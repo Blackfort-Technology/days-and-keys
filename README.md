@@ -87,6 +87,17 @@ werden vorerst nicht registriert. Am 2026-10-06 waren `daysandkeys.com/.de/.app/
 im DPMAregister (DE, EU, IR, alle Klassen) gab es keine Treffer. Ähnlich: die App „KeyDays"
 (Tageszähler, nicht als Marke eingetragen). Vor einer Veröffentlichung neu prüfen.
 
+## Bauen
+
+- Kern: `cd core && cargo test --locked` (Toolchain aus `core/rust-toolchain.toml`).
+- Android: Kern mit `cargo ndk -t arm64-v8a -t x86_64 -P 30 -o ../android/app/src/main/jniLibs build --release -p dak-ffi`,
+  dann `cd android && gradle assembleDebug` (Gradle 9.7, Android SDK 37, NDK 29). Die genauen Schritte
+  stehen in `.github/workflows/ci.yml`, Job `android`.
+- iOS: nur auf macOS; die CI baut den Kern als XCFramework, erzeugt das Projekt mit XcodeGen
+  (`ios/project.yml`) und baut für den Simulator (Job `ios`). TestFlight über
+  `.github/workflows/release.yml`, sobald das Apple-Konto steht (#10).
+- Testversionen für Android: signierte APK unter den Releases dieses Repos.
+
 ## Lizenz
 
 Kern und Apps stehen unter der Mozilla Public License 2.0 (`LICENSE`), der Server ab M1.5 unter

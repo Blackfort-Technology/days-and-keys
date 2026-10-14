@@ -148,36 +148,47 @@ struct FrageView: View {
 
     private func chips(_ werte: [(Int64, String)], gewaehlt: Int64?, tipp: @escaping (Int64) -> Void) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack { ForEach(werte, id: \.0) { w in Button(w.1) { tipp(w.0) }.buttonStyle(.bordered).tint(gewaehlt == w.0 ? .accentColor : .secondary) } }
+            HStack {
+                ForEach(werte, id: \.0) { w in
+                    WahlKnopf(text: w.1, an: gewaehlt == w.0) { tipp(w.0) }
+                }
+            }
         }
     }
 
-    private var auswahl: some View {
-        let gewaehlt = Set((a?.auswahl ?? []).map(\.option))
-        return VStack(alignment: .leading) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack {
-                    ForEach(q.optionen, id: \.id) { o in
-                        Button(o.text) {
-                            var neu = a?.auswahl ?? []
-                            if gewaehlt.contains(o.id) { neu.removeAll { $0.option == o.id } } else if q.feldart == .einfachauswahl { neu = [Auswahl(option: o.id, staerke: nil)] } else { neu.append(Auswahl(option: o.id, staerke: nil)) }
-                            antworten[q.messdefId] = neu.isEmpty ? nil : antwort(q, auswahl: neu)
-                        }.buttonStyle(.bordered).tint(gewaehlt.contains(o.id) ? .accentColor : .secondary)
-                    }
+    private func umschalten(_ id: UInt16) {
+        var neu: [Auswahl] = a?.auswahl ?? []
+        if neu.contains(where: { $0.option == id }) {
+            neu.removeAll { $0.option == id }
+        } else if q.feldart == .einfachauswahl {
+            neu = [Auswahl(option: id, staerke: nil)]
+        } else {
+            neu.append(Auswahl(option: id, staerke: nil))
+        }
+        antworten[q.messdefId] = neu.isEmpty ? nil : antwort(q, auswahl: neu)
+    }
+
+    private func staerkeSetzen(_ option: UInt16, _ w: Int64) {
+        let alt: [Auswahl] = a?.auswahl ?? []
+        let neu: [Auswahl] = alt.map { x in
+            guard x.option == option else { return x }
+            return Auswahl(option: x.option, staerke: x.staerke == w ? nil : w)
+        }
+        antworten[q.messdefId] = antwort(q, auswahl: neu)
+    }
+
+    @ViewBuilder private var auswahl: some View {
+        let gewaehlt: [Auswahl] = a?.auswahl ?? []
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack {
+                ForEach(q.optionen, id: \.id) { o in
+                    WahlKnopf(text: o.text, an: gewaehlt.contains { $0.option == o.id }) { umschalten(o.id) }
                 }
             }
-            if q.mitStaerke {
-                ForEach((a?.auswahl ?? []).filter { $0.option != 99 }, id: \.option) { x in
-                    HStack {
-                        Text(q.optionen.first { $0.id == x.option }?.text ?? "").font(.caption)
-                        ForEach([(Int64(2), "leicht"), (5, "mittel"), (8, "stark")], id: \.0) { s in
-                            Button(s.1) {
-                                let neu = (a?.auswahl ?? []).map { $0.option == x.option ? Auswahl(option: $0.option, staerke: $0.staerke == s.0 ? nil : s.0) : $0 }
-                                antworten[q.messdefId] = antwort(q, auswahl: neu)
-                            }.buttonStyle(.bordered).controlSize(.small).tint(x.staerke == s.0 ? .accentColor : .secondary)
-                        }
-                    }
-                }
+        }
+        if q.mitStaerke {
+            ForEach(gewaehlt.filter { $0.option != 99 }, id: \.option) { x in
+                StaerkeZeile(name: q.optionen.first { $0.id == x.option }?.text ?? "", staerke: x.staerke) { staerkeSetzen(x.option, $0) }
             }
         }
     }
@@ -214,6 +225,32 @@ struct AnkerZeile: View {
             ForEach(Array(anker.enumerated()), id: \.offset) { i, an in
                 if i > 0 { Spacer() }
                 Text(an.text).font(.caption2).foregroundStyle(.secondary)
+            }
+        }
+    }
+}
+
+struct WahlKnopf: View {
+    let text: String
+    let an: Bool
+    let tipp: () -> Void
+    var body: some View {
+        let farbe: Color = an ? Color.accentColor : Color.secondary
+        return Button(text, action: tipp).buttonStyle(.bordered).tint(farbe)
+            .accessibilityAddTraits(an ? .isSelected : [])
+    }
+}
+
+struct StaerkeZeile: View {
+    let name: String
+    let staerke: Int64?
+    let setzen: (Int64) -> Void
+    private let stufen: [(Int64, String)] = [(2, "leicht"), (5, "mittel"), (8, "stark")]
+    var body: some View {
+        HStack {
+            Text(name).font(.caption)
+            ForEach(stufen, id: \.0) { s in
+                WahlKnopf(text: s.1, an: staerke == s.0) { setzen(s.0) }.controlSize(.small)
             }
         }
     }

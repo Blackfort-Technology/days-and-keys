@@ -51,3 +51,18 @@ Stand 2026-10-08, aus `docs/architektur/bibliotheken.md`; gilt erst mit den Ents
 Kanonik nach RFC 8949 4.2.1), `sled` (Beta), `fjall` (löscht erst bei Kompaktierung), `genpdf`
 (seit 2021 still), `secrecy` (durch eigene Hülle ersetzt), `chrono-tz` (ältere Zeitzonendaten),
 SQLCipher (fremde Kryptografie neben libsodium).
+
+## Apps (#101)
+
+| Bibliothek | Rolle | gepinnt | Hinweise |
+|---|---|---|---|
+| UniFFI 0.32.2 (erzeugter Code) | Kotlin- und Swift-Bindung | `android/.../kern/dak_core.kt`, `ios/Generated/` | erzeugter Code liegt im Repo; die CI erzeugt ihn neu und bricht bei Abweichung ab |
+| JNA 5.17.0 | Aufruf der Rust-Bibliothek aus Kotlin | `android/app/build.gradle.kts` | bringt `libjnidispatch.so` mit; keine Netzfunktionen |
+| Jetpack Compose (BOM 2026.08.00), Material 3 1.4.0, activity-compose 1.12.4 | Oberfläche Android | `android/app/build.gradle.kts` | keine WebView |
+| kotlinx-coroutines-android 1.10.2 | Nebenläufigkeit Android | `android/app/build.gradle.kts` | |
+| Android Gradle Plugin 9.3.3, Kotlin-Compose-Plugin 2.4.10, Gradle 9.7.1 | Bau Android | `android/build.gradle.kts`, CI mit SHA-256 der Gradle-Verteilung | |
+| NDK 29.0.14206865, cargo-ndk 4.1.2 | Kern für arm64-v8a und x86_64 | CI | |
+| SwiftUI, Swift Charts, LocalAuthentication, Security | Oberfläche und Schlüsselbund iOS | Systembibliotheken | keine Fremdpakete auf iOS |
+| XcodeGen | erzeugt das Xcode-Projekt in der CI | aktuelle Homebrew-Version | Bauwerkzeug, nicht in der App |
+
+Gradle-Abhängigkeiten sind noch nicht mit Lockfile und Prüfsummen festgeschrieben (#68, offen).

@@ -145,9 +145,8 @@ jobs:
           git diff --exit-code -- ../android/app/src/main/java ../ios/Generated
       - name: Kern für Android und für den JVM-Bindungstest
         working-directory: core
-        env:
-          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
         run: |
+          export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
           cargo build --locked --release -p dak-ffi
           cargo ndk -t arm64-v8a -t x86_64 -P 30 -o ../android/app/src/main/jniLibs build --locked --release -p dak-ffi
       - name: Gradle (Bindungstest, Lint, APK)
