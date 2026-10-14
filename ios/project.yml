@@ -41,3 +41,4 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         OTHER_LDFLAGS: ["-ObjC"]
         ENABLE_BITCODE: NO
+        "EXCLUDED_ARCHS[sdk=iphonesimulator*]": x86_64

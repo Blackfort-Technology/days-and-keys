@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId = "de.blackforttec.daysandkeys"
-        minSdk = 30
+        minSdk = 33
         targetSdk = 36
         versionCode = (System.getenv("DAK_VERSION_CODE") ?: "1").toInt()
         versionName = System.getenv("DAK_VERSION_NAME") ?: "0.1.0"

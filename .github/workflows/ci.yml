@@ -148,7 +148,7 @@ jobs:
         run: |
           export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
           cargo build --locked --release -p dak-ffi
-          cargo ndk -t arm64-v8a -t x86_64 -P 30 -o ../android/app/src/main/jniLibs build --locked --release -p dak-ffi
+          cargo ndk -t arm64-v8a -t x86_64 -P 33 -o ../android/app/src/main/jniLibs build --locked --release -p dak-ffi
       - name: Gradle (Bindungstest, Lint, APK)
         working-directory: android
         run: |
@@ -190,6 +190,6 @@ jobs:
           xcodegen generate
           xcodebuild -project DaysAndKeys.xcodeproj -scheme DaysAndKeys -configuration Debug \
             -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 \
-            || { grep -E "error:|failed" -A3 build.log | head -300; exit 1; }
+            || { grep -E "error:|failed|Undefined symbol|ld: |referenced from" -A3 build.log | head -300; exit 1; }
           grep -E "warning:" build.log | grep -v "Generated/" | head -50 || true
           tail -3 build.log
