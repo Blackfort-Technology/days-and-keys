@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: MPL-2.0
+[bindings.kotlin]
+package_name = "de.blackforttec.daysandkeys.kern"
+cdylib_name = "dak_ffi"
+
+[bindings.swift]
+module_name = "DakKern"
+ffi_module_name = "DakKernFFI"
+ffi_module_filename = "DakKernFFI"

@@ -29,22 +29,26 @@ Nutzungsversuch, Freigaben und Mehrgeräte nur, wenn der Versuch den Bedarf zeig
       Issue-Pflege (#95)
 - [ ] Bedrohungsmodell gegen Teil A (#66), Begleitdokumente angleichen
 
-## Als Nächstes: M1a Gehgerüst und Nutzungsversuch
+## Jetzt: M1a Gehgerüst und Nutzungsversuch
 
-Status jederzeit festhalten statt Tagebuch (Entscheidung 2026-10-06). Ein schreibendes Gerät je
-Person, Android und iOS über ein Framework, keine Freigaben.
+Status jederzeit festhalten, beliebig oft am Tag (Entscheidung 2026-10-06). Ein schreibendes Gerät
+je Person, Android (Compose) und iOS (SwiftUI) über UniFFI am selben Kern, keine Freigaben.
 
-- `dak-core` mit Bridge-Regeln (#32), App ohne Netz (#59), Entsperren über die Geräteauthentifizierung,
-  Hilfe ohne Entsperren (#71)
-- voller Fragenkatalog als feste Vorlage (Status jetzt, seit dem letzten Status, Ereignisse ohne
-  Substanzen, Tagesabschluss, Wochenrückblick; #22, #75), Medikament und Einnahme ohne Vorbelegung
-  (#21, #73), Schutzklassen (#70)
-- Verlauf mit Punkten und Lebenstagen (#43, #74), Entwürfe beim Sperren (#94)
-- automatische Sicherung und Restore (#91, #79), Erinnerungen (#42), Client-Härtung (#69)
-- iOS-Bau und TestFlight mit Notfallplan (#8, #78), Android-APK (#9), Lieferkette (#68)
-- Rechtliche Einordnung der Rollen (#77)
-- **Nutzungsversuch mit einer Testgruppe (#82):** direkt Phase A (drei Wochen, M1a eingefroren), dann Phase B
-  (drei Wochen, M1b-Teile an der Phasengrenze)
+- [x] `dak-core` mit fachlicher Schnittstelle (#32, `dak_core::api`), App ohne Netz (#59),
+      Entsperren über die Geräteauthentifizierung, Hilfe ohne Entsperren mit eigenem Krisenplan (#71)
+- [x] voller Fragenkatalog als feste Vorlage (`templates/standard-v1.json`: Status jetzt, seit dem
+      letzten Status, Ereignisse ohne Substanzen, Tagesabschluss mit Stimmungsverlauf, Wochenrückblick;
+      #22, #75, #105), Medikament und Einnahme ohne Vorbelegung (#21, #73)
+- [x] Verlauf mit Einzelpunkten, Tageswerten, Grundniveau und Lücken (#43, #74), Entwürfe (#94)
+- [x] automatische Sicherung und Restore (#91, #79), Erinnerungen (#42), Client-Härtung (#69)
+- [x] Android-APK aus der CI, signiert im Release-Lauf (#9)
+- [ ] iOS über TestFlight (#8, #78): wartet auf das Apple-Konto der UG (#10)
+- [ ] interne Sicherheitsprüfungen des Lab-Jenkins als Pflicht-Check (#109)
+- [ ] Lieferkette: Gradle-Lockfile, Prüfsummen (#68); Schutzklassen-Feinschliff (#70)
+- [ ] Messungen auf den Zielgeräten: Entsperrzeit, Erinnerungen nach Neustart, Sicherungsordner (#80, #67)
+- [ ] Rechtliche Einordnung der Rollen (#77)
+- [ ] **Nutzungsversuch mit einer Testgruppe (#82):** direkt Phase A (drei Wochen, M1a eingefroren),
+      dann Phase B (drei Wochen, M1b-Teile an der Phasengrenze)
 
 ## Während des Versuchs: M1b Ausbau
 

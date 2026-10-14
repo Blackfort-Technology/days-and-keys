@@ -2,12 +2,17 @@
 //! `dak-core`: Kryptokern von Days & Keys (Architektur Abschnitt 3, Protokoll Teil A).
 #![forbid(unsafe_op_in_unsafe_fn)]
 
+#[cfg(feature = "ffi")]
+uniffi::setup_scaffolding!("dak_core");
+
+pub mod ansicht;
 pub mod api;
 pub mod cbor;
 pub mod fehler;
 pub mod kern;
 pub mod kette;
 pub mod modell;
+pub mod plan;
 pub mod sicherung;
 pub mod sodium;
 pub mod speicher;
