@@ -1,0 +1,6 @@
+ereignis 20727 1330 aufgewacht
+status 20727 1160 status_jetzt Some(4)
+status 20727 480 status_jetzt Some(-3)
+status 20727 650 status_jetzt Some(-1)
+status 20727 820 status_jetzt Some(2)
+status 20727 990 status_jetzt Some(0)
