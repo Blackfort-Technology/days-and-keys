@@ -1,0 +1,107 @@
+# SPDX-License-Identifier: MPL-2.0
+# CI für jeden Pull Request und jeden Stand auf main. Pflicht-Checks für den Merge:
+# governance, sicherheit, kern (Branch-Schutz). Actions sind auf Commits gepinnt (#68).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: never
+  GITLEAKS_VERSION: "8.30.1"
+  GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
+
+jobs:
+  governance:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Pflichtdateien
+        run: |
+          for f in README.md ROADMAP.md CLAUDE.md SECURITY.md AUDITS.md LICENSE LICENSE-docs core/Cargo.lock; do
+            test -f "$f" || { echo "Pflichtdatei fehlt: $f"; exit 1; }
+          done
+      - name: Jeder Commit und der PR-Titel referenzieren ein Issue
+        env:
+          PR_TITEL: ${{ github.event.pull_request.title }}
+          BASIS: ${{ github.event.pull_request.base.sha || github.event.before }}
+          KOPF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          fehler=0
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            echo "${PR_TITEL}" | grep -Eq '#[0-9]+' || { echo "PR-Titel ohne Issue-Bezug"; fehler=1; }
+          fi
+          if [ -n "${BASIS}" ] && [ "${BASIS}" != "0000000000000000000000000000000000000000" ]; then
+            while read -r sha; do
+              git log -1 --format=%B "$sha" | grep -Eq '#[0-9]+' || { echo "Commit ohne Issue-Bezug: $sha"; fehler=1; }
+            done < <(git rev-list --no-merges "${BASIS}..${KOPF}")
+          fi
+          exit $fehler
+      - name: Keine langen Gedankenstriche in Texten
+        run: |
+          if grep -rnP '[\x{2013}\x{2014}]' --include='*.md' --include='*.rs' --include='*.kt' --include='*.swift' --include='*.json' --exclude=LICENSE --exclude=LICENSE-docs . ; then
+            echo "Bitte nur den normalen Bindestrich verwenden."; exit 1
+          fi
+
+  sicherheit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Gitleaks über die ganze Historie
+        run: |
+          curl -fsSL -o gl.tgz "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          echo "${GITLEAKS_SHA256}  gl.tgz" | sha256sum -c -
+          tar -xzf gl.tgz gitleaks
+          ./gitleaks git --redact --no-banner --exit-code 1 .
+      - uses: taiki-e/install-action@861a07ce7084f55488e375df125cdc99bba60eb7 # v2.87.23
+        with:
+          tool: cargo-deny@0.19.9,cargo-audit@0.22.1
+      - name: cargo-deny (Advisories, Lizenzen, verbotene Pakete, Quellen)
+        working-directory: core
+        run: cargo deny --locked check
+      - name: cargo-audit
+        working-directory: core
+        run: cargo audit --deny warnings
+
+  kern:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: |
+            ~/.cargo/registry
+            core/target
+          key: kern-${{ hashFiles('core/Cargo.lock', 'core/rust-toolchain.toml') }}
+      - name: Toolchain (aus core/rust-toolchain.toml)
+        working-directory: core
+        run: rustup show active-toolchain || rustup toolchain install
+      - name: Formatierung
+        working-directory: core
+        run: cargo fmt --all --check
+      - name: Clippy
+        working-directory: core
+        run: cargo clippy --locked --all-targets --all-features -- -D warnings
+      - name: Tests und Testvektoren
+        working-directory: core
+        run: cargo test --locked --workspace
+      - name: Lastprobe (zwei Jahre, zehn Status je Tag)
+        working-directory: core
+        run: cargo test --locked --release -p dak-core --test szenarien lastprobe -- --ignored --nocapture

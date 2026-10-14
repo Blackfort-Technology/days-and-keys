@@ -6,7 +6,8 @@ Formularen, die jede Person selbst anpassen kann, und die App zeigt den Verlauf 
 Wochen und Monate. Alles ist auf dem Gerät verschlüsselt; die Schlüssel bleiben bei der Person,
 die die App nutzt. Später sollen einzelne Felder gezielt und widerrufbar freigegeben werden können.
 
-Status: **Konzeptphase** (Milestone M0). Noch kein Code. Alles wird Open Source.
+Status: **Prototyp** (Milestone M0/M1a). Der Kryptokern `dak-core` steht unter `core/`
+(`docs/prototyp-kern.md`), die Apps entstehen unter `android/` und `ios/`.
 
 - **Gesamtkonzept:** `docs/gesamtkonzept.md`
 - **Architektur:** `docs/architektur.md`, alle Architekturentscheidungen (AE-01 bis AE-39) mit

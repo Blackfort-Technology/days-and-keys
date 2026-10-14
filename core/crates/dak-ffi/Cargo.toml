@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: MPL-2.0
+[package]
+name = "dak-ffi"
+description = "Einzige exportierte Schnittstelle von dak-core für Android und iOS (UniFFI)"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[lib]
+crate-type = ["cdylib", "staticlib", "lib"]
+name = "dak_ffi"
+
+[[bin]]
+name = "uniffi-bindgen"
+path = "src/bindgen.rs"
+required-features = ["bindgen"]
+
+[dependencies]
+dak-core = { path = "../dak-core", features = ["ffi"] }
+uniffi.workspace = true
+
+[features]
+bindgen = ["uniffi/cli"]
