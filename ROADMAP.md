@@ -17,7 +17,9 @@ Nutzungsversuch, Freigaben und Mehrgeräte nur, wenn der Versuch den Bedarf zeig
 - [x] Architekturkonzept mit allen Entscheidungen (`docs/architektur.md`, #33)
 - [x] Entscheidungen (2026-10-14): Oberfläche nativ (AE-04, #33), Lizenz MPL-2.0 (AE-02),
       iOS-Bau und das ganze Projekt auf GitHub, öffentlich (AE-30, AE-39, #106)
-- [ ] Prototyp: Linux-Kern (#100), dann Plattformwege mit Compose und SwiftUI (#101)
+- [x] Prototyp Linux-Kern mit Sicherung, Restore, Rotation, Testvektoren und Lastprobe (#100,
+      `docs/prototyp-kern.md`), CI mit GitHub Actions
+- [ ] Plattformwege mit Compose und SwiftUI (#101)
 - [x] Entscheidung: kein Freigabeformat auf Vorrat, M1 in M1a und M1b geteilt (#96)
 - [ ] Teil A auf v1.0 (`docs/protokoll.md`, derzeit v0.7.1, #3): Rotation (#86), Wiederherstellung
       (#87, #79), hochsensible Metadaten und Schreibweg (#88, #89), Statusmodell (#90), Zeitmodell

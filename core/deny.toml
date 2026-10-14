@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MPL-2.0
+# cargo-deny: Lieferkette (#68, AE-32)
+[graph]
+all-features = true
+
+[advisories]
+yanked = "deny"
+
+[licenses]
+allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "ISC", "BSD-2-Clause", "BSD-3-Clause", "MPL-2.0", "Unicode-3.0", "Zlib", "CC0-1.0", "Unlicense", "BlueOak-1.0.0"]
+confidence-threshold = 0.9
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+allow-wildcard-paths = true
+deny = [
+    # keine Telemetrie- oder Netzwerkpakete im Kern (AE-19, AE-21)
+    { name = "reqwest" },
+    { name = "hyper" },
+    { name = "sentry" },
+    { name = "openssl" },
+    { name = "openssl-sys" },
+]
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

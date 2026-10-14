@@ -1,0 +1,28 @@
+# SPDX-License-Identifier: MPL-2.0
+[package]
+name = "dak-core"
+description = "Kryptokern von Days & Keys: Formate, Schlüssel, Speicher, Sicherung, Ansichtsmodelle"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+libsodium-sys-stable.workspace = true
+zeroize.workspace = true
+rusqlite.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+uniffi = { workspace = true, optional = true }
+
+[dev-dependencies]
+ciborium = "=0.2.2"
+dak-core = { path = ".", features = ["testzufall"] }
+
+[features]
+# Nur für Tests und Testvektoren: deterministischer Zufall. Nie in Release-Bauten der Apps.
+testzufall = []
+ffi = ["dep:uniffi"]

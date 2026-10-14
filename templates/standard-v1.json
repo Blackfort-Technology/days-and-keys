@@ -1,0 +1,97 @@
+{
+  "lizenz": "CC-BY-4.0",
+  "version": 1,
+  "hinweis": "Feste Vorlage für M1a (#22, #75, #105). Eigene Formulierungen, keine standardisierten Fragebögen. IDs entstehen aus dem Schlüssel; eine geänderte Frage bekommt einen neuen Schlüssel.",
+  "skalen": {
+    "haeufigkeit": [[0, "nie"], [1, "selten"], [2, "manchmal"], [3, "oft"], [4, "sehr oft"]],
+    "gelingen": [[0, "gar nicht"], [1, "kaum"], [2, "teils"], [3, "meist"], [4, "immer"]],
+    "staerke": [[0, "gar nicht"], [1, "wenig"], [2, "mittel"], [3, "stark"], [4, "sehr stark"]]
+  },
+  "messdefs": [
+    {"schluessel": "stimmung", "frage": "Wie ist meine Stimmung?", "feldtyp": "skala", "min": -5, "max": 5, "anker": [[-5, "sehr schlecht"], [0, "neutral"], [5, "sehr gut"]], "polung": "bipolar", "bezug": "jetzt"},
+    {"schluessel": "antrieb", "frage": "Wie viel Antrieb habe ich gerade?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "gar keinen"], [10, "sehr viel"]], "polung": "hoeher_besser", "bezug": "jetzt"},
+    {"schluessel": "konzentration", "frage": "Wie konzentriert bin ich gerade?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "gar nicht"], [10, "sehr"]], "polung": "hoeher_besser", "bezug": "jetzt"},
+    {"schluessel": "unruhe", "frage": "Wie unruhig bin ich innerlich?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "gar nicht"], [10, "sehr stark"]], "polung": "hoeher_mehr", "bezug": "jetzt"},
+    {"schluessel": "anspannung", "frage": "Wie angespannt oder ängstlich bin ich?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "gar nicht"], [10, "sehr stark"]], "polung": "hoeher_mehr", "bezug": "jetzt"},
+    {"schluessel": "gereiztheit", "frage": "Wie gereizt bin ich?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "gar nicht"], [10, "sehr stark"]], "polung": "hoeher_mehr", "bezug": "jetzt"},
+    {"schluessel": "muedigkeit", "frage": "Wie müde bin ich?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "gar nicht"], [10, "sehr stark"]], "polung": "hoeher_mehr", "bezug": "jetzt"},
+    {"schluessel": "appetit", "frage": "Wie ist mein Appetit gerade?", "feldtyp": "skala", "min": -2, "max": 2, "anker": [[-2, "viel weniger als sonst"], [0, "wie sonst"], [2, "viel mehr als sonst"]], "polung": "bipolar", "bezug": "jetzt"},
+    {"schluessel": "wirkung_jetzt", "frage": "Spüre ich die Wirkung meiner Medikation gerade?", "feldtyp": "stufen", "min": 0, "max": 3, "anker": [[0, "nein"], [1, "etwas"], [2, "deutlich"], [3, "stark"]], "polung": "keine", "bezug": "jetzt"},
+    {"schluessel": "beschwerden_jetzt", "frage": "Körperliche Beschwerden jetzt", "feldtyp": "mehrfach", "optionen": [[1, "Kopfschmerzen"], [2, "Herzklopfen"], [3, "Magen"], [4, "Verspannung"], [5, "Mundtrockenheit"], [99, "keine"]], "mit_staerke": true, "polung": "hoeher_mehr", "bezug": "jetzt", "hinweis": "Was zwischendurch war und vorbei ist, gehört in „seit dem letzten Status“."},
+    {"schluessel": "notiz_jetzt", "frage": "Notiz", "feldtyp": "text", "polung": "keine", "bezug": "jetzt"},
+
+    {"schluessel": "seit_viele_angefangen", "frage": "Habe ich viele Dinge gleichzeitig angefangen?", "feldtyp": "stufen", "skala": "haeufigkeit", "polung": "hoeher_mehr", "bezug": "seit_letztem"},
+    {"schluessel": "seit_vergessen_woran", "frage": "Habe ich vergessen, woran ich zuvor gearbeitet habe?", "feldtyp": "stufen", "skala": "haeufigkeit", "polung": "hoeher_mehr", "bezug": "seit_letztem"},
+    {"schluessel": "seit_vergessen_termine", "frage": "Habe ich etwas vergessen (Termine, Dinge, Absprachen)?", "feldtyp": "stufen", "skala": "haeufigkeit", "polung": "hoeher_mehr", "bezug": "seit_letztem"},
+    {"schluessel": "seit_am_stueck", "frage": "Konnte ich Aufgaben am Stück bearbeiten?", "feldtyp": "stufen", "skala": "gelingen", "polung": "hoeher_besser", "bezug": "seit_letztem", "kam_nicht_vor": true},
+    {"schluessel": "seit_zuhoeren", "frage": "Konnte ich gut zuhören, wenn mir jemand etwas erklärt hat?", "feldtyp": "stufen", "skala": "gelingen", "polung": "hoeher_besser", "bezug": "seit_letztem", "kam_nicht_vor": true},
+    {"schluessel": "seit_unterbrochen", "frage": "Habe ich andere unterbrochen oder vorschnell geantwortet?", "feldtyp": "stufen", "skala": "haeufigkeit", "polung": "hoeher_mehr", "bezug": "seit_letztem", "kam_nicht_vor": true},
+    {"schluessel": "seit_aufgeschoben", "frage": "Habe ich Wichtiges aufgeschoben?", "feldtyp": "stufen", "skala": "haeufigkeit", "polung": "hoeher_mehr", "bezug": "seit_letztem"},
+    {"schluessel": "seit_stimmung_schwankend", "frage": "Ist meine Stimmung stark geschwankt?", "feldtyp": "stufen", "skala": "haeufigkeit", "polung": "hoeher_mehr", "bezug": "seit_letztem"},
+    {"schluessel": "seit_beschwerden", "frage": "Hatte ich zwischendurch Beschwerden, die jetzt vorbei sind?", "feldtyp": "mehrfach", "optionen": [[1, "Kopfschmerzen"], [2, "Herzklopfen"], [3, "Magen"], [4, "Verspannung"], [5, "Mundtrockenheit"], [99, "keine"]], "mit_staerke": true, "polung": "hoeher_mehr", "bezug": "seit_letztem"},
+    {"schluessel": "seit_einfluesse", "frage": "Gab es äußere Einflüsse?", "feldtyp": "mehrfach", "optionen": [[1, "Termindruck"], [2, "Konflikt"], [3, "Unterbrechungen"], [4, "wenig Struktur"], [5, "Reise"], [6, "krank"], [7, "Zyklus"], [99, "keine"]], "polung": "keine", "bezug": "seit_letztem"},
+    {"schluessel": "seit_einfluesse_notiz", "frage": "Notiz zu den Einflüssen", "feldtyp": "text", "polung": "keine", "bezug": "seit_letztem"},
+
+    {"schluessel": "tag_insgesamt", "frage": "Wie war der Tag insgesamt?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "sehr schlecht"], [10, "sehr gut"]], "polung": "hoeher_besser", "bezug": "tag"},
+    {"schluessel": "tag_abends_erschoepft", "frage": "War ich gegen Abend gereizt oder erschöpft?", "feldtyp": "stufen", "skala": "staerke", "polung": "hoeher_mehr", "bezug": "tag"},
+    {"schluessel": "tag_schlaf_dauer", "frage": "Wie lange habe ich letzte Nacht geschlafen?", "feldtyp": "dauer", "min": 0, "max": 1440, "einheit": "Minuten", "polung": "keine", "bezug": "tag"},
+    {"schluessel": "tag_schlaf_qualitaet", "frage": "Wie gut habe ich geschlafen?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "sehr schlecht"], [10, "sehr gut"]], "polung": "hoeher_besser", "bezug": "tag"},
+    {"schluessel": "tag_bewegung", "frage": "Habe ich mich heute bewegt?", "feldtyp": "janein", "polung": "keine", "bezug": "tag"},
+    {"schluessel": "tag_bewegung_dauer", "frage": "Wie lange ungefähr?", "feldtyp": "dauer", "min": 0, "max": 1440, "einheit": "Minuten", "polung": "keine", "bezug": "tag"},
+    {"schluessel": "tag_kontakte", "frage": "Wie viele echte Gespräche hatte ich heute?", "feldtyp": "zahl", "min": 0, "max": 50, "polung": "keine", "bezug": "tag"},
+    {"schluessel": "tag_tageslicht", "frage": "War ich bei Tageslicht draußen?", "feldtyp": "janein", "polung": "keine", "bezug": "tag"},
+    {"schluessel": "tag_handyzeit", "frage": "Handyzeit heute (geschätzt)", "feldtyp": "dauer", "min": 0, "max": 1440, "einheit": "Minuten", "polung": "keine", "bezug": "tag"},
+    {"schluessel": "tag_marker", "frage": "Was war heute?", "feldtyp": "mehrfach", "optionen": [[2, "Belastungsereignis"], [3, "Therapiesitzung"], [5, "besonderer Tag"], [11, "eigener Marker 1"], [12, "eigener Marker 2"], [13, "eigener Marker 3"]], "hinweis": "Die eigenen Marker benennt jede Person selbst in den Einstellungen.", "polung": "keine", "bezug": "tag"},
+    {"schluessel": "tag_besonders", "frage": "Was war heute besonders?", "feldtyp": "text", "polung": "keine", "bezug": "tag"},
+
+    {"schluessel": "woche_vergesslich", "frage": "War ich diese Woche schnell vergesslich?", "feldtyp": "stufen", "skala": "haeufigkeit", "polung": "hoeher_mehr", "bezug": "woche"},
+    {"schluessel": "woche_nicht_beendet", "frage": "Habe ich diese Woche Dinge angefangen und nicht beendet?", "feldtyp": "stufen", "skala": "haeufigkeit", "polung": "hoeher_mehr", "bezug": "woche"},
+    {"schluessel": "woche_medikation", "frage": "Wie gut kam ich diese Woche mit der Medikation zurecht?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "sehr schlecht"], [10, "sehr gut"]], "polung": "hoeher_besser", "bezug": "woche"},
+    {"schluessel": "woche_anders", "frage": "Was war diese Woche anders?", "feldtyp": "text", "polung": "keine", "bezug": "woche"},
+    {"schluessel": "woche_arzt", "frage": "Für das nächste Arztgespräch merken", "feldtyp": "text", "polung": "keine", "bezug": "woche"},
+
+    {"schluessel": "ausgelassen_grund", "frage": "Warum ausgelassen?", "feldtyp": "einfach", "optionen": [[1, "vergessen"], [2, "bewusst ausgelassen"], [3, "Pause"], [4, "keine mehr da"], [5, "Nebenwirkungen"], [6, "anderes"]], "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "mahlzeit_art", "frage": "Welche Mahlzeit?", "feldtyp": "einfach", "optionen": [[1, "Frühstück"], [2, "Mittag"], [3, "Abend"], [4, "Snack"]], "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "mahlzeit_ohne_appetit", "frage": "Ohne Appetit gegessen?", "feldtyp": "janein", "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "bewegung_art", "frage": "Welche Bewegung?", "feldtyp": "einfach", "optionen": [[1, "Spaziergang"], [2, "Sport"], [3, "anderes"]], "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "bewegung_dauer", "frage": "Dauer", "feldtyp": "dauer", "min": 0, "max": 1440, "einheit": "Minuten", "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "aufgewacht_schlaf", "frage": "Wie habe ich geschlafen?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "sehr schlecht"], [10, "sehr gut"]], "polung": "hoeher_besser", "bezug": "ereignis"},
+    {"schluessel": "aufgewacht_nachts_wach", "frage": "Wie oft war ich nachts wach?", "feldtyp": "einfach", "optionen": [[0, "nie"], [1, "einmal"], [2, "zweimal"], [3, "dreimal oder öfter"]], "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "termin_puenktlich", "frage": "Wie war ich beim Termin?", "feldtyp": "einfach", "optionen": [[1, "pünktlich"], [2, "knapp"], [3, "zu spät"]], "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "belastung_notiz", "frage": "Was war los? (optional)", "feldtyp": "text", "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "termin_notiz", "frage": "Notiz (optional)", "feldtyp": "text", "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "dosiswechsel_vorher", "frage": "Dosis vorher", "feldtyp": "text", "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "dosiswechsel_nachher", "frage": "Dosis nachher", "feldtyp": "text", "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "dosiswechsel_anlass", "frage": "Anlass", "feldtyp": "text", "polung": "keine", "bezug": "ereignis"}
+  ],
+  "formulare": [
+    {"schluessel": "status_jetzt", "name": "Status jetzt", "art": "status_jetzt", "reihenfolge": 0, "gruppen": [
+      {"titel": "Wie geht es mir", "hinweis": "höher = besser", "fragen": ["stimmung", "antrieb", "konzentration"]},
+      {"titel": "Was ist gerade stark", "hinweis": "höher = mehr", "fragen": ["unruhe", "anspannung", "gereiztheit", "muedigkeit"]},
+      {"titel": "Körper", "fragen": ["appetit", "wirkung_jetzt", "beschwerden_jetzt"]},
+      {"titel": "Seit dem letzten Status", "zugeklappt": true, "fragen": ["seit_viele_angefangen", "seit_vergessen_woran", "seit_vergessen_termine", "seit_am_stueck", "seit_zuhoeren", "seit_unterbrochen", "seit_aufgeschoben", "seit_stimmung_schwankend", "seit_beschwerden", "seit_einfluesse", "seit_einfluesse_notiz"]},
+      {"titel": "Notiz", "fragen": ["notiz_jetzt"]}
+    ], "bedingungen": [["wirkung_jetzt", "einnahme_mit_wirkung_heute"], ["seit_viele_angefangen", "zwei_stunden_seit_letztem"]]},
+    {"schluessel": "tagesabschluss", "name": "Tagesabschluss", "art": "tagesabschluss", "reihenfolge": 1, "gruppen": [
+      {"titel": "Stimmung heute Abend", "fragen": ["stimmung", "tag_insgesamt", "tag_abends_erschoepft"]},
+      {"titel": "Faktoren", "hinweis": "jede Angabe lässt sich überspringen", "fragen": ["tag_schlaf_dauer", "tag_schlaf_qualitaet", "tag_bewegung", "tag_bewegung_dauer", "tag_kontakte", "tag_tageslicht", "tag_handyzeit"]},
+      {"titel": "Marker", "fragen": ["tag_marker", "tag_besonders"]}
+    ], "bedingungen": []},
+    {"schluessel": "wochenrueckblick", "name": "Wochenrückblick", "art": "wochenrueckblick", "reihenfolge": 2, "gruppen": [
+      {"titel": "Diese Woche", "fragen": ["woche_vergesslich", "woche_nicht_beendet", "woche_medikation", "woche_anders", "woche_arzt"]}
+    ], "bedingungen": []},
+    {"schluessel": "einnahme", "name": "Tablette genommen", "art": "ereignis", "reihenfolge": 10, "gruppen": [], "bedingungen": []},
+    {"schluessel": "einnahme_ausgelassen", "name": "Einnahme ausgelassen", "art": "ereignis", "reihenfolge": 11, "gruppen": [{"titel": "", "fragen": ["ausgelassen_grund"]}], "bedingungen": []},
+    {"schluessel": "wirkung_laesst_nach", "name": "Wirkung lässt nach", "art": "ereignis", "reihenfolge": 12, "gruppen": [], "bedingungen": []},
+    {"schluessel": "mahlzeit", "name": "Mahlzeit", "art": "ereignis", "reihenfolge": 13, "gruppen": [{"titel": "", "fragen": ["mahlzeit_art", "mahlzeit_ohne_appetit"]}], "bedingungen": []},
+    {"schluessel": "bewegung", "name": "Bewegung", "art": "ereignis", "reihenfolge": 14, "gruppen": [{"titel": "", "fragen": ["bewegung_art", "bewegung_dauer"]}], "bedingungen": []},
+    {"schluessel": "schlafen_gegangen", "name": "Schlafen gegangen", "art": "ereignis", "reihenfolge": 15, "gruppen": [], "bedingungen": []},
+    {"schluessel": "aufgewacht", "name": "Aufgewacht", "art": "ereignis", "reihenfolge": 16, "gruppen": [{"titel": "", "fragen": ["aufgewacht_schlaf", "aufgewacht_nachts_wach"]}], "bedingungen": []},
+    {"schluessel": "termin", "name": "Termin", "art": "ereignis", "reihenfolge": 17, "gruppen": [{"titel": "", "fragen": ["termin_puenktlich"]}], "bedingungen": []},
+    {"schluessel": "belastung", "name": "Belastung oder Konflikt", "art": "ereignis", "reihenfolge": 18, "gruppen": [{"titel": "", "fragen": ["belastung_notiz"]}], "bedingungen": []},
+    {"schluessel": "krise", "name": "Krise", "art": "ereignis", "reihenfolge": 19, "gruppen": [], "bedingungen": []},
+    {"schluessel": "arzttermin", "name": "Arzttermin", "art": "ereignis", "reihenfolge": 20, "gruppen": [{"titel": "", "fragen": ["termin_notiz"]}], "bedingungen": []},
+    {"schluessel": "therapiesitzung", "name": "Therapiesitzung", "art": "ereignis", "reihenfolge": 21, "gruppen": [{"titel": "", "fragen": ["termin_notiz"]}], "bedingungen": []},
+    {"schluessel": "dosiswechsel", "name": "Dosis- oder Präparatwechsel", "art": "ereignis", "reihenfolge": 22, "gruppen": [{"titel": "", "fragen": ["dosiswechsel_vorher", "dosiswechsel_nachher", "dosiswechsel_anlass"]}], "bedingungen": []}
+  ]
+}

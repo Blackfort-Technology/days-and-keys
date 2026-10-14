@@ -32,6 +32,13 @@ Noch kein Deploy-Ziel. Konzept und Leitplanken: `README.md`.
 
 ## Pipeline
 
-Die CI (GitHub Actions) führt bei jedem Push ein Governance-Gate und die Sicherheitsprüfungen
-aus (`SECURITY.md`). `main` ist geschützt: kein direkter Push, Merge nur mit grüner Pipeline und
-grünem Governance-Gate. Änderungen laufen also immer über einen Branch und einen PR.
+`.github/workflows/ci.yml` läuft bei jedem PR und auf `main`: `governance` (Pflichtdateien,
+Issue-Bezug in Titel und Commits, keine langen Gedankenstriche), `sicherheit` (Gitleaks über die
+Historie, `cargo-deny`, `cargo-audit`), `kern` (fmt, clippy, Tests, Lastprobe). `main` ist
+geschützt: Merge nur per PR mit grünen Pflicht-Checks, keine Force-Pushes. Actions sind auf
+Commits gepinnt.
+
+## Bauen
+
+`cd core && cargo test --locked` (Toolchain aus `core/rust-toolchain.toml`). Der Kern hat keine
+Netzabhängigkeit; libsodium wird aus dem signierten, gebündelten Quellarchiv gebaut.
