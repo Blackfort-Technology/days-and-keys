@@ -1,0 +1,130 @@
+# SPDX-License-Identifier: MPL-2.0
+# Auslieferung (#9, #8, #78): signierte APK als GitHub-Release, iOS nach TestFlight.
+# Signaturdaten liegen kanonisch in OpenBao und nur als Secrets der Umgebung `release`
+# (nur geschützte Zweige); PR-Läufe bekommen sie nie (#68).
+name: Release
+
+on:
+  push:
+    branches: [main]
+    paths: ["core/**", "android/**", "ios/**", "templates/**", ".github/workflows/release.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+env:
+  GRADLE_VERSION: "9.7.1"
+  NDK_VERSION: "29.0.14206865"
+  VERSION: "0.1.${{ github.run_number }}"
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: taiki-e/install-action@861a07ce7084f55488e375df125cdc99bba60eb7 # v2.87.23
+        with:
+          tool: cargo-ndk@4.1.2
+      - name: Werkzeuge
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;${NDK_VERSION}" "platforms;android-37" "build-tools;36.0.0" > /dev/null
+          curl -fsSL -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
+          echo "$(curl -fsSL https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip.sha256)  gradle.zip" | sha256sum -c -
+          unzip -q gradle.zip -d "$RUNNER_TEMP" && echo "$RUNNER_TEMP/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"
+      - name: Kern für Android
+        working-directory: core
+        env:
+          ANDROID_NDK_HOME: ${{ env.ANDROID_HOME }}/ndk/${{ env.NDK_VERSION }}
+        run: |
+          rustup target add aarch64-linux-android x86_64-linux-android
+          cargo ndk -t arm64-v8a -t x86_64 -P 30 -o ../android/app/src/main/jniLibs build --locked --release -p dak-ffi
+      - name: Signierte APK bauen
+        working-directory: android
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+          DAK_KEYSTORE_PASS: ${{ secrets.ANDROID_KEYSTORE_PASS }}
+          DAK_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          DAK_VERSION_CODE: ${{ github.run_number }}
+          DAK_VERSION_NAME: ${{ env.VERSION }}
+        run: |
+          test -n "$KS_B64" || { echo "Signaturschlüssel fehlt in der Umgebung release"; exit 1; }
+          export DAK_KEYSTORE="$RUNNER_TEMP/dak.jks"
+          echo "$KS_B64" | base64 -d > "$DAK_KEYSTORE"
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          gradle --console=plain --no-daemon assembleRelease
+          rm -f "$DAK_KEYSTORE"
+      - name: Prüfen (Signatur, keine INTERNET-Berechtigung) und Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          apk="days-and-keys-${VERSION}.apk"
+          cp android/app/build/outputs/apk/release/app-release.apk "$apk"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" | grep -E "Signer #1 certificate (DN|SHA-256)"
+          if "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump permissions "$apk" | grep -q android.permission.INTERNET; then echo "INTERNET-Berechtigung"; exit 1; fi
+          sha256sum "$apk" | tee "$apk.sha256"
+          gh release create "android-${VERSION}" "$apk" "$apk.sha256" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Days & Keys ${VERSION} (Android)" \
+            --notes "Testversion für den Nutzungsversuch (#82). Installation: APK auf dem Gerät öffnen und der Installation aus dieser Quelle zustimmen. Prüfsumme in der .sha256-Datei."
+
+  ios:
+    runs-on: macos-15
+    environment: release
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.ASC_KEY_ID != ''
+        with:
+          persist-credentials: false
+      - name: Ohne Apple-Konto kein TestFlight-Bau
+        if: env.ASC_KEY_ID == ''
+        run: echo "::notice::App-Store-Connect-Schlüssel fehlt in der Umgebung release (#10); TestFlight-Bau übersprungen."
+      - name: Kern als XCFramework
+        if: env.ASC_KEY_ID != ''
+        working-directory: core
+        run: |
+          rustup target add aarch64-apple-ios aarch64-apple-ios-sim
+          cargo build --locked --release -p dak-ffi --target aarch64-apple-ios
+          cargo build --locked --release -p dak-ffi --target aarch64-apple-ios-sim
+          mkdir -p kopf && cp ../ios/Generated/DakKernFFI.h kopf/ && cp ../ios/Generated/DakKernFFI.modulemap kopf/module.modulemap
+          mkdir -p ../ios/Frameworks
+          xcodebuild -create-xcframework -library target/aarch64-apple-ios/release/libdak_ffi.a -headers kopf \
+            -library target/aarch64-apple-ios-sim/release/libdak_ffi.a -headers kopf -output ../ios/Frameworks/DakKernFFI.xcframework
+      - name: Archivieren, signieren, zu TestFlight hochladen
+        if: env.ASC_KEY_ID != ''
+        working-directory: ios
+        env:
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          TEAM: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          brew install xcodegen
+          xcodegen generate
+          key="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"; printf '%s' "$ASC_KEY_P8" > "$key"
+          auth=(-allowProvisioningUpdates -authenticationKeyPath "$key" -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          xcodebuild -project DaysAndKeys.xcodeproj -scheme DaysAndKeys -configuration Release -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/dak.xcarchive" DAK_TEAM_ID="$TEAM" MARKETING_VERSION="${VERSION}" CURRENT_PROJECT_VERSION="${{ github.run_number }}" "${auth[@]}" archive
+          shasum -a 256 "$RUNNER_TEMP/dak.xcarchive/Products/Applications/DaysAndKeys.app/DaysAndKeys"
+          cat > "$RUNNER_TEMP/export.plist" <<PLIST
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict>
+            <key>method</key><string>app-store-connect</string>
+            <key>destination</key><string>upload</string>
+            <key>teamID</key><string>${TEAM}</string>
+            <key>signingStyle</key><string>automatic</string>
+            <key>manageAppVersionAndBuildNumber</key><false/>
+          </dict></plist>
+          PLIST
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/dak.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/export.plist" -exportPath "$RUNNER_TEMP/export" "${auth[@]}"
+          rm -f "$key"
