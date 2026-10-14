@@ -1,0 +1,26 @@
+# Rust
+core/target/
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/app/src/main/jniLibs/
+*.apk
+*.aab
+*.jks
+*.keystore
+# iOS
+ios/build/
+ios/DerivedData/
+ios/*.xcodeproj/xcuserdata/
+ios/Frameworks/
+*.ipa
+*.p8
+*.mobileprovision
+# Prüfwerkzeuge
+reports/
+# Editor
+.idea/
+.vscode/
+.DS_Store

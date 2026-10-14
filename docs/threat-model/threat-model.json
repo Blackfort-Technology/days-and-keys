@@ -1,0 +1,2329 @@
+{
+  "meta": {
+    "target": "Days & Keys (Konzept, Protokoll v0.1)",
+    "target_ref": "Protokoll v0.1 (frühere Historie)",
+    "scope": "Zero-Knowledge-Tagebuch: Client-Apps (Capacitor/Tauri), Daten-Server unter daysandkeys.wirdsichtbar.de, Einladungs- und Freigabeprotokoll, Gerätekopplung und Recovery, Wetterabruf, Build- und Verteilkette. Grundlage ist ausschließlich die Spezifikation, Code gibt es noch nicht.",
+    "methodology": "STRIDE-per-Element auf DFD, Risiko als Likelihood × Impact (3×3-Matrix), adversarischer Selbst-Review",
+    "analyst": "Claude Code",
+    "date": "2026-10-06",
+    "version": "0.3 (T-15/M-25 nach Protokoll v0.3, T-29 bis T-31 und M-26 bis M-28 aus der Konzeptprüfung; Belege gegen Protokoll v0.1)",
+    "assumptions": [
+      "libsodium ist korrekt implementiert und wird korrekt aufgerufen; Implementierungsfehler im späteren Code sind nicht Teil dieses Modells.",
+      "Die Betriebssysteme der Geräte (iOS 26, Android 16) sind aktuell und nicht gerootet bzw. gejailbreakt.",
+      "Der Server-Betreiber (Blackfort Technology) ist vertrauenswürdig, der Server selbst kann aber kompromittiert oder zur Herausgabe gezwungen werden.",
+      "Der Testkreis ist geschlossen; es gibt keine Selbstregistrierung Fremder.",
+      "TLS zum Server ist korrekt konfiguriert; Vertraulichkeit hängt trotzdem nicht davon ab, weil Inhalte Ende-zu-Ende verschlüsselt sind."
+    ],
+    "out_of_scope": [
+      "Implementierungsfehler im noch nicht geschriebenen Code (Gegenstand eines späteren Code-Reviews).",
+      "Physische Angriffe auf die Hardware-Schlüsselspeicher der Geräte.",
+      "Etebase: in #2 als Unterbau verworfen (docs/unterbau-etebase.md); modelliert ist die eigene schlanke API.",
+      "Health Connect, HealthKit, Kalender und OwnTracks (M2); sie werden mit #11 und #12 nachmodelliert."
+    ],
+    "dependencies": [
+      "libsodium (libsodium-wrappers bzw. native Bindings)",
+      "Capacitor, Tauri und deren Plugins (npm-Lieferkette)",
+      "Apple App Store Connect, TestFlight, Cloud-Builddienst für iOS",
+      "F-Droid bzw. APK aus der CI, Signaturschlüssel im Secret-Store",
+      "Open-Meteo bzw. Bright Sky (Wetter)",
+      "WhatsApp/Mail als Einladungskanal"
+    ]
+  },
+  "assets": [
+    {
+      "id": "AS-1",
+      "name": "Tagebuchinhalte inkl. Gesundheitsdaten (Medikation, Alkohol, Stimmung)",
+      "type": "data",
+      "sensitivity": "critical",
+      "description": "Besondere Kategorie nach Art. 9 DSGVO, zusätzlich beziehungssensibel.",
+      "cia": [
+        "confidentiality",
+        "integrity",
+        "availability"
+      ]
+    },
+    {
+      "id": "AS-2",
+      "name": "Schlüsselmaterial (IK_sig, IK_enc, KK, Kettenschlüssel, Recovery-Schlüssel)",
+      "type": "credential",
+      "sensitivity": "critical",
+      "description": "Wer es hat, liest alles und kann als Autor schreiben.",
+      "cia": [
+        "confidentiality",
+        "integrity"
+      ]
+    },
+    {
+      "id": "AS-3",
+      "name": "Metadaten (wer teilt mit wem, Zeitpunkte, Epochen, Größen, IP-Adressen)",
+      "type": "data",
+      "sensitivity": "high",
+      "description": "Erlauben Rückschlüsse auf Gewohnheiten und Beziehungen, auch ohne Inhalte.",
+      "cia": [
+        "confidentiality"
+      ]
+    },
+    {
+      "id": "AS-4",
+      "name": "Standort (für Wetter und später OwnTracks)",
+      "type": "data",
+      "sensitivity": "high",
+      "cia": [
+        "confidentiality"
+      ]
+    },
+    {
+      "id": "AS-5",
+      "name": "Integrität der ausgelieferten App (Binary, Signatur)",
+      "type": "function",
+      "sensitivity": "critical",
+      "description": "Eine manipulierte App hebelt jede Ende-zu-Ende-Verschlüsselung aus.",
+      "cia": [
+        "integrity"
+      ]
+    },
+    {
+      "id": "AS-6",
+      "name": "Verfügbarkeit des Tagebuchs",
+      "type": "availability",
+      "sensitivity": "medium",
+      "cia": [
+        "availability"
+      ]
+    },
+    {
+      "id": "AS-7",
+      "name": "Vertrauen der Nutzer untereinander",
+      "type": "reputation",
+      "sensitivity": "high",
+      "description": "Die App darf sich nicht wie ein Kontrollwerkzeug anfühlen (README, Leitplanke 2).",
+      "cia": [
+        "confidentiality",
+        "integrity"
+      ]
+    }
+  ],
+  "actors": [
+    {
+      "id": "AC-1",
+      "name": "Autor (führt das Tagebuch)",
+      "type": "human",
+      "trust_level": "authenticated"
+    },
+    {
+      "id": "AC-2",
+      "name": "Empfänger mit Freigabe",
+      "type": "human",
+      "trust_level": "authenticated",
+      "description": "Darf freigegebene Felder lesen, sonst nichts."
+    },
+    {
+      "id": "AC-3",
+      "name": "Angreifer mit Kontrolle über den Server",
+      "type": "external",
+      "trust_level": "admin",
+      "description": "Kompromittierter oder zur Herausgabe gezwungener Server."
+    },
+    {
+      "id": "AC-4",
+      "name": "Mitleser auf dem Einladungskanal",
+      "type": "external",
+      "trust_level": "untrusted",
+      "description": "Zugriff auf Mail-Postfach, WhatsApp-Backup oder entsperrtes Handy."
+    },
+    {
+      "id": "AC-5",
+      "name": "Person mit Zugriff auf ein entsperrtes oder verlorenes Gerät",
+      "type": "insider",
+      "trust_level": "untrusted",
+      "description": "Dieb, Finder oder eine nahestehende Person, die zum Entsperren drängt."
+    },
+    {
+      "id": "AC-6",
+      "name": "Angreifer in der Lieferkette (Build-Dienst, npm-Paket, Signaturschlüssel)",
+      "type": "external",
+      "trust_level": "privileged"
+    },
+    {
+      "id": "AC-7",
+      "name": "Drittdienst Wetter",
+      "type": "system",
+      "trust_level": "untrusted"
+    }
+  ],
+  "dfd": {
+    "elements": [
+      {
+        "id": "EE-1",
+        "name": "Autor",
+        "type": "external_entity",
+        "trust_zone": "Nutzer",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "README.md:5-6",
+            "note": "Autoren halten die Schlüssel und geben Felder frei"
+          }
+        ]
+      },
+      {
+        "id": "EE-2",
+        "name": "Empfänger",
+        "type": "external_entity",
+        "trust_zone": "Nutzer",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "docs/protokoll.md:143-156",
+            "note": "Freigabe an einen Empfänger"
+          }
+        ]
+      },
+      {
+        "id": "EE-3",
+        "name": "Einladungskanal (Mail, WhatsApp)",
+        "type": "external_entity",
+        "trust_zone": "Fremdkanal",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "docs/protokoll.md:193-194",
+            "note": "Link per Mail oder WhatsApp"
+          }
+        ]
+      },
+      {
+        "id": "EE-4",
+        "name": "Wetterdienst (Open-Meteo / Bright Sky)",
+        "type": "external_entity",
+        "trust_zone": "Drittdienst",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "README.md:18",
+            "note": "Wetter (#7) als automatische Quelle"
+          }
+        ]
+      },
+      {
+        "id": "EE-5",
+        "name": "Verteilung (TestFlight, F-Droid / APK)",
+        "type": "external_entity",
+        "trust_zone": "Lieferkette",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "README.md:35-36",
+            "note": "iOS über TestFlight, Android über APK/F-Droid"
+          }
+        ]
+      },
+      {
+        "id": "PR-1",
+        "name": "Client-App (Capacitor auf Android/iOS, Tauri)",
+        "type": "process",
+        "trust_zone": "Gerät",
+        "description": "Ver- und entschlüsselt, signiert, prüft, wertet aus.",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "README.md:31",
+            "note": "Clients: eine TypeScript-Codebasis, Capacitor und Tauri"
+          },
+          {
+            "kind": "doc",
+            "ref": "CLAUDE.md:24-25",
+            "note": "Invariante 3: Client wird nicht vom Datenserver nachgeladen"
+          }
+        ]
+      },
+      {
+        "id": "PR-2",
+        "name": "Daten-Server (API daysandkeys.wirdsichtbar.de)",
+        "type": "process",
+        "trust_zone": "Server",
+        "description": "Speichert Chiffrate, Freigabe-Blobs, Schlüsselbund, Einladungs-Hashes; Zugriffskontrolle als zweite Linie.",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "docs/protokoll.md:151-156",
+            "note": "Server speichert Blob und Freigabebeziehung im Klartext"
+          },
+          {
+            "kind": "doc",
+            "ref": "README.md:30",
+            "note": "Zero-Knowledge-Server"
+          }
+        ]
+      },
+      {
+        "id": "PR-3",
+        "name": "Build-Pipeline (CI + macOS-Cloud-Dienst)",
+        "type": "process",
+        "trust_zone": "Lieferkette",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "README.md:35",
+            "note": "iOS-Bau über Cloud-Dienst, angestoßen aus der CI, Signatur aus einem Secret-Store (#8)"
+          }
+        ]
+      },
+      {
+        "id": "DS-1",
+        "name": "Gerätespeicher (gewrappte Schlüssel, entschlüsselter Cache)",
+        "type": "data_store",
+        "trust_zone": "Gerät",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "docs/protokoll.md:54-58",
+            "note": "Schlüssel auf dem Gerät nur verschlüsselt, Hardware-Wrapping"
+          }
+        ]
+      },
+      {
+        "id": "DS-2",
+        "name": "Server-Datenbank",
+        "type": "data_store",
+        "trust_zone": "Server",
+        "description": "Chiffrate, Freigaben, Schlüsselbund, Recovery-Kopie, Einladungs-Hashes, Freigabebeziehungen.",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "docs/protokoll.md:177-185",
+            "note": "Schlüsselbund und Recovery-Kopie liegen auf dem Server"
+          }
+        ]
+      },
+      {
+        "id": "DS-3",
+        "name": "Signaturschlüssel im Secret-Store bzw. beim Cloud-Dienst",
+        "type": "data_store",
+        "trust_zone": "Lieferkette",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "README.md:35-36",
+            "note": "Signatur aus einem Secret-Store, Android-Signaturschlüssel im Secret-Store (#9)"
+          }
+        ]
+      },
+      {
+        "id": "DF-1",
+        "name": "Client → Server: Einträge, Freigaben, Schlüsselbund, Löschanweisungen",
+        "type": "data_flow",
+        "source": "PR-1",
+        "dest": "PR-2",
+        "protocol": "HTTPS",
+        "crosses_boundary": "TB-1",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "docs/protokoll.md:113-122",
+            "note": "Umschlag mit Chiffraten und Signatur"
+          }
+        ]
+      },
+      {
+        "id": "DF-2",
+        "name": "Server → Client: Chiffrate, Freigaben, öffentliche Schlüssel",
+        "type": "data_flow",
+        "source": "PR-2",
+        "dest": "PR-1",
+        "protocol": "HTTPS",
+        "crosses_boundary": "TB-1",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "docs/protokoll.md:124-130",
+            "note": "Empfänger prüfen Log, Server liefert Längen nicht freigegebener Felder"
+          }
+        ]
+      },
+      {
+        "id": "DF-3",
+        "name": "Autor → Empfänger: Einladungslink",
+        "type": "data_flow",
+        "source": "EE-1",
+        "dest": "EE-3",
+        "protocol": "Mail / WhatsApp",
+        "crosses_boundary": "TB-2",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "docs/protokoll.md:191-199",
+            "note": "Einladungsablauf"
+          }
+        ]
+      },
+      {
+        "id": "DF-4",
+        "name": "Client → Wetterdienst: Koordinaten",
+        "type": "data_flow",
+        "source": "PR-1",
+        "dest": "EE-4",
+        "protocol": "HTTPS",
+        "crosses_boundary": "TB-3",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "README.md:18",
+            "note": "Wetter wird auf dem Gerät abgerufen (#7)"
+          }
+        ]
+      },
+      {
+        "id": "DF-5",
+        "name": "Pipeline → Verteilung → Gerät: App-Binary",
+        "type": "data_flow",
+        "source": "PR-3",
+        "dest": "EE-5",
+        "protocol": "App Store Connect API / APK-Download",
+        "crosses_boundary": "TB-4",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "README.md:35-36",
+            "note": "Bauweg iOS und Android"
+          }
+        ]
+      },
+      {
+        "id": "DF-6",
+        "name": "Altes Gerät → neues Gerät: Gerätekopplung",
+        "type": "data_flow",
+        "source": "PR-1",
+        "dest": "PR-1",
+        "protocol": "QR + crypto_box über den Server",
+        "crosses_boundary": "TB-1",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "docs/protokoll.md:180-182",
+            "note": "Kopplung per QR, Übertragung von IK_sig, IK_enc, KK"
+          }
+        ]
+      },
+      {
+        "id": "DF-7",
+        "name": "Secret-Store → Cloud-Builddienst: Signaturzertifikat",
+        "type": "data_flow",
+        "source": "DS-3",
+        "dest": "PR-3",
+        "protocol": "HTTPS (Übergabe aus der CI)",
+        "crosses_boundary": "TB-5",
+        "evidence": [
+          {
+            "kind": "doc",
+            "ref": "README.md:35",
+            "note": "Signatur aus einem Secret-Store, nur zur Bauzeit übergeben (#8)"
+          }
+        ]
+      }
+    ],
+    "trust_boundaries": [
+      {
+        "id": "TB-1",
+        "name": "Gerät ↔ Server",
+        "separates": [
+          "Gerät",
+          "Server"
+        ],
+        "description": "Alles jenseits dieser Grenze gilt als potenziell feindlich (Zero-Knowledge-Annahme)."
+      },
+      {
+        "id": "TB-2",
+        "name": "App ↔ Fremdkanal",
+        "separates": [
+          "Nutzer",
+          "Fremdkanal"
+        ]
+      },
+      {
+        "id": "TB-3",
+        "name": "Gerät ↔ Drittdienst",
+        "separates": [
+          "Gerät",
+          "Drittdienst"
+        ]
+      },
+      {
+        "id": "TB-4",
+        "name": "Lieferkette ↔ Gerät",
+        "separates": [
+          "Lieferkette",
+          "Gerät"
+        ]
+      },
+      {
+        "id": "TB-5",
+        "name": "Build-Infrastruktur ↔ Cloud-Builddienst",
+        "separates": [
+          "Build-Infrastruktur",
+          "Cloud-Builddienst"
+        ]
+      }
+    ],
+    "diagram_mermaid": "flowchart LR\n  subgraph Nutzer\n    EE1[Autor]\n    EE2[Empfänger]\n  end\n  subgraph Gerät\n    PR1((Client-App))\n    DS1[(Gerätespeicher)]\n  end\n  subgraph Server\n    PR2((Daten-Server))\n    DS2[(Server-DB)]\n  end\n  subgraph Lieferkette\n    PR3((Build-Pipeline))\n    DS3[(Signaturschlüssel)]\n    EE5[Verteilung]\n  end\n  EE3[Mail / WhatsApp]\n  EE4[Wetterdienst]\n  EE1 --> PR1\n  PR1 -- DF-1 --> PR2\n  PR2 -- DF-2 --> PR1\n  PR2 --- DS2\n  PR1 --- DS1\n  EE1 -- DF-3 Einladung --> EE3 --> EE2\n  PR1 -- DF-4 Koordinaten --> EE4\n  DS3 -- DF-7 --> PR3 -- DF-5 --> EE5 --> PR1\n  PR1 -- DF-6 Kopplung --> PR1\n"
+  },
+  "threats": [
+    {
+      "id": "T-1",
+      "title": "Einladungsseite auf dem Datenserver kann den Code aus dem URL-Fragment auslesen",
+      "stride": "information_disclosure",
+      "element_ref": "DF-3",
+      "description": "Der Einladungslink zeigt auf eine Seite des Datenservers. Öffnet der Empfänger ihn im Browser statt in der App, kann JavaScript dieser Seite das Fragment (#code) lesen. Damit fällt der Schutz aus Schritt 3 der Einladung, und es entsteht genau der vom Server ausgelieferte Code, den Invariante 3 verbietet.",
+      "attack_vector": "Kompromittierter Server liefert unter /e/<id> eine Seite mit Skript, das location.hash ausliest, selbst den HMAC berechnet und eigene Schlüssel als Empfänger anmeldet.",
+      "affected_assets": [
+        "AS-2",
+        "AS-1",
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:193-194",
+          "note": "Link auf daysandkeys.wirdsichtbar.de mit Code im Fragment"
+        },
+        {
+          "kind": "doc",
+          "ref": "CLAUDE.md:24-25",
+          "note": "Invariante: kein Code vom Datenserver"
+        },
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:189-206",
+          "note": "Es ist nicht festgelegt, dass der Link nur von der App (Universal Links / App Links) geöffnet wird und die Webseite kein Skript enthält"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "high",
+      "risk": "high",
+      "existing_controls": [
+        "HMAC über die öffentlichen Schlüssel, Bestätigung durch den Autor (protokoll.md:195-199)"
+      ],
+      "residual_risk": "high",
+      "status": "open",
+      "mitigation_refs": [
+        "M-1"
+      ],
+      "cwe": [
+        "CWE-200",
+        "CWE-829"
+      ]
+    },
+    {
+      "id": "T-2",
+      "title": "Server tauscht öffentliche Schlüssel bei unverifizierten Kontakten aus",
+      "stride": "spoofing",
+      "element_ref": "PR-2",
+      "description": "Freigaben an unverifizierte Kontakte sind erlaubt. Hat ein Angreifer zusätzlich zum Server auch den Einladungskanal (WhatsApp-Backup, Postfach), kann er bei der Einladung eigene Schlüssel einschleusen; alle Freigaben gehen dann an ihn.",
+      "attack_vector": "AC-3 und AC-4 zusammen: Code aus dem Chat lesen, Einladung vor dem Empfänger einlösen, eigene Schlüssel melden. Der Autor sieht nur einen Namen, den der Angreifer frei wählt.",
+      "affected_assets": [
+        "AS-1",
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:200-204",
+          "note": "Sicherheitsnummer optional, Freigaben auch an unverifizierte Kontakte möglich"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "high",
+      "risk": "medium",
+      "existing_controls": [
+        "Einmaligkeit und 48-Stunden-Frist der Einladung (protokoll.md:191-192)",
+        "HMAC mit Einladungscode (protokoll.md:195-197)"
+      ],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-2"
+      ],
+      "cwe": [
+        "CWE-295"
+      ]
+    },
+    {
+      "id": "T-3",
+      "title": "Server zeigt verschiedenen Empfängern verschiedene Log-Stände (Equivocation)",
+      "stride": "tampering",
+      "element_ref": "PR-2",
+      "description": "Die Hashkette erkennt Lücken nur innerhalb dessen, was ein Empfänger sieht. Ein Server kann einem Empfänger dauerhaft einen älteren oder verzweigten Log-Stand zeigen, etwa um einen Lösch-Eintrag oder eine neue Freigabe zu unterdrücken.",
+      "attack_vector": "Server liefert Empfänger B den Log nur bis Nummer n und hält spätere Einträge zurück. B bemerkt nichts, weil kein späterer Eintrag ankommt.",
+      "affected_assets": [
+        "AS-1",
+        "AS-6"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:124-127",
+          "note": "Append-only-Log mit Hashkette, Prüfung nur durch den jeweiligen Empfänger"
+        },
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:113-133",
+          "note": "Kein Abgleich des Log-Kopfes zwischen Empfängern oder mit dem Autor, keine Frischeangabe"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "medium",
+      "risk": "low",
+      "existing_controls": [
+        "Signatur und Hashkette je Eintrag (protokoll.md:118-126)"
+      ],
+      "residual_risk": "low",
+      "status": "open",
+      "mitigation_refs": [
+        "M-3"
+      ],
+      "cwe": [
+        "CWE-345"
+      ]
+    },
+    {
+      "id": "T-4",
+      "title": "Widerruf hängt für bereits geladene und serverseitig kopierte Daten vom Server ab",
+      "stride": "information_disclosure",
+      "element_ref": "DS-2",
+      "description": "Schritt 3 und 4 des Widerrufs löschen Chiffrate und Freigaben auf dem Server. Ein kompromittierter Server kann Kopien behalten und dem widerrufenen Empfänger weiter alte Chiffrate liefern, für die er die Schlüssel schon hat.",
+      "attack_vector": "Server ignoriert die Löschanweisung und liefert R weiter Werte der Epochen vor w.",
+      "affected_assets": [
+        "AS-1",
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:166-172",
+          "note": "Löschen auf dem Server, rückwirkend nur durch Neuverschlüsselung"
+        },
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:22-23",
+          "note": "Nicht-Ziel: Schutz dessen, was ein Empfänger schon gesehen hat"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "medium",
+      "risk": "low",
+      "existing_controls": [
+        "Neue Kette ab Epoche w, neue Daten für R unlesbar (protokoll.md:162-165)"
+      ],
+      "residual_risk": "low",
+      "status": "accepted",
+      "mitigation_refs": [
+        "M-4"
+      ],
+      "cwe": [
+        "CWE-404"
+      ]
+    },
+    {
+      "id": "T-5",
+      "title": "Empfänger erfährt Zahl und Größe nicht freigegebener Felder",
+      "stride": "information_disclosure",
+      "element_ref": "DF-2",
+      "description": "Damit der Umschlag nachrechenbar bleibt, bekommt der Empfänger zu nicht freigegebenen Feldern Feld-ID und Länge. Er sieht also, dass es Felder gibt, die ihm verborgen bleiben, und wann sie befüllt werden. In einer Beziehung kann das allein Misstrauen auslösen.",
+      "attack_vector": "Empfänger zählt je Tag die fremden Feld-IDs und deren Größen und schließt daraus z. B. auf eine verborgene Medikations- oder Alkoholerfassung.",
+      "affected_assets": [
+        "AS-3",
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:126-130",
+          "note": "Server liefert (feld_id, Länge) nicht freigegebener Felder, als offener Punkt markiert"
+        }
+      ],
+      "likelihood": "high",
+      "impact": "medium",
+      "risk": "high",
+      "existing_controls": [],
+      "residual_risk": "high",
+      "status": "open",
+      "mitigation_refs": [
+        "M-5"
+      ],
+      "cwe": [
+        "CWE-203"
+      ]
+    },
+    {
+      "id": "T-6",
+      "title": "Metadaten auf dem Server verraten Gewohnheiten und Beziehungen",
+      "stride": "information_disclosure",
+      "element_ref": "DS-2",
+      "description": "Der Server kennt Freigabebeziehungen, Epochen, Upload-Zeitpunkte, aufgefüllte Größen und IP-Adressen. Regelmäßige Uploads zu festen Uhrzeiten (z. B. Medikation morgens) sind auch verschlüsselt erkennbar.",
+      "attack_vector": "Wer die Datenbank und Zugriffslogs bekommt, rekonstruiert Tagesrhythmus, Orte über IP-Adressen und wer wem was freigibt.",
+      "affected_assets": [
+        "AS-3",
+        "AS-4"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:208-219",
+          "note": "Tabelle der sichtbaren Metadaten"
+        },
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:24-25",
+          "note": "Nicht-Ziel: Verbergen, wer mit wem teilt"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "medium",
+      "risk": "medium",
+      "existing_controls": [
+        "Auffüllen auf Blockgrößen (protokoll.md:39)",
+        "Gebündeltes Hochladen (protokoll.md:218-219)"
+      ],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-6"
+      ],
+      "cwe": [
+        "CWE-359"
+      ]
+    },
+    {
+      "id": "T-7",
+      "title": "Fehlerhafte Zugriffskontrolle liefert fremde Chiffrate und Metadaten aus",
+      "stride": "elevation_of_privilege",
+      "element_ref": "PR-2",
+      "description": "Die Zugriffskontrolle auf dem Server ist die zweite Linie. Ein Fehler darin (Objekt-ID statt Prüfung der Freigabe) liefert fremde Chiffrate aus. Inhalte bleiben verschlüsselt, Metadaten und Log-Struktur werden sichtbar.",
+      "attack_vector": "Angemeldeter Nutzer fragt Einträge eines fremden Autors per ID ab.",
+      "affected_assets": [
+        "AS-3"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:151-156",
+          "note": "Server liefert nur freigegebene Chiffrate aus (Zugriffskontrolle als zweite Linie)"
+        },
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:208-219",
+          "note": "Keine Spezifikation der serverseitigen Berechtigungsprüfung je Objekt"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "low",
+      "risk": "low",
+      "existing_controls": [
+        "Ende-zu-Ende-Verschlüsselung der Inhalte"
+      ],
+      "residual_risk": "low",
+      "status": "open",
+      "mitigation_refs": [
+        "M-7"
+      ],
+      "cwe": [
+        "CWE-639"
+      ],
+      "owasp": [
+        "OWASP A01:2021"
+      ]
+    },
+    {
+      "id": "T-8",
+      "title": "Server verweigert Dienst oder löscht Daten",
+      "stride": "denial_of_service",
+      "element_ref": "PR-2",
+      "description": "Fällt der Server aus oder löscht ein Angreifer die Datenbank, sind Einträge, Freigaben und der Schlüsselbund weg, sofern kein Gerät eine vollständige Kopie hat.",
+      "attack_vector": "Ransomware oder Fehlbedienung auf dem Server-Host; oder gezieltes Nichtausliefern einzelner Freigaben.",
+      "affected_assets": [
+        "AS-6",
+        "AS-1"
+      ],
+      "evidence": [
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:175-187",
+          "note": "Keine Aussage, ob Geräte eine vollständige lokale Kopie halten oder wie Server-Backups laufen"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "medium",
+      "risk": "medium",
+      "existing_controls": [],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-8"
+      ],
+      "cwe": [
+        "CWE-400"
+      ]
+    },
+    {
+      "id": "T-9",
+      "title": "Server-Datenbank wird gelöscht, verändert oder zurückgespielt",
+      "stride": "tampering",
+      "element_ref": "DS-2",
+      "description": "Ein Angreifer spielt einen alten Datenbankstand ein. Ein Widerruf ist dann scheinbar nie passiert, alte Freigabe-Blobs liegen wieder aus.",
+      "attack_vector": "Rückspielen eines Backups vor dem Widerruf; Empfänger R bekommt seine gelöschte Freigabe wieder ausgeliefert.",
+      "affected_assets": [
+        "AS-1",
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:166-167",
+          "note": "Widerruf löscht Freigabe-Einträge serverseitig"
+        },
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:158-173",
+          "note": "Keine signierte Widerrufsliste, die der Client prüft"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "medium",
+      "risk": "low",
+      "existing_controls": [
+        "Neue Kette nach Widerruf, Daten ab w sind für R ohnehin unlesbar (protokoll.md:162-163)"
+      ],
+      "residual_risk": "low",
+      "status": "open",
+      "mitigation_refs": [
+        "M-9"
+      ],
+      "cwe": [
+        "CWE-345"
+      ]
+    },
+    {
+      "id": "T-10",
+      "title": "Nachträgliches Abstreiten von Server-Aktionen",
+      "stride": "repudiation",
+      "element_ref": "DS-2",
+      "description": "Löschungen und Auslieferungen auf dem Server sind nicht nachvollziehbar protokolliert. Nach einem Vorfall lässt sich nicht klären, ob der Server eine Löschanweisung umgesetzt hat.",
+      "attack_vector": "Streit, ob ein widerrufener Empfänger nach dem Widerruf noch Daten geladen hat.",
+      "affected_assets": [
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:158-173",
+          "note": "Kein Ereignisprotokoll für Widerruf und Auslieferung"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "low",
+      "risk": "low",
+      "existing_controls": [
+        "Signierte Löschanweisung des Autors (protokoll.md:166)"
+      ],
+      "residual_risk": "low",
+      "status": "open",
+      "mitigation_refs": [
+        "M-10"
+      ],
+      "cwe": [
+        "CWE-778"
+      ]
+    },
+    {
+      "id": "T-11",
+      "title": "Manipulation der Daten auf dem Weg zum Server",
+      "stride": "tampering",
+      "element_ref": "DF-1",
+      "description": "Ein Angreifer im Netz oder auf dem Server verändert Chiffrate, Freigaben oder Löschanweisungen.",
+      "attack_vector": "Austausch eines Chiffrats gegen ein älteres desselben Feldes.",
+      "affected_assets": [
+        "AS-1"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:107-111",
+          "note": "AEAD mit Associated Data bindet Wert an Eintrag, Feld, Kette und Epoche"
+        },
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:118-122",
+          "note": "Signatur über den Umschlag"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "low",
+      "risk": "low",
+      "existing_controls": [
+        "AEAD + Signatur + Hashkette"
+      ],
+      "residual_risk": "low",
+      "status": "mitigated",
+      "mitigation_refs": [
+        "M-3"
+      ],
+      "cwe": [
+        "CWE-345"
+      ]
+    },
+    {
+      "id": "T-12",
+      "title": "Gerätekopplung: Angreifer koppelt eigenes Gerät",
+      "stride": "spoofing",
+      "element_ref": "PR-1",
+      "description": "Bei der Kopplung gehen alle Identitätsschlüssel an das neue Gerät. Wer den QR-Code ersetzt oder der Nutzer zu einer Bestätigung drängt, bekommt das komplette Konto.",
+      "attack_vector": "Server oder Angreifer mit Blick auf das Display tauscht den kurzlebigen Schlüssel aus; Prüfzahl wird ungeprüft bestätigt.",
+      "affected_assets": [
+        "AS-2",
+        "AS-1"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:180-182",
+          "note": "Kopplung per QR mit Prüfzahl, danach Übertragung von IK_sig, IK_enc, KK"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "high",
+      "risk": "medium",
+      "existing_controls": [
+        "Prüfzahl auf beiden Geräten (protokoll.md:180-181)"
+      ],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-11"
+      ],
+      "cwe": [
+        "CWE-287"
+      ]
+    },
+    {
+      "id": "T-13",
+      "title": "Verlorenes oder entsperrtes Gerät gibt das ganze Konto preis, ein Gerät lässt sich nicht einzeln sperren",
+      "stride": "information_disclosure",
+      "element_ref": "DS-1",
+      "description": "Alle Geräte teilen dieselben Identitätsschlüssel und denselben KK. Wer ein entsperrtes Gerät hat, liest alles und kann als Autor schreiben. Es gibt keinen Weg, nur dieses Gerät auszusperren; der Autor müsste ein neues Konto anlegen.",
+      "attack_vector": "Gestohlenes Handy mit entsperrter App, oder eine nahestehende Person drängt zum Entsperren.",
+      "affected_assets": [
+        "AS-1",
+        "AS-2",
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:180-182",
+          "note": "Neues Gerät bekommt IK_sig, IK_enc und KK"
+        },
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:26",
+          "note": "Nicht-Ziel: entsperrtes, kompromittiertes Gerät"
+        },
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:175-187",
+          "note": "Keine Geräteschlüssel, kein Gerätewiderruf, keine Schlüsselrotation nach Geräteverlust"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "high",
+      "risk": "high",
+      "existing_controls": [
+        "Hardware-Wrapping und Biometrie (protokoll.md:54-58)"
+      ],
+      "residual_risk": "high",
+      "status": "open",
+      "mitigation_refs": [
+        "M-12",
+        "M-13"
+      ],
+      "cwe": [
+        "CWE-320"
+      ]
+    },
+    {
+      "id": "T-14",
+      "title": "Entschlüsselter Cache auf dem Gerät nicht geschützt",
+      "stride": "information_disclosure",
+      "element_ref": "PR-1",
+      "description": "Die App hält entschlüsselte Werte für die Auswertung. Wie dieser Cache geschützt ist, legt die Spezifikation nicht fest. Er kann in Backups (iCloud, Google), Screenshots im App-Umschalter oder Logs landen.",
+      "attack_vector": "Unverschlüsseltes Geräte-Backup oder Vorschaubild im App-Umschalter zeigt Medikation.",
+      "affected_assets": [
+        "AS-1"
+      ],
+      "evidence": [
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:54-58",
+          "note": "Nur die Schlüssel sind als verschlüsselt beschrieben, nicht der Klartext-Cache"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "high",
+      "risk": "high",
+      "existing_controls": [],
+      "residual_risk": "high",
+      "status": "open",
+      "mitigation_refs": [
+        "M-13"
+      ],
+      "cwe": [
+        "CWE-312",
+        "CWE-532"
+      ]
+    },
+    {
+      "id": "T-15",
+      "title": "Kompromittierter WebView-Code (z. B. bösartiges npm-Paket) greift auf Schlüssel oder die Bridge zu",
+      "stride": "elevation_of_privilege",
+      "element_ref": "PR-1",
+      "description": "Die Oberfläche läuft als TypeScript in der WebView. Eine kompromittierte Abhängigkeit hat dort vollen Zugriff. Liegen Schlüssel in der WebView, kann sie sie auslesen. Liegen sie nativ, kann sie die Bridge missbrauchen: entschlüsseln, ausleiten, Freigaben oder Exporte anstoßen.",
+      "attack_vector": "Übernommenes npm-Paket ruft beim Start entry.open für alle Einträge auf und schickt die Ergebnisse an einen fremden Server, oder ruft grant.create für einen eigenen Kontakt auf.",
+      "affected_assets": [
+        "AS-2",
+        "AS-1",
+        "AS-5"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:31",
+          "note": "Oberfläche als TypeScript-Codebasis in Capacitor/Tauri"
+        },
+        {
+          "kind": "doc",
+          "ref": "SECURITY.md:10-13",
+          "note": "Security-Suite inkl. SBOM und Trivy im Build"
+        },
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:1-6",
+          "note": "Protokoll v0.1 legt nicht fest, wo Schlüssel und Autorisierung liegen; nachgezogen in v0.3 Abschnitt 13"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "high",
+      "risk": "high",
+      "existing_controls": [
+        "CI-Sicherheitsprüfungen mit Dependency-Check, Trivy, SBOM (SECURITY.md:10-13)"
+      ],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-14",
+        "M-25"
+      ],
+      "cwe": [
+        "CWE-1357",
+        "CWE-506",
+        "CWE-285"
+      ]
+    },
+    {
+      "id": "T-16",
+      "title": "Client akzeptiert gefälschte Freigaben oder Einträge",
+      "stride": "spoofing",
+      "element_ref": "PR-1",
+      "description": "Prüft die App Signaturen von Freigaben und Einträgen nicht konsequent, kann der Server Werte unterschieben.",
+      "attack_vector": "Server legt einen Freigabe-Blob mit eigenem Schlüssel ab; App verwendet ihn ohne Signaturprüfung.",
+      "affected_assets": [
+        "AS-1"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:145-150",
+          "note": "Freigaben werden signiert, dann versiegelt"
+        },
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:124-127",
+          "note": "Empfänger prüfen Signatur und Hashkette"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "high",
+      "risk": "medium",
+      "existing_controls": [
+        "Sign-then-seal, Signatur auf jedem Eintrag"
+      ],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-15"
+      ],
+      "cwe": [
+        "CWE-347"
+      ]
+    },
+    {
+      "id": "T-17",
+      "title": "Autor bestreitet Einträge oder Freigaben",
+      "stride": "repudiation",
+      "element_ref": "EE-1",
+      "description": "Wegen der Signaturen kann ein Autor kaum abstreiten, einen Eintrag geschrieben zu haben. Das ist für ein Tagebuch eher ein Risiko für den Autor: Einträge sind gegenüber Empfängern beweisbar.",
+      "attack_vector": "Empfänger legt einen signierten Eintrag Dritten vor.",
+      "affected_assets": [
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:118-122",
+          "note": "Ed25519-Signatur auf jedem Umschlag"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "medium",
+      "risk": "low",
+      "existing_controls": [],
+      "residual_risk": "low",
+      "status": "accepted",
+      "mitigation_refs": [
+        "M-16"
+      ]
+    },
+    {
+      "id": "T-18",
+      "title": "Verfügbarkeit der App: Akku-Optimierung und Plattformgrenzen",
+      "stride": "denial_of_service",
+      "element_ref": "PR-1",
+      "description": "Manche Hersteller beenden Hintergrund-Apps; Erinnerungen und Standort laufen dann nicht. Erfasste Daten fehlen.",
+      "attack_vector": "Akku-Optimierung beendet die App, Upload und Erinnerungen bleiben aus.",
+      "affected_assets": [
+        "AS-6"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:36",
+          "note": "Android-Verteilung, Hinweis auf Akku-Optimierung in Issue #9"
+        }
+      ],
+      "likelihood": "high",
+      "impact": "low",
+      "risk": "medium",
+      "existing_controls": [],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-17"
+      ]
+    },
+    {
+      "id": "T-19",
+      "title": "Client wird zur Ausführung fremden Codes gebracht",
+      "stride": "tampering",
+      "element_ref": "PR-1",
+      "description": "Lädt die WebView Inhalte nach (Remote-URL, Hot-Update-Plugins), kann der Server eigenen Code ausführen.",
+      "attack_vector": "Capacitor-Konfiguration mit server.url oder ein Live-Update-Dienst lädt JavaScript vom Server.",
+      "affected_assets": [
+        "AS-2",
+        "AS-5"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "CLAUDE.md:24-25",
+          "note": "Invariante 3: kein Nachladen vom Datenserver"
+        },
+        {
+          "kind": "absence",
+          "ref": "README.md:31",
+          "note": "Keine Festlegung zu CSP und zum Verbot von Live-Update-Plugins"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "high",
+      "risk": "medium",
+      "existing_controls": [
+        "Invariante 3 in CLAUDE.md"
+      ],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-18"
+      ],
+      "cwe": [
+        "CWE-829",
+        "CWE-494"
+      ]
+    },
+    {
+      "id": "T-20",
+      "title": "Mitleser löst Einladung vor dem Empfänger ein",
+      "stride": "spoofing",
+      "element_ref": "EE-3",
+      "description": "Der Code liegt im Chatverlauf und in Backups. Wer ihn liest, kann sich innerhalb von 48 Stunden als Empfänger anmelden.",
+      "attack_vector": "WhatsApp-Backup in der Cloud oder geteiltes Postfach; Angreifer meldet sich unter dem erwarteten Namen an.",
+      "affected_assets": [
+        "AS-1",
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:205-206",
+          "note": "Mitleser kann Einladung vorher einlösen, Gegenmaßnahmen Laufzeit, Einmaligkeit, Bestätigung"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "high",
+      "risk": "medium",
+      "existing_controls": [
+        "Einmaligkeit, 48 Stunden, Bestätigung durch den Autor (protokoll.md:191-199)"
+      ],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-2"
+      ],
+      "cwe": [
+        "CWE-294"
+      ]
+    },
+    {
+      "id": "T-21",
+      "title": "Einladungslink bleibt dauerhaft im Kanal",
+      "stride": "repudiation",
+      "element_ref": "EE-3",
+      "description": "Nach dem Einlösen bleibt der Link im Verlauf. Er ist dann wertlos, der Zusammenhang (wer wen eingeladen hat) bleibt aber sichtbar.",
+      "attack_vector": "Später mitlesende Person sieht, dass eine Einladung zu Days & Keys verschickt wurde.",
+      "affected_assets": [
+        "AS-3"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:193-194",
+          "note": "Link enthält Domain und Einladungs-ID"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "low",
+      "risk": "low",
+      "existing_controls": [
+        "Einmaligkeit des Codes"
+      ],
+      "residual_risk": "low",
+      "status": "accepted",
+      "mitigation_refs": [
+        "M-19"
+      ]
+    },
+    {
+      "id": "T-22",
+      "title": "Wetterdienst erfährt täglich den Standort",
+      "stride": "information_disclosure",
+      "element_ref": "DF-4",
+      "description": "Für das Wetter schickt der Client Koordinaten an einen Drittdienst, zusammen mit der IP-Adresse. Über Monate ergibt das ein Bewegungsprofil.",
+      "attack_vector": "Wetterdienst oder ein Angreifer bei ihm protokolliert Koordinaten und IP-Adressen.",
+      "affected_assets": [
+        "AS-4"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:18",
+          "note": "Wetter auf dem Gerät abgerufen, Server erfährt den Ort nicht (#7)"
+        },
+        {
+          "kind": "absence",
+          "ref": "README.md:18",
+          "note": "Keine Vorgabe zur Vergröberung der Koordinaten"
+        }
+      ],
+      "likelihood": "high",
+      "impact": "medium",
+      "risk": "high",
+      "existing_controls": [],
+      "residual_risk": "high",
+      "status": "open",
+      "mitigation_refs": [
+        "M-20"
+      ],
+      "cwe": [
+        "CWE-359"
+      ]
+    },
+    {
+      "id": "T-23",
+      "title": "Manipulierte Wetterdaten",
+      "stride": "tampering",
+      "element_ref": "DF-4",
+      "description": "Falsche Wetterdaten verfälschen Muster (z. B. Wetter gegen Stimmung).",
+      "attack_vector": "Angreifer im Netz oder beim Dienst liefert falsche Werte.",
+      "affected_assets": [
+        "AS-1"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:18",
+          "note": "Wetter als automatische Quelle für die Auswertung"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "low",
+      "risk": "low",
+      "existing_controls": [
+        "HTTPS zum Dienst"
+      ],
+      "residual_risk": "low",
+      "status": "accepted",
+      "mitigation_refs": [
+        "M-21"
+      ]
+    },
+    {
+      "id": "T-24",
+      "title": "Kompromittierter Build-Dienst liefert manipulierte iOS-App",
+      "stride": "tampering",
+      "element_ref": "PR-3",
+      "description": "Der macOS-Cloud-Dienst baut und signiert die iOS-App. Wer ihn kontrolliert, kann eine App ausliefern, die Schlüssel ausleitet. iOS-Builds sind nicht reproduzierbar, eine Prüfung gegen den Quellcode ist schwer.",
+      "attack_vector": "Übernahme des Kontos beim Cloud-Builddienst oder ein manipulierter Build-Schritt.",
+      "affected_assets": [
+        "AS-5",
+        "AS-2",
+        "AS-1"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:35",
+          "note": "iOS-Bau über einen Cloud-Dienst (#8)"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "high",
+      "risk": "medium",
+      "existing_controls": [
+        "Signaturzertifikat nur zur Bauzeit aus dem Secret-Store (README.md:35)"
+      ],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-22"
+      ],
+      "cwe": [
+        "CWE-494"
+      ]
+    },
+    {
+      "id": "T-25",
+      "title": "Signaturschlüssel abgegriffen",
+      "stride": "information_disclosure",
+      "element_ref": "DS-3",
+      "description": "Mit dem Android-Signaturschlüssel oder dem Apple-Zertifikat kann ein Angreifer Updates signieren, die als echt durchgehen.",
+      "attack_vector": "Schlüssel bleibt nach dem Bau im Cloud-Dienst liegen oder wird aus einem CI-Workspace kopiert.",
+      "affected_assets": [
+        "AS-5"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:35-36",
+          "note": "Signaturschlüssel im Secret-Store, Übergabe an den Bau"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "high",
+      "risk": "medium",
+      "existing_controls": [
+        "Ablage im Secret-Store"
+      ],
+      "residual_risk": "medium",
+      "status": "open",
+      "mitigation_refs": [
+        "M-22",
+        "M-23"
+      ],
+      "cwe": [
+        "CWE-522"
+      ]
+    },
+    {
+      "id": "T-26",
+      "title": "Signaturschlüssel verloren oder unbrauchbar",
+      "stride": "denial_of_service",
+      "element_ref": "DS-3",
+      "description": "Geht der Android-Signaturschlüssel verloren, lassen sich keine Updates mehr ausliefern; Nutzer müssten neu installieren und Schlüssel neu koppeln.",
+      "attack_vector": "Datenverlust im Secret-Store ohne Sicherung des Schlüssels.",
+      "affected_assets": [
+        "AS-6"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:36",
+          "note": "Signaturschlüssel im Secret-Store"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "medium",
+      "risk": "low",
+      "existing_controls": [],
+      "residual_risk": "low",
+      "status": "open",
+      "mitigation_refs": [
+        "M-23"
+      ]
+    },
+    {
+      "id": "T-27",
+      "title": "Manipulation der App auf dem Verteilweg",
+      "stride": "tampering",
+      "element_ref": "DF-5",
+      "description": "Eine APK außerhalb eines Stores kann auf dem Weg ausgetauscht werden.",
+      "attack_vector": "Download einer APK über einen manipulierten Link.",
+      "affected_assets": [
+        "AS-5"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:36",
+          "note": "APK aus der CI, später F-Droid"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "high",
+      "risk": "medium",
+      "existing_controls": [
+        "Android prüft beim Update die Signatur gegen die installierte App"
+      ],
+      "residual_risk": "low",
+      "status": "open",
+      "mitigation_refs": [
+        "M-24"
+      ],
+      "cwe": [
+        "CWE-494"
+      ]
+    },
+    {
+      "id": "T-28",
+      "title": "Nachträgliches Abstreiten eines Builds",
+      "stride": "repudiation",
+      "element_ref": "PR-3",
+      "description": "Ohne Zuordnung von Build zu Commit lässt sich nicht nachweisen, welcher Quellstand in einer ausgelieferten App steckt.",
+      "attack_vector": "Streit über den Inhalt einer TestFlight-Version.",
+      "affected_assets": [
+        "AS-5"
+      ],
+      "evidence": [
+        {
+          "kind": "absence",
+          "ref": "README.md:35-36",
+          "note": "Keine Vorgabe, Build-ID, Commit und Artefakt-Hash zu protokollieren"
+        }
+      ],
+      "likelihood": "low",
+      "impact": "medium",
+      "risk": "low",
+      "existing_controls": [
+        "CI-Build-Historie"
+      ],
+      "residual_risk": "low",
+      "status": "open",
+      "mitigation_refs": [
+        "M-24"
+      ]
+    },
+    {
+      "id": "T-29",
+      "title": "Fremde Texte werden in der WebView als HTML ausgeführt (Cross-Site-Scripting)",
+      "stride": "tampering",
+      "element_ref": "PR-1",
+      "description": "Feldbeschreibungen in Freigaben, geteilte Formularvorlagen und Kontaktnamen stammen von anderen Personen. Rendert die Oberfläche sie als HTML oder Markdown, läuft eingeschleustes Skript in der WebView und kann die Bridge im aktuellen Autorisierungszustand nutzen.",
+      "attack_vector": "Ein Kontakt gibt ein Feld mit der Beschreibung <img src=x onerror=...> frei; beim Anzeigen der Freigabe läuft das Skript.",
+      "affected_assets": [
+        "AS-1",
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:137-139",
+          "note": "Feldbeschreibung (Name, Typ, Einheit) kommt mit der Freigabe vom Autor"
+        },
+        {
+          "kind": "doc",
+          "ref": "docs/protokoll.md:145-148",
+          "note": "feldbeschreibung ist Teil des Freigabe-Inhalts"
+        },
+        {
+          "kind": "absence",
+          "ref": "docs/protokoll.md:135-139",
+          "note": "Keine Regel, wie fremde Zeichenketten geprüft und dargestellt werden"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "high",
+      "risk": "high",
+      "existing_controls": [
+        "Signatur der Freigabe belegt nur die Herkunft, nicht die Harmlosigkeit"
+      ],
+      "residual_risk": "high",
+      "status": "open",
+      "mitigation_refs": [
+        "M-26"
+      ],
+      "cwe": [
+        "CWE-79",
+        "CWE-116"
+      ],
+      "owasp": [
+        "OWASP A03:2021"
+      ]
+    },
+    {
+      "id": "T-30",
+      "title": "Benachrichtigungen verraten Medikation oder Konsum",
+      "stride": "information_disclosure",
+      "element_ref": "PR-1",
+      "description": "Erinnerungen mit Medikamentennamen erscheinen auf dem Sperrbildschirm und sind für jeden sichtbar, der aufs Handy schaut. Kämen sie als Push vom Server, sähen Apple bzw. Google Zeitpunkt und Inhalt.",
+      "attack_vector": "Person am Tisch sieht auf dem gesperrten Handy „Präparat A nehmen“; oder Push-Inhalte liegen bei APNs/FCM.",
+      "affected_assets": [
+        "AS-1",
+        "AS-3",
+        "AS-7"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:24",
+          "note": "Erinnerungen zum sinnvollen Zeitpunkt"
+        },
+        {
+          "kind": "absence",
+          "ref": "README.md:24",
+          "note": "Keine Vorgabe zu Inhalt und Weg der Benachrichtigungen"
+        }
+      ],
+      "likelihood": "high",
+      "impact": "medium",
+      "risk": "high",
+      "existing_controls": [],
+      "residual_risk": "low",
+      "status": "open",
+      "mitigation_refs": [
+        "M-27"
+      ],
+      "cwe": [
+        "CWE-359"
+      ]
+    },
+    {
+      "id": "T-31",
+      "title": "Spracheingabe schickt Gesundheitsdaten an einen Cloud-Dienst",
+      "stride": "information_disclosure",
+      "element_ref": "PR-1",
+      "description": "Die geplante Spracheingabe mit LLM-Auswertung würde gesprochene Sätze über Medikation und Befinden im Klartext an einen Cloud-Dienst geben und damit die Ende-zu-Ende-Verschlüsselung umgehen.",
+      "attack_vector": "Systemweite Online-Spracherkennung oder eine Cloud-LLM-API erhält jeden diktierten Eintrag.",
+      "affected_assets": [
+        "AS-1"
+      ],
+      "evidence": [
+        {
+          "kind": "doc",
+          "ref": "README.md:17",
+          "note": "Sprache statt Tippen, ein LLM überführt den Satz in Felder"
+        },
+        {
+          "kind": "absence",
+          "ref": "README.md:17",
+          "note": "Keine Vorgabe, dass Erkennung und Auswertung auf dem Gerät laufen"
+        }
+      ],
+      "likelihood": "medium",
+      "impact": "high",
+      "risk": "high",
+      "existing_controls": [],
+      "residual_risk": "low",
+      "status": "open",
+      "mitigation_refs": [
+        "M-28"
+      ],
+      "cwe": [
+        "CWE-359",
+        "CWE-201"
+      ]
+    }
+  ],
+  "mitigations": [
+    {
+      "id": "M-1",
+      "title": "Einladungen nur über die App öffnen, Webseite ohne Skript",
+      "description": "Einladungslinks als Universal Links (iOS) und App Links (Android) registrieren, sodass die App den Link direkt öffnet. Die Seite /e/* auf dem Server liefert nur statisches HTML ohne JavaScript mit dem Hinweis, die App zu installieren, plus Content-Security-Policy `script-src 'none'`. Alternativ den Code getrennt vom Link als sechs Wörter übermitteln, die in der App eingegeben werden. In protokoll.md Abschnitt 8 festschreiben.",
+      "addresses": [
+        "T-1"
+      ],
+      "priority": "P1",
+      "type": "preventive",
+      "effort": "low",
+      "control_mapping": "OWASP ASVS 14.4.3"
+    },
+    {
+      "id": "M-2",
+      "title": "Sicherheitsnummer vor der ersten Freigabe sensibler Felder verlangen",
+      "description": "Freigaben an unverifizierte Kontakte nur für Felder ohne Gesundheitsbezug zulassen oder mit deutlichem Warnhinweis; die App schlägt den Vergleich der sechs Wörter per Anruf vor. Zeigt der Server für einen Kontakt plötzlich andere Schlüssel, blockiert die App weitere Freigaben bis zum erneuten Vergleich.",
+      "addresses": [
+        "T-2",
+        "T-20"
+      ],
+      "priority": "P2",
+      "type": "preventive",
+      "effort": "medium",
+      "control_mapping": "OWASP ASVS 6.4"
+    },
+    {
+      "id": "M-3",
+      "title": "Log-Kopf zwischen Clients abgleichen",
+      "description": "Jeder Autor signiert regelmäßig (z. B. täglich) einen Log-Kopf mit Nummer, Hash und Zeitstempel. Empfänger zeigen eine Warnung, wenn der neueste Kopf älter als ein festgelegter Zeitraum ist oder zwei Köpfe mit gleicher Nummer verschieden sind. Optional legen Empfänger den zuletzt gesehenen Kopf in ihrem eigenen Log ab, sodass der Autor Abweichungen sieht.",
+      "addresses": [
+        "T-3",
+        "T-11"
+      ],
+      "priority": "P3",
+      "type": "detective",
+      "effort": "medium",
+      "control_mapping": "NIST 800-53 SI-7"
+    },
+    {
+      "id": "M-4",
+      "title": "Widerruf ehrlich darstellen und rückwirkende Neuverschlüsselung anbieten",
+      "description": "Beim Widerruf erklärt die App in einem Satz, dass bereits Gesehenes beim Empfänger bleiben kann, und bietet die rückwirkende Neuverschlüsselung an. Akzeptiert als Restrisiko: Ein kompromittierter Server kann Kopien alter Chiffrate behalten.",
+      "addresses": [
+        "T-4"
+      ],
+      "priority": "P3",
+      "type": "corrective",
+      "effort": "low"
+    },
+    {
+      "id": "M-5",
+      "title": "Feld-Hashes statt Längen im Umschlag (Merkle-Liste), feste Feldzahl",
+      "description": "Der Umschlag enthält je Feld nur `BLAKE2b(feld_id || chiffrat)`; Empfänger bekommen für nicht freigegebene Felder nur diese Hashes. Zusätzlich füllt der Client jeden Eintrag auf eine feste Zahl von Feldern mit Dummy-Chiffraten auf, damit die Zahl der verborgenen Felder nicht ablesbar ist. In protokoll.md Abschnitt 5.2 aufnehmen.",
+      "addresses": [
+        "T-5"
+      ],
+      "priority": "P1",
+      "type": "preventive",
+      "effort": "medium"
+    },
+    {
+      "id": "M-6",
+      "title": "Metadaten reduzieren",
+      "description": "Uploads in festen Fenstern (z. B. alle 6 Stunden) bündeln, Zeitstempel auf dem Server auf den Tag runden, Zugriffslogs ohne IP-Adressen oder mit maximal 7 Tagen Aufbewahrung, keine Analyse- oder Tracking-Dienste auf dem Server.",
+      "addresses": [
+        "T-6"
+      ],
+      "priority": "P2",
+      "type": "preventive",
+      "effort": "low",
+      "control_mapping": "DSGVO Art. 25"
+    },
+    {
+      "id": "M-7",
+      "title": "Berechtigungsprüfung je Objekt serverseitig und als Test",
+      "description": "Jede Leseanfrage prüft, ob für (Autor, Empfänger, Feld, Kette) eine Freigabe existiert; Integrationstests versuchen gezielt, fremde Objekte zu lesen. Festlegen in der API-Spezifikation.",
+      "addresses": [
+        "T-7"
+      ],
+      "priority": "P2",
+      "type": "preventive",
+      "effort": "low",
+      "control_mapping": "OWASP ASVS 4.2.1"
+    },
+    {
+      "id": "M-8",
+      "title": "Local-first und Backups",
+      "description": "Jedes Gerät hält eine vollständige verschlüsselte Kopie der eigenen Daten und des Schlüsselbunds. Server-Datenbank täglich verschlüsselt sichern (Chiffrate bleiben Chiffrate). Export der eigenen Daten als verschlüsselte Datei jederzeit möglich.",
+      "addresses": [
+        "T-8"
+      ],
+      "priority": "P2",
+      "type": "corrective",
+      "effort": "medium",
+      "control_mapping": "NIST 800-53 CP-9"
+    },
+    {
+      "id": "M-9",
+      "title": "Signierte Widerrufsliste im Log des Autors",
+      "description": "Widerrufe sind zusätzlich signierte Log-Einträge des Autors. Clients der übrigen Empfänger und der Autor selbst prüfen, dass widerrufene Freigaben nicht wieder auftauchen; ein Rückspielen wird damit sichtbar.",
+      "addresses": [
+        "T-9"
+      ],
+      "priority": "P3",
+      "type": "detective",
+      "effort": "low"
+    },
+    {
+      "id": "M-10",
+      "title": "Ereignisprotokoll auf dem Server ohne Inhalte",
+      "description": "Server protokolliert Widerrufe, Löschungen und Auslieferungen mit Konto-ID und Zeit (ohne IP), 90 Tage Aufbewahrung, für den Autor einsehbar.",
+      "addresses": [
+        "T-10"
+      ],
+      "priority": "P4",
+      "type": "detective",
+      "effort": "low",
+      "control_mapping": "NIST 800-53 AU-2"
+    },
+    {
+      "id": "M-11",
+      "title": "Gerätekopplung nur mit Bestätigung auf dem alten Gerät und Benachrichtigung",
+      "description": "Kopplung nur per Kamera-Scan auf dem alten Gerät (kein Eintippen), Prüfzahl muss aktiv verglichen werden, und alle bestehenden Geräte melden ein neu gekoppeltes Gerät mit Name und Zeit.",
+      "addresses": [
+        "T-12"
+      ],
+      "priority": "P2",
+      "type": "preventive",
+      "effort": "low"
+    },
+    {
+      "id": "M-12",
+      "title": "Geräteschlüssel und Gerätewiderruf einführen",
+      "description": "Jedes Gerät bekommt einen eigenen Signatur- und Verschlüsselungsschlüssel, signiert vom Identitätsschlüssel. KK und Kettenschlüssel werden je Gerät verschlüsselt. Bei Verlust widerruft ein anderes Gerät oder der Recovery-Schlüssel das verlorene Gerät; danach werden KK, alle Ketten und gegebenenfalls der Identitätsschlüssel rotiert und Freigaben neu ausgestellt. Abschnitt 7 von protokoll.md entsprechend erweitern.",
+      "addresses": [
+        "T-13"
+      ],
+      "priority": "P1",
+      "type": "corrective",
+      "effort": "high",
+      "control_mapping": "NIST 800-53 IA-5"
+    },
+    {
+      "id": "M-13",
+      "title": "App-Sperre und geschützter Cache",
+      "description": "Eigene App-Sperre (Biometrie/PIN) mit kurzer Sperrzeit unabhängig von der Gerätesperre; Klartext-Cache nur verschlüsselt mit einem hardwaregebundenen Schlüssel; App-Daten von Cloud-Backups ausnehmen (iOS: NSFileProtectionComplete + Ausschluss aus iCloud-Backup, Android: allowBackup=false); Vorschaubild im App-Umschalter abdecken (FLAG_SECURE bzw. Abdeckung beim Wechsel).",
+      "addresses": [
+        "T-13",
+        "T-14"
+      ],
+      "priority": "P1",
+      "type": "preventive",
+      "effort": "medium",
+      "control_mapping": "OWASP MASVS-STORAGE-1/2"
+    },
+    {
+      "id": "M-14",
+      "title": "Abhängigkeiten klein halten und festnageln",
+      "description": "Lockfile mit Integritäts-Hashes, Renovate-Updates nur per PR mit grünem Gate, keine Plugins mit Netzzugriff ohne Begründung, libsodium aus einer geprüften Quelle. Zusätzlich Content-Security-Policy in der WebView, die ausgehende Verbindungen auf den eigenen Server und den Wetterdienst beschränkt.",
+      "addresses": [
+        "T-15"
+      ],
+      "priority": "P1",
+      "type": "preventive",
+      "effort": "medium",
+      "control_mapping": "OWASP ASVS 14.2"
+    },
+    {
+      "id": "M-15",
+      "title": "Prüfpflicht im Code verankern",
+      "description": "Eine zentrale Funktion öffnet Freigaben und Einträge nur nach erfolgreicher Signaturprüfung; Tests mit manipulierten Blobs (falsche Signatur, fremder Autor, vertauschte Felder) müssen scheitern.",
+      "addresses": [
+        "T-16"
+      ],
+      "priority": "P2",
+      "type": "preventive",
+      "effort": "low",
+      "control_mapping": "OWASP ASVS 6.2"
+    },
+    {
+      "id": "M-16",
+      "title": "Abstreitbarkeit als Option prüfen",
+      "description": "Prüfen, ob Einträge gegenüber Empfängern statt mit Signatur mit einem paarweisen MAC (abstreitbar) geschützt werden sollen. Bis dahin akzeptiert und in der App erklärt.",
+      "addresses": [
+        "T-17"
+      ],
+      "priority": "P4",
+      "type": "deterrent",
+      "effort": "medium"
+    },
+    {
+      "id": "M-17",
+      "title": "Einrichtungshinweis und Nachholen",
+      "description": "Beim Einrichten die Akku-Optimierung prüfen und darauf hinweisen; verpasste Erinnerungen beim nächsten Öffnen nachholen.",
+      "addresses": [
+        "T-18"
+      ],
+      "priority": "P3",
+      "type": "corrective",
+      "effort": "low"
+    },
+    {
+      "id": "M-18",
+      "title": "Kein Nachladen: CSP und Build-Prüfung",
+      "description": "Capacitor-Konfiguration ohne `server.url`, keine Live-Update-Plugins, CSP mit `script-src 'self'`. Ein Pipeline-Check bricht den Build ab, wenn `server.url` gesetzt ist oder ein Live-Update-Paket in den Abhängigkeiten auftaucht.",
+      "addresses": [
+        "T-19"
+      ],
+      "priority": "P2",
+      "type": "preventive",
+      "effort": "low",
+      "control_mapping": "OWASP MASVS-CODE-4"
+    },
+    {
+      "id": "M-19",
+      "title": "Neutrale Einladungstexte",
+      "description": "Der vorformulierte Einladungstext nennt keine Gesundheitsthemen. Akzeptiert: Dass eine Einladung verschickt wurde, bleibt im Verlauf sichtbar.",
+      "addresses": [
+        "T-21"
+      ],
+      "priority": "P4",
+      "type": "deterrent",
+      "effort": "low"
+    },
+    {
+      "id": "M-20",
+      "title": "Koordinaten vergröbern",
+      "description": "Vor dem Wetterabruf Koordinaten auf ein Raster von etwa 10 km runden (eine Dezimalstelle), Abruf ohne Kennungen, nur einmal am Tag und zu zufälligen Zeiten.",
+      "addresses": [
+        "T-22"
+      ],
+      "priority": "P1",
+      "type": "preventive",
+      "effort": "low",
+      "control_mapping": "DSGVO Art. 5 Abs. 1 lit. c"
+    },
+    {
+      "id": "M-21",
+      "title": "Plausibilitätsprüfung Wetter",
+      "description": "Werte außerhalb plausibler Bereiche verwerfen. Akzeptiert als geringes Restrisiko.",
+      "addresses": [
+        "T-23"
+      ],
+      "priority": "P4",
+      "type": "detective",
+      "effort": "low"
+    },
+    {
+      "id": "M-22",
+      "title": "Cloud-Bau absichern",
+      "description": "Eigenes Konto beim Cloud-Builddienst mit Hardware-Zwei-Faktor, Build nur aus signierten Tags, App-Store-Connect-API-Schlüssel mit minimaler Rolle, Zertifikat nur zur Bauzeit übergeben und danach im Dienst löschen; Hash des IPA in der CI protokollieren und vor Freigabe in TestFlight vergleichen.",
+      "addresses": [
+        "T-24",
+        "T-25"
+      ],
+      "priority": "P2",
+      "type": "preventive",
+      "effort": "medium",
+      "control_mapping": "SLSA Level 2"
+    },
+    {
+      "id": "M-23",
+      "title": "Signaturschlüssel sichern und eingrenzen",
+      "description": "Android-Schlüssel im Secret-Store mit Zugriff nur für den Release-Build, zusätzlich verschlüsselte Offline-Kopie; Play bzw. F-Droid mit eigenem Upload-Schlüssel, falls verfügbar.",
+      "addresses": [
+        "T-25",
+        "T-26"
+      ],
+      "priority": "P3",
+      "type": "preventive",
+      "effort": "low"
+    },
+    {
+      "id": "M-24",
+      "title": "Reproduzierbare Android-Builds und Provenienz",
+      "description": "F-Droid-taugliche reproduzierbare Builds anstreben; je Release Commit, Build-ID und Artefakt-Hash in CHANGELOG und als GitHub-Release festhalten.",
+      "addresses": [
+        "T-27",
+        "T-28"
+      ],
+      "priority": "P3",
+      "type": "detective",
+      "effort": "medium",
+      "control_mapping": "SLSA Provenance"
+    },
+    {
+      "id": "M-25",
+      "title": "Nativer Kryptokern mit Autorisierung an der Bridge",
+      "description": "Geheime Schlüssel und alle Kryptografie nur in der Rust-Crate dak-core (protokoll.md v0.3 Abschnitt 13). Keine generischen decrypt/sign-Funktionen, Prüfung von Kontakten, Schutzklassen und Freigaben nativ, native Bestätigung mit konkreten Aktionsdaten für sensible Freigaben, Geräte, Exporte und Recovery, Entsperrstatus und Ablaufzeiten nativ. Ergebnis: Kompromittierter WebView-Code kann Schlüssel nicht auslesen; er kann angezeigte Klartexte und Daten gefährden, die die native API im aktuellen Autorisierungszustand freigibt. Restrisiko daher mittel.",
+      "addresses": [
+        "T-15"
+      ],
+      "priority": "P1",
+      "type": "preventive",
+      "effort": "high",
+      "control_mapping": "OWASP MASVS-CRYPTO-2, MASVS-AUTH-2"
+    },
+    {
+      "id": "M-26",
+      "title": "Fremde Inhalte nur als Text darstellen",
+      "description": "dak-core prüft jede Zeichenkette aus Daten (UTF-8, Höchstlänge, keine Steuer-, Bidi- oder Nullzeichen); die Oberfläche setzt sie nur per textContent, nie als HTML oder Markdown, keine klickbaren Links; CSP ohne unsafe-inline/unsafe-eval plus Trusted Types; Formularvorlagen enthalten nur Daten, Bedingungen sind eine feste kleine Ausdrucksform, die dak-core auswertet (protokoll.md v0.4 Abschnitt 13.4).",
+      "addresses": [
+        "T-29"
+      ],
+      "priority": "P1",
+      "type": "preventive",
+      "effort": "low",
+      "control_mapping": "OWASP ASVS 5.3.3, 14.4.3"
+    },
+    {
+      "id": "M-27",
+      "title": "Benachrichtigungen lokal und neutral",
+      "description": "Erinnerungen nur lokal planen, Push höchstens inhaltsleer, Sperrbildschirm-Texte standardmäßig neutral ohne Medikamente, Substanzen oder Werte; hochsensible Inhalte nie in Benachrichtigungen (protokoll.md v0.4 Abschnitt 12).",
+      "addresses": [
+        "T-30"
+      ],
+      "priority": "P1",
+      "type": "preventive",
+      "effort": "low",
+      "control_mapping": "OWASP MASVS-PRIVACY-1"
+    },
+    {
+      "id": "M-28",
+      "title": "Sprache nur auf dem Gerät",
+      "description": "Transkription ausschließlich mit der Offline-Spracherkennung des Betriebssystems (iOS requiresOnDeviceRecognition, Android On-Device-Recognizer); keine Cloud-Dienste; LLM-Auswertung erst, wenn sie lokal läuft (protokoll.md v0.4 Abschnitt 12).",
+      "addresses": [
+        "T-31"
+      ],
+      "priority": "P1",
+      "type": "preventive",
+      "effort": "low",
+      "control_mapping": "DSGVO Art. 25"
+    }
+  ],
+  "coverage": [
+    {
+      "element_ref": "EE-1",
+      "stride": "spoofing",
+      "addressed": false,
+      "na_reason": "Ein Angreifer, der sich als Autor ausgibt, braucht dessen Schlüssel; das ist als Geräteverlust (T-13) und Kopplung (T-12) erfasst."
+    },
+    {
+      "element_ref": "EE-1",
+      "stride": "repudiation",
+      "addressed": true,
+      "threat_refs": [
+        "T-17"
+      ]
+    },
+    {
+      "element_ref": "EE-2",
+      "stride": "spoofing",
+      "addressed": false,
+      "na_reason": "Fremde, die sich als Empfänger ausgeben, sind über die Einladung erfasst (T-2, T-20)."
+    },
+    {
+      "element_ref": "EE-2",
+      "stride": "repudiation",
+      "addressed": false,
+      "na_reason": "Ob ein Empfänger Daten gesehen hat, lässt sich prinzipiell nicht belegen; als Nicht-Ziel dokumentiert (protokoll.md:22-23)."
+    },
+    {
+      "element_ref": "EE-3",
+      "stride": "spoofing",
+      "addressed": true,
+      "threat_refs": [
+        "T-20"
+      ]
+    },
+    {
+      "element_ref": "EE-3",
+      "stride": "repudiation",
+      "addressed": true,
+      "threat_refs": [
+        "T-21"
+      ]
+    },
+    {
+      "element_ref": "EE-4",
+      "stride": "spoofing",
+      "addressed": false,
+      "na_reason": "Ein gefälschter Wetterdienst wirkt wie manipulierte Wetterdaten, erfasst als T-23."
+    },
+    {
+      "element_ref": "EE-4",
+      "stride": "repudiation",
+      "addressed": false,
+      "na_reason": "Der Wetterdienst erbringt keine Aktion, deren Abstreiten einen Schaden hätte."
+    },
+    {
+      "element_ref": "EE-5",
+      "stride": "spoofing",
+      "addressed": false,
+      "na_reason": "Eine gefälschte Verteilquelle ist als Manipulation auf dem Verteilweg erfasst (T-27)."
+    },
+    {
+      "element_ref": "EE-5",
+      "stride": "repudiation",
+      "addressed": false,
+      "na_reason": "Abstreiten eines Builds ist bei der Pipeline erfasst (T-28)."
+    },
+    {
+      "element_ref": "PR-1",
+      "stride": "spoofing",
+      "addressed": true,
+      "threat_refs": [
+        "T-12",
+        "T-16"
+      ]
+    },
+    {
+      "element_ref": "PR-1",
+      "stride": "tampering",
+      "addressed": true,
+      "threat_refs": [
+        "T-19",
+        "T-29"
+      ]
+    },
+    {
+      "element_ref": "PR-1",
+      "stride": "repudiation",
+      "addressed": false,
+      "na_reason": "Aktionen des Clients sind signiert; Abstreiten durch den Autor ist bei EE-1 erfasst (T-17)."
+    },
+    {
+      "element_ref": "PR-1",
+      "stride": "information_disclosure",
+      "addressed": true,
+      "threat_refs": [
+        "T-14",
+        "T-30",
+        "T-31"
+      ]
+    },
+    {
+      "element_ref": "PR-1",
+      "stride": "denial_of_service",
+      "addressed": true,
+      "threat_refs": [
+        "T-18"
+      ]
+    },
+    {
+      "element_ref": "PR-1",
+      "stride": "elevation_of_privilege",
+      "addressed": true,
+      "threat_refs": [
+        "T-15"
+      ]
+    },
+    {
+      "element_ref": "PR-2",
+      "stride": "spoofing",
+      "addressed": true,
+      "threat_refs": [
+        "T-2"
+      ]
+    },
+    {
+      "element_ref": "PR-2",
+      "stride": "tampering",
+      "addressed": true,
+      "threat_refs": [
+        "T-3"
+      ]
+    },
+    {
+      "element_ref": "PR-2",
+      "stride": "repudiation",
+      "addressed": false,
+      "na_reason": "Server-Aktionen sind beim Data Store erfasst (T-10)."
+    },
+    {
+      "element_ref": "PR-2",
+      "stride": "information_disclosure",
+      "addressed": false,
+      "na_reason": "Inhalte sieht der Server nicht; seine Einsicht in Metadaten ist bei DS-2 erfasst (T-6)."
+    },
+    {
+      "element_ref": "PR-2",
+      "stride": "denial_of_service",
+      "addressed": true,
+      "threat_refs": [
+        "T-8"
+      ]
+    },
+    {
+      "element_ref": "PR-2",
+      "stride": "elevation_of_privilege",
+      "addressed": true,
+      "threat_refs": [
+        "T-7"
+      ]
+    },
+    {
+      "element_ref": "PR-3",
+      "stride": "spoofing",
+      "addressed": false,
+      "na_reason": "Fremde Builds als eigene auszugeben ist als Manipulation (T-24) und Schlüsselabfluss (T-25) erfasst."
+    },
+    {
+      "element_ref": "PR-3",
+      "stride": "tampering",
+      "addressed": true,
+      "threat_refs": [
+        "T-24"
+      ]
+    },
+    {
+      "element_ref": "PR-3",
+      "stride": "repudiation",
+      "addressed": true,
+      "threat_refs": [
+        "T-28"
+      ]
+    },
+    {
+      "element_ref": "PR-3",
+      "stride": "information_disclosure",
+      "addressed": false,
+      "na_reason": "Die Pipeline verarbeitet keine Nutzerdaten; Abfluss von Signaturschlüsseln ist bei DS-3 erfasst (T-25)."
+    },
+    {
+      "element_ref": "PR-3",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Ausfall der Pipeline verzögert nur Updates; installierte Apps arbeiten weiter. Schlüsselverlust ist bei DS-3 erfasst (T-26)."
+    },
+    {
+      "element_ref": "PR-3",
+      "stride": "elevation_of_privilege",
+      "addressed": false,
+      "na_reason": "Rechte der Pipeline sind Gegenstand der Härtung der Build-Infrastruktur, nicht dieses Systems; der Build-Dienst ist bei T-24 erfasst."
+    },
+    {
+      "element_ref": "DS-1",
+      "stride": "tampering",
+      "addressed": false,
+      "na_reason": "Lokale Daten sind mit AEAD verschlüsselt und Einträge signiert; Manipulation wird beim Lesen erkannt. Wer das entsperrte Gerät hat, ist bei T-13 erfasst."
+    },
+    {
+      "element_ref": "DS-1",
+      "stride": "repudiation",
+      "addressed": false,
+      "na_reason": "Der Gerätespeicher protokolliert keine Aktionen, deren Abstreiten relevant wäre."
+    },
+    {
+      "element_ref": "DS-1",
+      "stride": "information_disclosure",
+      "addressed": true,
+      "threat_refs": [
+        "T-13"
+      ]
+    },
+    {
+      "element_ref": "DS-1",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Verlust des Gerätespeichers ist über Schlüsselbund und Recovery abgedeckt (protokoll.md:177-187); Serverausfall ist T-8."
+    },
+    {
+      "element_ref": "DS-2",
+      "stride": "tampering",
+      "addressed": true,
+      "threat_refs": [
+        "T-9"
+      ]
+    },
+    {
+      "element_ref": "DS-2",
+      "stride": "repudiation",
+      "addressed": true,
+      "threat_refs": [
+        "T-10"
+      ]
+    },
+    {
+      "element_ref": "DS-2",
+      "stride": "information_disclosure",
+      "addressed": true,
+      "threat_refs": [
+        "T-4",
+        "T-6"
+      ]
+    },
+    {
+      "element_ref": "DS-2",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Ausfall oder Löschung der Datenbank ist beim Server-Prozess erfasst (T-8), samt Backup-Maßnahme M-8."
+    },
+    {
+      "element_ref": "DS-3",
+      "stride": "tampering",
+      "addressed": false,
+      "na_reason": "Ein ausgetauschter Signaturschlüssel führt zu Update-Fehlern auf den Geräten, nicht zu stiller Manipulation; der Abfluss ist T-25."
+    },
+    {
+      "element_ref": "DS-3",
+      "stride": "repudiation",
+      "addressed": false,
+      "na_reason": "Zugriffe auf den Secret-Store werden dort auditiert; außerhalb dieses Modells."
+    },
+    {
+      "element_ref": "DS-3",
+      "stride": "information_disclosure",
+      "addressed": true,
+      "threat_refs": [
+        "T-25"
+      ]
+    },
+    {
+      "element_ref": "DS-3",
+      "stride": "denial_of_service",
+      "addressed": true,
+      "threat_refs": [
+        "T-26"
+      ]
+    },
+    {
+      "element_ref": "DF-1",
+      "stride": "tampering",
+      "addressed": true,
+      "threat_refs": [
+        "T-11"
+      ]
+    },
+    {
+      "element_ref": "DF-1",
+      "stride": "information_disclosure",
+      "addressed": false,
+      "na_reason": "Inhalte sind Ende-zu-Ende verschlüsselt; die mitlesbaren Metadaten sind bei DS-2 erfasst (T-6)."
+    },
+    {
+      "element_ref": "DF-1",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Unterbrochene Uploads werden lokal vorgehalten und nachgeholt; Serverausfall ist T-8."
+    },
+    {
+      "element_ref": "DF-2",
+      "stride": "tampering",
+      "addressed": false,
+      "na_reason": "Signatur und AEAD verhindern unbemerkte Änderung (T-11, T-16); Unterdrücken ist T-3."
+    },
+    {
+      "element_ref": "DF-2",
+      "stride": "information_disclosure",
+      "addressed": true,
+      "threat_refs": [
+        "T-5"
+      ]
+    },
+    {
+      "element_ref": "DF-2",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Nichtausliefern ist beim Server erfasst (T-8, T-3)."
+    },
+    {
+      "element_ref": "DF-3",
+      "stride": "tampering",
+      "addressed": false,
+      "na_reason": "Ein veränderter Link führt zu einem fehlschlagenden HMAC; das Einschleusen eigener Schlüssel ist T-2/T-20."
+    },
+    {
+      "element_ref": "DF-3",
+      "stride": "information_disclosure",
+      "addressed": true,
+      "threat_refs": [
+        "T-1"
+      ]
+    },
+    {
+      "element_ref": "DF-3",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Ein abgefangener Link wird neu verschickt; kein dauerhafter Schaden."
+    },
+    {
+      "element_ref": "DF-4",
+      "stride": "tampering",
+      "addressed": true,
+      "threat_refs": [
+        "T-23"
+      ]
+    },
+    {
+      "element_ref": "DF-4",
+      "stride": "information_disclosure",
+      "addressed": true,
+      "threat_refs": [
+        "T-22"
+      ]
+    },
+    {
+      "element_ref": "DF-4",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Ohne Wetter fehlt nur ein Kontextwert; die App arbeitet weiter."
+    },
+    {
+      "element_ref": "DF-5",
+      "stride": "tampering",
+      "addressed": true,
+      "threat_refs": [
+        "T-27"
+      ]
+    },
+    {
+      "element_ref": "DF-5",
+      "stride": "information_disclosure",
+      "addressed": false,
+      "na_reason": "Das App-Binary ist Open Source und enthält keine Geheimnisse."
+    },
+    {
+      "element_ref": "DF-5",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Fällt die Verteilung aus, bleiben installierte Apps nutzbar."
+    },
+    {
+      "element_ref": "DF-6",
+      "stride": "tampering",
+      "addressed": false,
+      "na_reason": "Die Übertragung ist per crypto_box authentifiziert; das Unterschieben eines fremden Geräts ist als Spoofing erfasst (T-12)."
+    },
+    {
+      "element_ref": "DF-6",
+      "stride": "information_disclosure",
+      "addressed": false,
+      "na_reason": "Die Schlüssel gehen verschlüsselt an das neue Gerät; Abfluss nur über ein fremdes Gerät (T-12)."
+    },
+    {
+      "element_ref": "DF-6",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Scheitert die Kopplung, wird sie wiederholt; das alte Gerät bleibt nutzbar."
+    },
+    {
+      "element_ref": "DF-7",
+      "stride": "tampering",
+      "addressed": false,
+      "na_reason": "Ein veränderter Schlüssel führt zu einem ungültigen Build, nicht zu stiller Manipulation."
+    },
+    {
+      "element_ref": "DF-7",
+      "stride": "information_disclosure",
+      "addressed": false,
+      "na_reason": "Der Abfluss des Schlüssels beim Cloud-Dienst ist bei DS-3 erfasst (T-25)."
+    },
+    {
+      "element_ref": "DF-7",
+      "stride": "denial_of_service",
+      "addressed": false,
+      "na_reason": "Verzögert nur einen Build."
+    }
+  ],
+  "open_questions": [
+    "Die Server-API ist noch nicht spezifiziert; T-7 und T-10 sind nach der API-Spezifikation erneut zu prüfen.",
+    "Sollen Einträge gegenüber Empfängern abstreitbar sein (M-16)? Das ist eine Produktentscheidung vor v1.0.",
+    "Wie wird Druck zum Entsperren durch nahestehende Personen behandelt, braucht es mehr als die App-Sperre (z. B. Felder, die nur nach erneuter Biometrie sichtbar werden)?",
+    "M2-Datenquellen (Standort, Gesundheitsdaten) sind noch nicht modelliert."
+  ],
+  "residual_summary": "Nach Umsetzung der P1-Maßnahmen (M-1, M-5, M-12, M-13, M-14, M-20, M-25, M-26, M-27, M-28) bleiben keine hohen Restrisiken; T-15 bleibt bei mittel, weil kompromittierter WebView-Code angezeigte Klartexte und im aktuellen Autorisierungszustand erlaubte Daten gefährden kann. Akzeptiert sind: Kopien beim kompromittierten Server nach einem Widerruf (T-4), Beweisbarkeit signierter Einträge (T-17), Sichtbarkeit verschickter Einladungen (T-21) und manipulierte Wetterdaten (T-23). Größte Hebel vor dem ersten Code: Gerätewiderruf (M-12), Feld-Hashes statt Längen (M-5) und Einladung ohne Webseite mit Skript (M-1)."
+}
