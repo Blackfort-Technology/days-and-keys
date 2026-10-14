@@ -42,7 +42,7 @@ jobs:
           tool: cargo-ndk@4.1.2
       - name: Werkzeuge
         run: |
-          printf 'y\n%.0s' $(seq 30) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;${NDK_VERSION}" "platforms;android-37" "build-tools;36.0.0" > /dev/null
+          printf 'y\n%.0s' $(seq 30) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;${NDK_VERSION}" "platforms;android-37.0" "build-tools;36.0.0" > /dev/null
           curl -fsSL -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
           echo "$(curl -fsSL https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip.sha256)  gradle.zip" | sha256sum -c -
           unzip -q gradle.zip -d "$RUNNER_TEMP" && echo "$RUNNER_TEMP/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"

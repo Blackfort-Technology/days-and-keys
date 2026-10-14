@@ -133,23 +133,17 @@ struct FrageView: View {
     }
 
     private var tippReihe: some View {
-        let lo = q.min ?? 0, hi = q.max ?? 10
+        let lo = q.min ?? 0
+        let hi = q.max ?? 10
+        let werte: [Int64] = Array(lo...hi)
         return VStack(spacing: 2) {
             HStack(spacing: 3) {
-                ForEach(Array(lo...hi), id: \.self) { w in
-                    let gewaehlt = a?.zahl == w
-                    Text(w > 0 && lo < 0 ? "+\(w)" : "\(w)").font(.caption2)
-                        .frame(maxWidth: .infinity, minHeight: 40)
-                        .background(gewaehlt ? Color.accentColor : Color.secondary.opacity(0.15), in: RoundedRectangle(cornerRadius: 7))
-                        .foregroundStyle(gewaehlt ? Color.white : Color.primary)
-                        .overlay(RoundedRectangle(cornerRadius: 7).stroke(w == 0 && lo < 0 ? Color.secondary : .clear))
-                        .onTapGesture { setzen(zahl: w) }
-                        .accessibilityLabel("\(w)").accessibilityAddTraits(gewaehlt ? .isSelected : [])
+                ForEach(werte, id: \.self) { w in
+                    TippFeld(wert: w, bipolar: lo < 0, gewaehlt: a?.zahl == w) { setzen(zahl: w) }
                 }
             }
-            HStack { ForEach(Array(q.anker.enumerated()), id: \.offset) { i, an in if i > 0 { Spacer() }; Text(an.text).font(.caption2).foregroundStyle(.secondary) } }
+            AnkerZeile(anker: q.anker)
         }
-        .buttonStyle(.plain)
     }
 
     private func chips(_ werte: [(Int64, String)], gewaehlt: Int64?, tipp: @escaping (Int64) -> Void) -> some View {
@@ -184,6 +178,42 @@ struct FrageView: View {
                         }
                     }
                 }
+            }
+        }
+    }
+}
+
+/// Ein Feld der Tipp-Reihe; ohne Vorauswahl, die Nulllinie bipolarer Skalen ist umrandet.
+struct TippFeld: View {
+    let wert: Int64
+    let bipolar: Bool
+    let gewaehlt: Bool
+    let tipp: () -> Void
+
+    var body: some View {
+        let text: String = (bipolar && wert > 0) ? "+\(wert)" : "\(wert)"
+        let hintergrund: Color = gewaehlt ? Color.accentColor : Color.secondary.opacity(0.15)
+        let rand: Color = (bipolar && wert == 0) ? Color.secondary : Color.clear
+        return Text(text)
+            .font(.caption2)
+            .frame(maxWidth: .infinity, minHeight: 40)
+            .background(RoundedRectangle(cornerRadius: 7).fill(hintergrund))
+            .overlay(RoundedRectangle(cornerRadius: 7).stroke(rand))
+            .foregroundStyle(gewaehlt ? Color.white : Color.primary)
+            .contentShape(Rectangle())
+            .onTapGesture(perform: tipp)
+            .accessibilityLabel(text)
+            .accessibilityAddTraits(gewaehlt ? [.isSelected, .isButton] : [.isButton])
+    }
+}
+
+struct AnkerZeile: View {
+    let anker: [Anker]
+    var body: some View {
+        HStack {
+            ForEach(Array(anker.enumerated()), id: \.offset) { i, an in
+                if i > 0 { Spacer() }
+                Text(an.text).font(.caption2).foregroundStyle(.secondary)
             }
         }
     }
