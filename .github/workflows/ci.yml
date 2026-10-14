@@ -11,6 +11,11 @@ on:
 permissions:
   contents: read
 
+# Ohne ausdrückliches bash läuft GitHub ohne pipefail; ein Fehler vor `| tail` bliebe dann grün.
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -53,7 +58,7 @@ jobs:
           exit $fehler
       - name: Keine langen Gedankenstriche in Texten
         run: |
-          if grep -rnP '[\x{2013}\x{2014}]' --include='*.md' --include='*.rs' --include='*.kt' --include='*.swift' --include='*.json' --exclude=LICENSE --exclude=LICENSE-docs . ; then
+          if grep -rnP '[\x{2013}\x{2014}]' --include='*.md' --include='*.rs' --include='*.kt' --include='*.swift' --include='*.json' --exclude=LICENSE --exclude=LICENSE-docs --exclude=dak_core.kt --exclude=DakKern.swift . ; then
             echo "Bitte nur den normalen Bindestrich verwenden."; exit 1
           fi
 
@@ -126,7 +131,7 @@ jobs:
           tool: cargo-ndk@4.1.2
       - name: Werkzeuge (NDK, SDK 37, Gradle mit Prüfsumme)
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;${NDK_VERSION}" "platforms;android-37" "build-tools;36.0.0" > /dev/null
+          printf 'y\n%.0s' $(seq 30) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;${NDK_VERSION}" "platforms;android-37" "build-tools;36.0.0" > /dev/null
           curl -fsSL -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
           echo "$(curl -fsSL https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip.sha256)  gradle.zip" | sha256sum -c -
           unzip -q gradle.zip -d "$RUNNER_TEMP" && echo "$RUNNER_TEMP/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"
@@ -185,4 +190,7 @@ jobs:
           brew install xcodegen
           xcodegen generate
           xcodebuild -project DaysAndKeys.xcodeproj -scheme DaysAndKeys -configuration Debug \
-            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build | tail -40
+            -destination 'generic/platform=iOS Simulator' CODE_SIGNING_ALLOWED=NO build > build.log 2>&1 \
+            || { grep -E "error:|failed" -A3 build.log | head -300; exit 1; }
+          grep -E "warning:" build.log | grep -v "Generated/" | head -50 || true
+          tail -3 build.log

@@ -1,6 +1,7 @@
 # Fragen und Erfassung (Entwurf)
 
-Stand 2026-10-06. Issues #6, #21, #22, #26, #74, #75.
+Stand 2026-10-14. Issues #6, #21, #22, #26, #74, #75, #105. Maßgeblich für M1a ist die Datei
+`templates/standard-v1.json`; diese Seite beschreibt sie.
 
 **Grundprinzip: den Status jederzeit festhalten.** Die App ist kein Tagebuch mit einem Eintrag am
 Abend. Eine Person hält ihren Zustand fest, wann immer sie will, auch mehrmals am Tag: morgens,
@@ -44,14 +45,14 @@ getrennten Gruppen: „Wie geht es mir" (höher = besser) und „Was ist gerade 
 
 | Frage | Polung |
 |---|---|
-| Wie ist meine Stimmung gerade? (Anker: 0 sehr schlecht, 5 neutral, 10 sehr gut) | höher = besser |
+| Wie ist meine Stimmung? (bipolar -5 bis +5, 0 = neutral; dieselbe Frage im Tagesabschluss, #105) | höher = besser |
 | Wie viel Antrieb habe ich gerade? | höher = besser |
 | Wie konzentriert bin ich gerade? | höher = besser |
 | Wie unruhig bin ich innerlich? | höher = mehr |
 | Wie angespannt oder ängstlich bin ich? | höher = mehr |
 | Wie gereizt bin ich? | höher = mehr |
 | Wie müde bin ich? | höher = mehr |
-| Wie viel Hunger oder Appetit habe ich? | höher = mehr |
+| Wie ist mein Appetit gerade? (bipolar -2 bis +2: viel weniger als sonst bis viel mehr als sonst, #75) | bipolar |
 | Spüre ich die Wirkung meiner Medikation gerade? (nur wenn heute eine Einnahme eines Präparats bestätigt ist, dessen Wirkung im Tagesverlauf spürbar ist; vierstufig: nein, etwas, deutlich, stark) | höher = stärker |
 | Körperliche Beschwerden jetzt | Mehrfachauswahl: Kopfschmerzen, Herzklopfen, Magen, Verspannung, Mundtrockenheit, keine, + eigene; je Stärke. Was zwischendurch war und vorbei ist, gehört in „seit dem letzten Status" |
 | Notiz | Freitext oder Sprachnotiz (nur Offline-Spracherkennung) |
@@ -105,6 +106,23 @@ Für Angaben, die einmal am Tag genügen. Standardmäßig eingeschaltet, Erinner
 | Wie war der Tag insgesamt? | 0-10, höher = besser |
 | Gegen Abend gereizt oder erschöpft? | Fünferskala |
 | Was war heute besonders? | Freitext |
+
+### Stimmungsverlauf im Tagesabschluss (#105)
+
+Der Tagesabschluss beginnt mit derselben Stimmungsfrage wie der Status jetzt; der Tageswert ist der
+letzte Eintrag des Tages, also meist der Abendwert. Dazu einzeln überspringbare Faktoren: Schlaf
+(Dauer, Qualität), Bewegung (ja/nein, Minuten), echte Gespräche (Anzahl), Tageslicht draußen
+(ja/nein), Handyzeit. Tagesmarker mit einem Tipp: Belastungsereignis, Therapiesitzung, besonderer
+Tag und bis zu drei eigene Marker, deren Namen die Person selbst festlegt (nur verschlüsselt
+gespeichert). Im Verlauf erscheint jeder Eintrag als Punkt, das Grundniveau als gleitender
+Mittelwert über 7 oder 28 Tage (nur mit mindestens 4 bzw. 14 Tageswerten im Fenster, Lücken
+bleiben Lücken), dazu ein beschreibender Vergleich der Tage mit und ohne Faktor samt Fallzahl.
+Alkohol kommt erst mit dem hochsensiblen Bereich (M1b).
+
+**Eigener Krisenplan:** ein selbst geschriebener Text („Mein Plan für Tiefs"), über die Hilfe auch
+ohne Entsperren lesbar und deshalb unverschlüsselt gespeichert. Auf Wunsch eine selbst gesetzte
+Regel „wenn ich N Tage in Folge unter X eintrage, zeig mir meinen Plan"; keine voreingestellten
+Schwellen, keine Diagnose. Solange die Regel gilt, lässt sich die Stimmungsfrage nicht ausblenden.
 
 ## 5. Wochenrückblick (Sonntag)
 

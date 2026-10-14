@@ -82,10 +82,10 @@ fn verlauf_zeigt_jeden_eintrag_und_laesst_luecken() {
     // Tag 0: drei Status; Tage 1-4: je einer; Tag 5-9: nichts; Tag 10: einer.
     for w in [-3, 0, 2] {
         stimmung(&k, w);
-        uhr.0.fetch_add(4 * 3600_000, Ordering::SeqCst);
+        uhr.0.fetch_add(4 * 3_600_000, Ordering::SeqCst);
     }
     for _ in 1..=4 {
-        uhr.0.fetch_add(24 * 3600_000, Ordering::SeqCst);
+        uhr.0.fetch_add(24 * 3_600_000, Ordering::SeqCst);
         stimmung(&k, 1);
     }
     uhr.0.fetch_add(6 * 86_400_000, Ordering::SeqCst);
