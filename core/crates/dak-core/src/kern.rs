@@ -245,6 +245,18 @@ impl Kern {
         Ok((woerter, probe, s))
     }
 
+    /// Prüft die Wortprobe, ohne etwas zu schreiben (vor dem Umhüllen durch die Plattform).
+    pub fn einrichtung_probe_pruefen(&self, probe_antworten: &[String]) -> Ergebnis<bool> {
+        let e = self
+            .einrichtung
+            .as_ref()
+            .ok_or(Fehler::Zustand("keine Einrichtung offen"))?;
+        Ok(probe_antworten.len() == e.probe.len()
+            && e.probe.iter().zip(probe_antworten).all(|(i, a)| {
+                woerter::index(a).is_some() && woerter::index(a) == woerter::index(&e.woerter[*i])
+            }))
+    }
+
     /// Prüft die Wortprobe und schreibt den Bestand. `kk_umh`/`kk_h_umh` sind die von der
     /// Plattform erzeugten Umhüllungen (Android) oder `None` (iOS: Keychain hält den Schlüssel).
     pub fn einrichtung_abschliessen(

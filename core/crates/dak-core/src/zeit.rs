@@ -11,6 +11,7 @@ pub const MINUTEN_TAG: i64 = 24 * 60;
 pub const TAGESWECHSEL_STANDARD: i32 = 4 * 60;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
+#[cfg_attr(feature = "ffi", derive(uniffi::Record))]
 pub struct Zeitpunkt {
     pub utc_ms: i64,
     pub versatz_min: i32,

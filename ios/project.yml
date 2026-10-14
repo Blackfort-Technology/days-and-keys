@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: MPL-2.0
+# Xcode-Projekt wird in der CI mit XcodeGen erzeugt (kein Mac im Projekt, AE-30).
+name: DaysAndKeys
+options:
+  bundleIdPrefix: de.blackforttec
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.10"
+    MARKETING_VERSION: "0.1.0"
+    CURRENT_PROJECT_VERSION: "1"
+    DEVELOPMENT_TEAM: "$(DAK_TEAM_ID)"
+    CODE_SIGN_STYLE: Automatic
+targets:
+  DaysAndKeys:
+    type: application
+    platform: iOS
+    sources:
+      - path: DaysAndKeys
+      - path: Generated
+    dependencies:
+      - framework: Frameworks/DakKernFFI.xcframework
+        embed: false
+    info:
+      path: DaysAndKeys/Info.plist
+      properties:
+        CFBundleDisplayName: "Days & Keys"
+        CFBundleShortVersionString: "$(MARKETING_VERSION)"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        UILaunchScreen: {}
+        UIApplicationSupportsIndirectInputEvents: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        NSFaceIDUsageDescription: "Mit Face ID öffnest du deine verschlüsselten Einträge."
+        ITSAppUsesNonExemptEncryption: false
+        LSApplicationQueriesSchemes: [tel]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: de.blackforttec.daysandkeys
+        TARGETED_DEVICE_FAMILY: "1"
+        OTHER_LDFLAGS: ["-ObjC"]
+        ENABLE_BITCODE: NO

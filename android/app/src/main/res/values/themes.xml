@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Thema" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/hintergrund</item>
+        <item name="android:statusBarColor">@color/hintergrund</item>
+    </style>
+    <color name="hintergrund">#FFF7F6F3</color>
+    <color name="symbol">#FF3D4A5C</color>
+</resources>
