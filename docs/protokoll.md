@@ -1,10 +1,12 @@
-# Krypto- und Datenprotokoll, Teil A: Kern für M1 (Entwurf v0.7.1)
+# Krypto- und Datenprotokoll, Teil A: Kern für M1 (v1.0)
 
-Stand 2026-10-08, Issue #3. v0.6 entstand nach der zweiten Erörterung und der Entscheidung #96;
-v0.7 setzt die Befunde „vor dem Prototyp" der dritten Erörterung
-(Erörterung vom 2026-10-06, nicht öffentliches Archiv; Befunde als Issues) und die Entscheidungen
-#99 um; v0.7.1 korrigiert die Widersprüche aus dem Abgleich vom 2026-10-08 (nicht öffentliches
-Archiv). Der Nutzungsversuch startet direkt mit Phase A, iOS wird per Cloud-Bau gebaut (#99).
+Stand 2026-10-14, Issue #3. **v1.0 friert das Format für M1a ein** (Formatversion 1, Suite
+`dak-s1`): Die bytegenauen Tabellen stehen in `docs/format.md` (#63), umgesetzt in `dak-core` und
+belegt durch Testvektoren (`core/testvectors/v1/`) und den Prototyp des Kerns (#100,
+`docs/prototyp-kern.md`). Gegenüber v0.7.1 neu: native Oberflächen ohne WebView (AE-04),
+Abschnitt 13 entsprechend; eigene Tagesmarker; die Abschnitte zum hochsensiblen Bereich gelten
+ab M1b, ihr Format ist in v1.0 enthalten. Frühere Fassungen: v0.6 nach der zweiten Erörterung und
+#96, v0.7 nach der dritten Erörterung und #99, v0.7.1 nach dem Abgleich vom 2026-10-08.
 **Protokoll v1.0 umfasst nur diesen Teil A:** eine persönliche, lokale App, mit der eine Person ihren Status jederzeit
 festhält, ein schreibendes Gerät je Person, automatische verschlüsselte Sicherung und
 Wiederherstellung ohne Server.
@@ -14,8 +16,9 @@ Das Schlüsselformat für Freigaben (Monats- und Tagesketten, Freigabepakete) ko
 (`docs/protokoll-freigaben.md`, M1.5); vor der ersten Freigabe werden alle Daten lokal umgeschlüsselt
 (Abschnitt 15).
 
-v1.0 setzt voraus: Wegwerf-Prototyp (#81), bytegenaue Formattabellen mit Testvektoren
-(`docs/format.md`, #63) und ein Bedrohungsmodell gegen diesen Teil (#66).
+v1.0 beruht auf dem Prototyp des Kerns (#100) und den Formattabellen mit Testvektoren (#63). Das
+Bedrohungsmodell gegen diesen Teil (#66) und die Plattformmatrix (#67) folgen mit den Apps (#101);
+ergeben sie eine Formatänderung, kommt sie als Formatversion 2 mit Migration (Abschnitt 15).
 
 ## 1. Umfang und Garantien
 
@@ -26,7 +29,7 @@ v1.0 setzt voraus: Wegwerf-Prototyp (#81), bytegenaue Formattabellen mit Testvek
 | Person, die den Geräte-Code kennt oder die Biometrie erzwingt | Inhalt und Bezeichnungen hochsensibler Einträge (App-PIN, Abschnitt 8); sie kann hochsensible Einträge nur vorläufig anlegen | alle Gesundheitsdaten (Entscheidung #99: Geräteentsperrung genügt); sie kann Einträge der Klasse Gesundheit anlegen und Sicherungen erzeugen |
 | Erzwungene Herausgabe der App-PIN | nichts | alles; eine rechtliche, keine technische Frage |
 | Auslesen des Geräts mit forensischen Werkzeugen | Inhalt hochsensibler Einträge, solange der Hardware-Schlüssel nicht gebrochen ist (Abschnitt 8.4) | Zahl und Zeitpunkte hochsensibler Einträge; alle Gesundheitsdaten, wenn der Geräte-Code bekannt ist oder der Hardware-Schutz gebrochen ist |
-| Kompromittierter WebView-Code bei entsperrter App | Schlüssel, hochsensible Einträge ohne frische PIN, Export und Sicherung ohne native Bestätigung | alle Daten, die die Oberfläche in dieser Sitzung anzeigen darf |
+| Kompromittierter Code der Oberfläche bei entsperrter App (Kotlin, Swift) | Schlüssel (liegen nur im Kern), hochsensible Einträge ohne frische PIN, Export ohne eingelöste Bestätigung | alle Daten, die die Oberfläche in dieser Sitzung anzeigen darf |
 | Altes Gerät nach Wiederherstellung auf einem neuen | alle Daten, die nach der Wiederherstellung entstehen (Rotation, Abschnitt 9) | was es bis dahin hatte; solange es Zugang zum Sicherungsordner hat, kann es dort Dateien schreiben und löschen (Abschnitt 10.2) |
 | Manipulierter Build oder nativer Code | nichts | alles (Lieferkette, #68) |
 | Einträge ohne Entsperren (Entwürfe, später Widgets) | sie zählen erst nach Durchsicht in der entsperrten App (Abschnitt 6.2) | wer das Gerät in der Hand hat, kann vorläufige Einträge anlegen |
@@ -39,7 +42,7 @@ Sicherungen hinaus (Abschnitt 10.3).
 ## 2. Bausteine und Kryptosuiten
 
 Ausschließlich libsodium über den Rust-Kern `dak-core` (Abschnitt 13); keine Nachbauten, keine
-Kryptografie in der WebView. Jedes verschlüsselte Objekt hat eine **Suite-Kennung**.
+Kryptografie in der Oberfläche. Jedes verschlüsselte Objekt hat eine **Suite-Kennung**.
 
 | Suite | Signatur | Asymmetrisch | Symmetrisch | Hash/KDF | Passwort |
 |---|---|---|---|---|---|
@@ -242,7 +245,7 @@ Aufbewahrung (#70).
 ### 8.4 App-PIN
 
 - Die App-PIN schützt nur den hochsensiblen Bereich (ab M1b).
-- Eingabe ausschließlich in einer nativen Ansicht, nie in der WebView; ebenso Anzeige und Eingabe
+- Eingabe ausschließlich in einer nativen Ansicht; ebenso Anzeige und Eingabe
   der Recovery-Wörter (#60).
 - **Konstruktion:** `x = crypto_pwhash(PIN)`, dann `kek = HMAC_hw(x)` mit einem nicht exportierbaren
   Hardware-Schlüssel (Android: HMAC im Keystore, StrongBox vor TEE, Software-Keystore wird angezeigt;
@@ -371,21 +374,27 @@ nicht (verloren, defekt), sorgt die Rotation dafür, dass es nichts Neues lesen 
 
 ## 13. Kryptokern und Oberfläche
 
-- `dak-core` (Rust, libsodium über `libsodium-sys-stable`, `zeroize`), eingebunden in **ein**
-  Mobile-Framework (#33). Geheime Schlüssel existieren nur dort.
-- **Bridge:** nur fachliche Operationen; native Bestätigung, gebunden an einen Digest der konkreten
-  Aktion, für Arzt-PDF und jeden Export, manuelle Sicherung, Wiederherstellung, App-PIN ändern,
-  Herab- und Hochstufen, Anzeige der Recovery-Wörter, `recovery_neu`, Rotation auf Wunsch.
+- `dak-core` (Rust, libsodium über `libsodium-sys-stable`, `zeroize`), über UniFFI an native
+  Oberflächen gebunden: Android mit Jetpack Compose, iOS mit SwiftUI, keine WebView (AE-04).
+  Geheime Schlüssel existieren nur im Kern; die Plattform hält `KK` und `KK_h` nur hinter ihrem
+  Hardware-Schlüssel und reicht sie beim Entsperren herein (AE-12).
+- **Schnittstelle** (`dak_core::api`): nur fachliche Operationen, keine generischen Funktionen wie
+  „entschlüssle" oder „signiere". Ansichtsmodelle entstehen im Kern, die Oberfläche zeichnet sie.
+- **Native Bestätigung**, gebunden an einen Digest der konkreten Aktion (`bestaetigung_anfordern`,
+  einmal einlösbar), für Export, Arzt-PDF, Rotation auf Wunsch und ab M1b für App-PIN, Herab- und
+  Hochstufen, `recovery_neu`. Die Plattform holt vor dem Einlösen eine frische
+  Geräteauthentifizierung ein.
 - **Kein Netz für die App (#59):**
-  - Android: Die App wird **ohne `INTERNET`-Berechtigung** gebaut; die Pipeline prüft das Manifest.
-    Ob das gewählte Framework so läuft, belegt der Prototyp (#81).
-  - Framework-Funktionen mit Netzzugang (z. B. `CapacitorHttp`) sind nicht eingebunden; WebRTC und
-    DNS-Prefetch in der WebView sind abgeschaltet, soweit die Plattform das erlaubt.
-  - Telefonnummern und Links öffnet nur die native Hilfe-Ansicht, nie die WebView.
-  - iOS hat keine Sperre auf Ebene des Betriebssystems; die Doku sagt das offen.
+  - Android: Die App wird **ohne `INTERNET`-Berechtigung** gebaut; die CI prüft das Manifest.
+  - Telefonnummern öffnet nur die native Hilfe-Ansicht über das Wählfeld des Systems.
+  - iOS hat keine Sperre auf Ebene des Betriebssystems; die App enthält keinen Netzwerkcode, und
+    die Doku sagt das offen.
 - **Hilfe** ist eine native Ansicht, auch **ohne Entsperren** erreichbar (Sperrbildschirm der App):
-  TelefonSeelsorge 0800 111 0 111, 0800 111 0 222 und 116 123, Nummer gegen Kummer 116 111,
-  ärztlicher Bereitschaftsdienst 116 117, Notruf 112, eigene Vertrauenspersonen (#71).
+  Notruf 112, TelefonSeelsorge 0800 111 0 111, 0800 111 0 222 und 116 123, Nummer gegen Kummer
+  116 111, ärztlicher Bereitschaftsdienst 116 117. Auf Wunsch zeigt sie den eigenen Krisenplan
+  („Mein Plan für Tiefs", #105); er ist dann ohne Entsperren lesbar und deshalb unverschlüsselt
+  gespeichert, worauf die App beim Schreiben hinweist. Eigene Vertrauenspersonen nur entsperrt.
+  Die App benachrichtigt niemanden (#71).
 - Fremde oder wiederhergestellte Zeichenketten nur als Text; Prüfung in `dak-core`.
 
 ## 14. Anforderungen an die App
@@ -425,13 +434,13 @@ Gepinnte Versionen, `AUDITS.md`, Updates nur mit gelesenen Release- und Security
 Testvektoren, Wycheproof-Fällen, Negativtests; native Abhängigkeiten, Toolchains, Trennung von Bau
 und Signatur (#68).
 
-## 17. Offen bis v1.0
+## 17. Offen nach v1.0
 
 | Punkt | Issue |
 |---|---|
-| Prototyp: Linux-Kern sofort, Plattformwege nach der Framework-Entscheidung | #100, #33, #101 |
-| Bytegenaue Formattabellen, KDF-Tabelle, Größen- und Laufzeitbudgets, Testvektoren, Migrationsregel | #63 |
-| Bedrohungsmodell gegen Teil A | #66 |
-| Plattformmatrix (Biometriebindung, Backup-Ausschluss, Bildschirmschutz, Android ohne Netz) | #67 |
-| Argon2id-Parameter, Fehlversuchsregel | #60 |
-| Ausdrucksform der Bedingungen | #6 |
+| Plattformwege auf Android und iOS messen (Hardware-Schlüssel, Planer, Sicherungsordner) | #101 |
+| Bedrohungsmodell gegen Teil A und die native Architektur | #66 |
+| Plattformmatrix (Biometriebindung, Backup-Ausschluss, Bildschirmschutz) | #67 |
+| Argon2id-Parameter, Fehlversuchsregel (mit der App-PIN in M1b) | #60 |
+| Ausdrucksform der Bedingungen über die zwei festen Bedingungen hinaus (Formulareditor, M1b) | #6 |
+| Verlaufsblöcke je Monat, falls das Entsperren auf den Geräten zu langsam ist | #100 |

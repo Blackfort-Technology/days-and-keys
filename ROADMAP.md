@@ -21,10 +21,12 @@ Nutzungsversuch, Freigaben und Mehrgeräte nur, wenn der Versuch den Bedarf zeig
       `docs/prototyp-kern.md`), CI mit GitHub Actions
 - [ ] Plattformwege mit Compose und SwiftUI (#101)
 - [x] Entscheidung: kein Freigabeformat auf Vorrat, M1 in M1a und M1b geteilt (#96)
-- [ ] Teil A auf v1.0 (`docs/protokoll.md`, derzeit v0.7.1, #3): Rotation (#86), Wiederherstellung
-      (#87, #79), hochsensible Metadaten und Schreibweg (#88, #89), Statusmodell (#90), Zeitmodell
-      (#92), App-PIN und Biometrie (#60), Löschung (#62), Formate (#63), Formular-Engine (#6),
-      Plattformmatrix (#67), Tests auf Hardware (#80), Apple-Konto (#10), Issue-Pflege (#95)
+- [x] Formate bytegenau mit Testvektoren (`docs/format.md`, `core/testvectors/v1/`, #63)
+- [x] Teil A v1.0, Format für M1a eingefroren (`docs/protokoll.md`, #3): Rotation (#86),
+      Wiederherstellung (#87), Statusmodell (#90), Zeitmodell (#92), Löschung (#62), Formate (#63)
+- [ ] nach v1.0: hochsensible Metadaten und Schreibweg (#88, #89) und App-PIN (#60) mit M1b,
+      Formular-Engine (#6), Plattformmatrix (#67), Tests auf Hardware (#80), Apple-Konto (#10),
+      Issue-Pflege (#95)
 - [ ] Bedrohungsmodell gegen Teil A (#66), Begleitdokumente angleichen
 
 ## Als Nächstes: M1a Gehgerüst und Nutzungsversuch
