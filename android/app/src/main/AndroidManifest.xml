@@ -19,6 +19,8 @@
         android:supportsRtl="false"
         android:theme="@style/Thema">
 
+        <!-- Launcher-Activity muss exportiert sein; sie nimmt nur MAIN/LAUNCHER an und wertet keine Intent-Daten aus (#113). -->
+        <!-- nosemgrep: java.android.security.exported_activity.exported_activity -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
