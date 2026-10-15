@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -116,10 +115,14 @@ fun EinrichtungSeite(z: AppZustand) {
                 SensibleAnsicht()
                 val e = einrichtung!!
                 Abschnitt("Deine 24 Recovery-Wörter", "Schreib sie auf Papier und bewahre sie sicher auf. Nur mit ihnen lassen sich deine Einträge auf einem neuen Gerät wiederherstellen. Kein Bildschirmfoto, keine Notiz-App.") {
-                    for (zeile in e.woerter.chunked(3).withIndex()) {
-                        Row {
+                    // Zwei Spalten: drei passen bei 360 dp Breite nicht, Nummer und Wort brachen um (#120).
+                    for (zeile in e.woerter.chunked(2).withIndex()) {
+                        Row(Modifier.fillMaxWidth()) {
                             for ((i, w) in zeile.value.withIndex()) {
-                                Text("${zeile.index * 3 + i + 1}. $w", fontFamily = FontFamily.Monospace, modifier = Modifier.width(110.dp))
+                                Text(
+                                    "${(zeile.index * 2 + i + 1).toString().padStart(2)}. $w", fontFamily = FontFamily.Monospace,
+                                    maxLines = 1, softWrap = false, modifier = Modifier.weight(1f),
+                                )
                             }
                         }
                     }
