@@ -35,6 +35,11 @@ android {
             isMinifyEnabled = false
             if (System.getenv("DAK_KEYSTORE") != null) signingConfig = signingConfigs.getByName("release")
         }
+        // Vorschau-Builds laufen als eigene App neben der Release-App, mit eigenen Daten (#133).
+        debug {
+            applicationIdSuffix = ".vorschau"
+            versionNameSuffix = "-vorschau"
+        }
     }
 
     buildFeatures { compose = true }
