@@ -3895,6 +3895,11 @@ data class GruppeAnsicht (
      */
     var `zugeklappt`: kotlin.Boolean
     , 
+    /**
+     * Anfangs zugeklappt, auf Tipp aufklappbar; die Antworten zählen ohne Weiteres (#134).
+     */
+    var `aufklappbar`: kotlin.Boolean
+    , 
     var `fragen`: List<FrageAnsicht>
     
 ){
@@ -3915,6 +3920,7 @@ public object FfiConverterTypeGruppeAnsicht: FfiConverterRustBuffer<GruppeAnsich
             FfiConverterString.read(buf),
             FfiConverterOptionalString.read(buf),
             FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
             FfiConverterSequenceTypeFrageAnsicht.read(buf),
         )
     }
@@ -3923,6 +3929,7 @@ public object FfiConverterTypeGruppeAnsicht: FfiConverterRustBuffer<GruppeAnsich
             FfiConverterString.allocationSize(value.`titel`) +
             FfiConverterOptionalString.allocationSize(value.`hinweis`) +
             FfiConverterBoolean.allocationSize(value.`zugeklappt`) +
+            FfiConverterBoolean.allocationSize(value.`aufklappbar`) +
             FfiConverterSequenceTypeFrageAnsicht.allocationSize(value.`fragen`)
     )
 
@@ -3930,6 +3937,7 @@ public object FfiConverterTypeGruppeAnsicht: FfiConverterRustBuffer<GruppeAnsich
             FfiConverterString.write(value.`titel`, buf)
             FfiConverterOptionalString.write(value.`hinweis`, buf)
             FfiConverterBoolean.write(value.`zugeklappt`, buf)
+            FfiConverterBoolean.write(value.`aufklappbar`, buf)
             FfiConverterSequenceTypeFrageAnsicht.write(value.`fragen`, buf)
     }
 }
@@ -4493,6 +4501,11 @@ public object FfiConverterTypeSicherungDatei: FfiConverterRustBuffer<SicherungDa
 data class Startseite (
     var `heute`: kotlin.String
     , 
+    /**
+     * „Donnerstag, 15. Oktober“ für die Kopfzeile (#134).
+     */
+    var `heuteLang`: kotlin.String
+    , 
     var `ereignisse`: List<Knopf>
     , 
     var `einnahmenHeute`: List<EinnahmeHeute>
@@ -4541,6 +4554,7 @@ public object FfiConverterTypeStartseite: FfiConverterRustBuffer<Startseite> {
     override fun read(buf: ByteBuffer): Startseite {
         return Startseite(
             FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
             FfiConverterSequenceTypeKnopf.read(buf),
             FfiConverterSequenceTypeEinnahmeHeute.read(buf),
             FfiConverterSequenceTypeKnopf.read(buf),
@@ -4559,6 +4573,7 @@ public object FfiConverterTypeStartseite: FfiConverterRustBuffer<Startseite> {
 
     override fun allocationSize(value: Startseite) = (
             FfiConverterString.allocationSize(value.`heute`) +
+            FfiConverterString.allocationSize(value.`heuteLang`) +
             FfiConverterSequenceTypeKnopf.allocationSize(value.`ereignisse`) +
             FfiConverterSequenceTypeEinnahmeHeute.allocationSize(value.`einnahmenHeute`) +
             FfiConverterSequenceTypeKnopf.allocationSize(value.`bedarf`) +
@@ -4576,6 +4591,7 @@ public object FfiConverterTypeStartseite: FfiConverterRustBuffer<Startseite> {
 
     override fun write(value: Startseite, buf: ByteBuffer) {
             FfiConverterString.write(value.`heute`, buf)
+            FfiConverterString.write(value.`heuteLang`, buf)
             FfiConverterSequenceTypeKnopf.write(value.`ereignisse`, buf)
             FfiConverterSequenceTypeEinnahmeHeute.write(value.`einnahmenHeute`, buf)
             FfiConverterSequenceTypeKnopf.write(value.`bedarf`, buf)

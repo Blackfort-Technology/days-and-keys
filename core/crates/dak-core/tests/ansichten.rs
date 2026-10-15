@@ -238,6 +238,28 @@ fn schlaf_morgens_anbieten_und_im_verlauf() {
 }
 
 #[test]
+fn gruppen_aufklappbar_aus_der_vorlage() {
+    // #134: Die Vorlage bestimmt, welche Gruppen anfangs zugeklappt sind; die Oberfläche nicht.
+    let (k, _u) = kern(9, tag_aus_datum(2026, 10, 4), 9 * 60);
+    let titel = |schl: &str| -> Vec<(String, bool)> {
+        k.formular(schl.into())
+            .unwrap()
+            .gruppen
+            .iter()
+            .map(|g| (g.titel.clone(), g.aufklappbar))
+            .collect()
+    };
+    let st = titel("status_jetzt");
+    assert!(st.contains(&("Wie geht es mir".into(), false)));
+    assert!(st.contains(&("Was ist gerade stark".into(), true)));
+    assert!(st.contains(&("Körper".into(), true)));
+    let ta = titel("tagesabschluss");
+    assert!(ta.contains(&("Stimmung heute Abend".into(), false)));
+    assert!(ta.contains(&("Faktoren".into(), true)));
+    assert_eq!(k.startseite().unwrap().heute_lang, "Sonntag, 4. Oktober");
+}
+
+#[test]
 fn verlauf_zeigt_jeden_eintrag_und_laesst_luecken() {
     let t0 = tag_aus_datum(2026, 9, 1);
     let (k, uhr) = kern(1, t0, 8 * 60);

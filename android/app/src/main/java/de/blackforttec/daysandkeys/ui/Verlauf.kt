@@ -7,15 +7,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -145,5 +151,25 @@ fun Diagramm(v: Verlauf, von: Long, bis: Long, mittel: Int) {
         Text("● Eintrag", style = MaterialTheme.typography.labelSmall, color = farbePunkt)
         Text("━ Grundniveau ($mittel Tage)", style = MaterialTheme.typography.labelSmall, color = farbeLinie)
         Text("${v.anker.firstOrNull()?.text ?: ""} … ${v.anker.lastOrNull()?.text ?: ""}", style = MaterialTheme.typography.labelSmall, color = farbeAchse)
+    }
+}
+
+/** Reiter „Verlauf“: Diagramm und Einträge mit einem Umschalter oben (#134, Vorgabe 4.7). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VerlaufReiter(z: AppZustand, eintraege: Boolean) {
+    Column(Modifier.fillMaxSize()) {
+        SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = Abstand.rand, vertical = Abstand.s)) {
+            listOf("Diagramm" to Seite.Verlauf, "Einträge" to Seite.Eintraege).forEachIndexed { i, (t, ziel) ->
+                SegmentedButton(
+                    selected = (ziel == Seite.Eintraege) == eintraege,
+                    onClick = { z.zu(ziel) },
+                    shape = SegmentedButtonDefaults.itemShape(i, 2, MaterialTheme.shapes.small),
+                    icon = {},
+                    colors = SegmentedButtonDefaults.colors(activeContainerColor = MaterialTheme.colorScheme.primaryContainer, activeContentColor = MaterialTheme.colorScheme.onPrimaryContainer),
+                ) { Text(t, style = MaterialTheme.typography.labelMedium) }
+            }
+        }
+        Box(Modifier.weight(1f)) { if (eintraege) EintraegeSeite(z) else VerlaufSeite(z) }
     }
 }

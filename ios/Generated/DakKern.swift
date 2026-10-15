@@ -2739,6 +2739,10 @@ public struct GruppeAnsicht: Equatable, Hashable {
      * Gruppe „seit dem letzten Status": zugeklappt, öffnen per Tipp.
      */
     public var zugeklappt: Bool
+    /**
+     * Anfangs zugeklappt, auf Tipp aufklappbar; die Antworten zählen ohne Weiteres (#134).
+     */
+    public var aufklappbar: Bool
     public var fragen: [FrageAnsicht]
 
     // Default memberwise initializers are never public by default, so we
@@ -2746,10 +2750,14 @@ public struct GruppeAnsicht: Equatable, Hashable {
     public init(titel: String, hinweis: String?, 
         /**
          * Gruppe „seit dem letzten Status": zugeklappt, öffnen per Tipp.
-         */zugeklappt: Bool, fragen: [FrageAnsicht]) {
+         */zugeklappt: Bool, 
+        /**
+         * Anfangs zugeklappt, auf Tipp aufklappbar; die Antworten zählen ohne Weiteres (#134).
+         */aufklappbar: Bool, fragen: [FrageAnsicht]) {
         self.titel = titel
         self.hinweis = hinweis
         self.zugeklappt = zugeklappt
+        self.aufklappbar = aufklappbar
         self.fragen = fragen
     }
 
@@ -2772,6 +2780,7 @@ public struct FfiConverterTypeGruppeAnsicht: FfiConverterRustBuffer {
                 titel: FfiConverterString.read(from: &buf), 
                 hinweis: FfiConverterOptionString.read(from: &buf), 
                 zugeklappt: FfiConverterBool.read(from: &buf), 
+                aufklappbar: FfiConverterBool.read(from: &buf), 
                 fragen: FfiConverterSequenceTypeFrageAnsicht.read(from: &buf)
         )
     }
@@ -2780,6 +2789,7 @@ public struct FfiConverterTypeGruppeAnsicht: FfiConverterRustBuffer {
         FfiConverterString.write(value.titel, into: &buf)
         FfiConverterOptionString.write(value.hinweis, into: &buf)
         FfiConverterBool.write(value.zugeklappt, into: &buf)
+        FfiConverterBool.write(value.aufklappbar, into: &buf)
         FfiConverterSequenceTypeFrageAnsicht.write(value.fragen, into: &buf)
     }
 }
@@ -3512,6 +3522,10 @@ public func FfiConverterTypeSicherungDatei_lower(_ value: SicherungDatei) -> Rus
 
 public struct Startseite: Equatable, Hashable {
     public var heute: String
+    /**
+     * „Donnerstag, 15. Oktober“ für die Kopfzeile (#134).
+     */
+    public var heuteLang: String
     public var ereignisse: [Knopf]
     public var einnahmenHeute: [EinnahmeHeute]
     public var bedarf: [Knopf]
@@ -3534,7 +3548,10 @@ public struct Startseite: Equatable, Hashable {
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(heute: String, ereignisse: [Knopf], einnahmenHeute: [EinnahmeHeute], bedarf: [Knopf], entwuerfe: [EntwurfKurz], statusHeute: UInt32, letzterStatusMs: Int64?, tagesabschlussHeute: Bool, wochenrueckblickHeute: Bool, letzteSicherungMs: Int64?, sicherungWarnung: Bool, sicherungNoetig: Bool, 
+    public init(heute: String, 
+        /**
+         * „Donnerstag, 15. Oktober“ für die Kopfzeile (#134).
+         */heuteLang: String, ereignisse: [Knopf], einnahmenHeute: [EinnahmeHeute], bedarf: [Knopf], entwuerfe: [EntwurfKurz], statusHeute: UInt32, letzterStatusMs: Int64?, tagesabschlussHeute: Bool, wochenrueckblickHeute: Bool, letzteSicherungMs: Int64?, sicherungWarnung: Bool, sicherungNoetig: Bool, 
         /**
          * Eigene Regel für den Krisenplan greift (höchstens einmal am Tag, nicht modal).
          */krisenplanHinweis: Bool, 
@@ -3542,6 +3559,7 @@ public struct Startseite: Equatable, Hashable {
          * Morgens bis 14 Uhr, solange heute noch kein „Aufgewacht“ erfasst ist (#139).
          */schlafAnbieten: Bool) {
         self.heute = heute
+        self.heuteLang = heuteLang
         self.ereignisse = ereignisse
         self.einnahmenHeute = einnahmenHeute
         self.bedarf = bedarf
@@ -3574,6 +3592,7 @@ public struct FfiConverterTypeStartseite: FfiConverterRustBuffer {
         return
             try Startseite(
                 heute: FfiConverterString.read(from: &buf), 
+                heuteLang: FfiConverterString.read(from: &buf), 
                 ereignisse: FfiConverterSequenceTypeKnopf.read(from: &buf), 
                 einnahmenHeute: FfiConverterSequenceTypeEinnahmeHeute.read(from: &buf), 
                 bedarf: FfiConverterSequenceTypeKnopf.read(from: &buf), 
@@ -3592,6 +3611,7 @@ public struct FfiConverterTypeStartseite: FfiConverterRustBuffer {
 
     public static func write(_ value: Startseite, into buf: inout [UInt8]) {
         FfiConverterString.write(value.heute, into: &buf)
+        FfiConverterString.write(value.heuteLang, into: &buf)
         FfiConverterSequenceTypeKnopf.write(value.ereignisse, into: &buf)
         FfiConverterSequenceTypeEinnahmeHeute.write(value.einnahmenHeute, into: &buf)
         FfiConverterSequenceTypeKnopf.write(value.bedarf, into: &buf)

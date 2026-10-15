@@ -213,6 +213,8 @@ pub struct GruppeAnsicht {
     pub hinweis: Option<String>,
     /// Gruppe „seit dem letzten Status": zugeklappt, öffnen per Tipp.
     pub zugeklappt: bool,
+    /// Anfangs zugeklappt, auf Tipp aufklappbar; die Antworten zählen ohne Weiteres (#134).
+    pub aufklappbar: bool,
     pub fragen: Vec<FrageAnsicht>,
 }
 
@@ -273,6 +275,8 @@ pub struct EntwurfKurz {
 #[cfg_attr(feature = "ffi", derive(uniffi::Record))]
 pub struct Startseite {
     pub heute: String,
+    /// „Donnerstag, 15. Oktober“ für die Kopfzeile (#134).
+    pub heute_lang: String,
     pub ereignisse: Vec<Knopf>,
     pub einnahmen_heute: Vec<EinnahmeHeute>,
     pub bedarf: Vec<Knopf>,

@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import de.blackforttec.daysandkeys.DaysAndKeysApp
 import de.blackforttec.daysandkeys.MainActivity
+import de.blackforttec.daysandkeys.kern.AntwortEingabe
 import de.blackforttec.daysandkeys.kern.DakFehler
 import de.blackforttec.daysandkeys.kern.EintragDetail
 import de.blackforttec.daysandkeys.kern.KernLage
@@ -24,7 +25,11 @@ sealed class Seite {
     data object Einrichtung : Seite()
     data object Wiederherstellung : Seite()
     data object Start : Seite()
-    data class Formular(val schluessel: String, val entwurf: String? = null, val korrektur: EintragDetail? = null, val praeparat: String? = null) : Seite()
+    /** `vorbelegt`: Antworten, die die Person schon gegeben hat (Schnellstatus, #134); keine Vorbelegung aus Altwerten. */
+    data class Formular(
+        val schluessel: String, val entwurf: String? = null, val korrektur: EintragDetail? = null, val praeparat: String? = null,
+        val vorbelegt: List<AntwortEingabe> = emptyList(),
+    ) : Seite()
     data object Verlauf : Seite()
     data object Eintraege : Seite()
     data object Medikamente : Seite()

@@ -69,15 +69,15 @@
   "formulare": [
     {"schluessel": "status_jetzt", "name": "Status jetzt", "art": "status_jetzt", "reihenfolge": 0, "gruppen": [
       {"titel": "Wie geht es mir", "hinweis": "höher = besser", "fragen": ["stimmung", "antrieb", "konzentration"]},
-      {"titel": "Was ist gerade stark", "hinweis": "höher = mehr", "fragen": ["unruhe", "anspannung", "gereiztheit", "muedigkeit"]},
-      {"titel": "Körper", "fragen": ["appetit", "wirkung_jetzt", "beschwerden_jetzt"]},
+      {"titel": "Was ist gerade stark", "hinweis": "höher = mehr", "fragen": ["unruhe", "anspannung", "gereiztheit", "muedigkeit"], "aufklappbar": true},
+      {"titel": "Körper", "fragen": ["appetit", "wirkung_jetzt", "beschwerden_jetzt"], "aufklappbar": true},
       {"titel": "Seit dem letzten Status", "zugeklappt": true, "fragen": ["seit_viele_angefangen", "seit_vergessen_woran", "seit_vergessen_termine", "seit_am_stueck", "seit_zuhoeren", "seit_unterbrochen", "seit_aufgeschoben", "seit_stimmung_schwankend", "seit_beschwerden", "seit_einfluesse", "seit_einfluesse_notiz"]},
       {"titel": "Notiz", "fragen": ["notiz_jetzt"]}
     ], "bedingungen": [["wirkung_jetzt", "einnahme_mit_wirkung_heute"], ["seit_viele_angefangen", "zwei_stunden_seit_letztem"]]},
     {"schluessel": "tagesabschluss", "name": "Tagesabschluss", "art": "tagesabschluss", "reihenfolge": 1, "gruppen": [
       {"titel": "Stimmung heute Abend", "fragen": ["stimmung", "tag_insgesamt", "tag_abends_erschoepft"]},
-      {"titel": "Faktoren", "hinweis": "jede Angabe lässt sich überspringen", "fragen": ["tag_bewegung", "tag_bewegung_dauer", "tag_kontakte", "tag_tageslicht", "tag_handyzeit"]},
-      {"titel": "Marker", "fragen": ["tag_marker", "tag_besonders"]}
+      {"titel": "Faktoren", "hinweis": "jede Angabe lässt sich überspringen", "fragen": ["tag_bewegung", "tag_bewegung_dauer", "tag_kontakte", "tag_tageslicht", "tag_handyzeit"], "aufklappbar": true},
+      {"titel": "Marker", "fragen": ["tag_marker", "tag_besonders"], "aufklappbar": true}
     ], "bedingungen": []},
     {"schluessel": "wochenrueckblick", "name": "Wochenrückblick", "art": "wochenrueckblick", "reihenfolge": 2, "gruppen": [
       {"titel": "Diese Woche", "fragen": ["woche_vergesslich", "woche_nicht_beendet", "woche_medikation", "woche_anders", "woche_arzt"]}

@@ -66,6 +66,9 @@ struct GruppeQ {
     fragen: Vec<String>,
     #[serde(default)]
     zugeklappt: bool,
+    /// Anzeige: anfangs zugeklappt, auf Tipp aufklappbar (#134). Keine Bedeutungsänderung.
+    #[serde(default)]
+    aufklappbar: bool,
 }
 
 #[derive(Deserialize)]
@@ -178,6 +181,7 @@ pub fn standard() -> Ergebnis<Vorlage> {
                     .map(|s| id_von(s))
                     .collect::<Ergebnis<_>>()?,
                 zugeklappt: g.zugeklappt,
+                aufklappbar: g.aufklappbar,
             });
         }
         let mut bedingungen = Vec::new();
