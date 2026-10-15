@@ -37,6 +37,12 @@ fun StartSeite(z: AppZustand) {
     var bedarf by remember { mutableStateOf<Knopf?>(null) }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(vertical = 8.dp)) {
         Text(s.heute, style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+        // Morgens bis 14 Uhr, solange heute noch nichts zum Schlaf erfasst ist; der Kern entscheidet (#139).
+        if (s.schlafAnbieten) {
+            Abschnitt("Wie hast du geschlafen?", "Wie lange und wie gut, in ein paar Sekunden.") {
+                FilledTonalButton(onClick = { z.zu(Seite.Formular("aufgewacht")) }, modifier = Modifier.fillMaxWidth().height(56.dp)) { Text("Schlaf festhalten") }
+            }
+        }
         Abschnitt("Wie geht es dir gerade?", when (s.statusHeute.toInt()) {
             0 -> "Heute noch kein Status. Halte ihn fest, so oft du willst."
             1 -> "Heute 1 Status" + (s.letzterStatusMs?.let { ", zuletzt ${vorText(it)}" } ?: "")

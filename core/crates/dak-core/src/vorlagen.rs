@@ -222,7 +222,7 @@ mod tests {
     #[test]
     fn vorlage_ist_gueltig_und_vollstaendig() {
         let v = standard().unwrap();
-        assert_eq!(v.messdefs.len(), 51);
+        assert_eq!(v.messdefs.len(), 53); // +2 für den Schlaf am Morgen (#139)
         let st = v
             .messdefs
             .iter()

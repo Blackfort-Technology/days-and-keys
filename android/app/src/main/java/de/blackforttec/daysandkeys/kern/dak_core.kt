@@ -4519,6 +4519,11 @@ data class Startseite (
      * Eigene Regel für den Krisenplan greift (höchstens einmal am Tag, nicht modal).
      */
     var `krisenplanHinweis`: kotlin.Boolean
+    , 
+    /**
+     * Morgens bis 14 Uhr, solange heute noch kein „Aufgewacht“ erfasst ist (#139).
+     */
+    var `schlafAnbieten`: kotlin.Boolean
     
 ){
     
@@ -4548,6 +4553,7 @@ public object FfiConverterTypeStartseite: FfiConverterRustBuffer<Startseite> {
             FfiConverterBoolean.read(buf),
             FfiConverterBoolean.read(buf),
             FfiConverterBoolean.read(buf),
+            FfiConverterBoolean.read(buf),
         )
     }
 
@@ -4564,7 +4570,8 @@ public object FfiConverterTypeStartseite: FfiConverterRustBuffer<Startseite> {
             FfiConverterOptionalLong.allocationSize(value.`letzteSicherungMs`) +
             FfiConverterBoolean.allocationSize(value.`sicherungWarnung`) +
             FfiConverterBoolean.allocationSize(value.`sicherungNoetig`) +
-            FfiConverterBoolean.allocationSize(value.`krisenplanHinweis`)
+            FfiConverterBoolean.allocationSize(value.`krisenplanHinweis`) +
+            FfiConverterBoolean.allocationSize(value.`schlafAnbieten`)
     )
 
     override fun write(value: Startseite, buf: ByteBuffer) {
@@ -4581,6 +4588,7 @@ public object FfiConverterTypeStartseite: FfiConverterRustBuffer<Startseite> {
             FfiConverterBoolean.write(value.`sicherungWarnung`, buf)
             FfiConverterBoolean.write(value.`sicherungNoetig`, buf)
             FfiConverterBoolean.write(value.`krisenplanHinweis`, buf)
+            FfiConverterBoolean.write(value.`schlafAnbieten`, buf)
     }
 }
 

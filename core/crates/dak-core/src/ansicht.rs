@@ -282,6 +282,10 @@ pub(crate) fn startseite(k: &Kern) -> Ergebnis<Startseite> {
             .filter(|st| st.art == FormularArt::StatusJetzt)
             .count() as u32,
         letzter_status_ms: k.letzter_status_jetzt_ms()?,
+        schlaf_anbieten: (s.tageswechsel()..14 * 60).contains(&jetzt.uhrzeit_min())
+            && !s.eintraege.iter().any(|e| {
+                matches!(&e.objekt, Objekt::Ereignis(ev) if ev.art == "aufgewacht" && ev.lebenstag == heute)
+            }),
         tagesabschluss_heute: !status_heute
             .iter()
             .any(|st| st.art == FormularArt::Tagesabschluss),
@@ -420,8 +424,21 @@ pub(crate) fn verlauf(k: &Kern, schluessel: &str, von: i64, bis: i64) -> Ergebni
                     }
                 }
             }
-            Objekt::Ereignis(ev) if ev.art == "einnahme" && !ev.vorlaeufig => {
-                einnahmen_ms.push(ev.zeitpunkt.utc_ms)
+            Objekt::Ereignis(ev) if !ev.vorlaeufig => {
+                if ev.art == "einnahme" {
+                    einnahmen_ms.push(ev.zeitpunkt.utc_ms)
+                }
+                // Fragen aus Ereignissen (etwa Schlaf bei „Aufgewacht“, #139) gehen mit ein.
+                if let Some(w) = wert(&ev.antworten, &md.id) {
+                    punkte.push(Punkt {
+                        utc_ms: ev.zeitpunkt.utc_ms,
+                        lebenstag: lt,
+                        uhrzeit_min: ev.zeitpunkt.uhrzeit_min(),
+                        wert: w,
+                        aus_tagesabschluss: false,
+                    });
+                    tage.entry(lt).or_default().push((ev.zeitpunkt.utc_ms, w));
+                }
             }
             _ => {}
         }

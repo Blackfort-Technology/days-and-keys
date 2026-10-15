@@ -3527,13 +3527,20 @@ public struct Startseite: Equatable, Hashable {
      * Eigene Regel für den Krisenplan greift (höchstens einmal am Tag, nicht modal).
      */
     public var krisenplanHinweis: Bool
+    /**
+     * Morgens bis 14 Uhr, solange heute noch kein „Aufgewacht“ erfasst ist (#139).
+     */
+    public var schlafAnbieten: Bool
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
     public init(heute: String, ereignisse: [Knopf], einnahmenHeute: [EinnahmeHeute], bedarf: [Knopf], entwuerfe: [EntwurfKurz], statusHeute: UInt32, letzterStatusMs: Int64?, tagesabschlussHeute: Bool, wochenrueckblickHeute: Bool, letzteSicherungMs: Int64?, sicherungWarnung: Bool, sicherungNoetig: Bool, 
         /**
          * Eigene Regel für den Krisenplan greift (höchstens einmal am Tag, nicht modal).
-         */krisenplanHinweis: Bool) {
+         */krisenplanHinweis: Bool, 
+        /**
+         * Morgens bis 14 Uhr, solange heute noch kein „Aufgewacht“ erfasst ist (#139).
+         */schlafAnbieten: Bool) {
         self.heute = heute
         self.ereignisse = ereignisse
         self.einnahmenHeute = einnahmenHeute
@@ -3547,6 +3554,7 @@ public struct Startseite: Equatable, Hashable {
         self.sicherungWarnung = sicherungWarnung
         self.sicherungNoetig = sicherungNoetig
         self.krisenplanHinweis = krisenplanHinweis
+        self.schlafAnbieten = schlafAnbieten
     }
 
     
@@ -3577,7 +3585,8 @@ public struct FfiConverterTypeStartseite: FfiConverterRustBuffer {
                 letzteSicherungMs: FfiConverterOptionInt64.read(from: &buf), 
                 sicherungWarnung: FfiConverterBool.read(from: &buf), 
                 sicherungNoetig: FfiConverterBool.read(from: &buf), 
-                krisenplanHinweis: FfiConverterBool.read(from: &buf)
+                krisenplanHinweis: FfiConverterBool.read(from: &buf), 
+                schlafAnbieten: FfiConverterBool.read(from: &buf)
         )
     }
 
@@ -3595,6 +3604,7 @@ public struct FfiConverterTypeStartseite: FfiConverterRustBuffer {
         FfiConverterBool.write(value.sicherungWarnung, into: &buf)
         FfiConverterBool.write(value.sicherungNoetig, into: &buf)
         FfiConverterBool.write(value.krisenplanHinweis, into: &buf)
+        FfiConverterBool.write(value.schlafAnbieten, into: &buf)
     }
 }
 
