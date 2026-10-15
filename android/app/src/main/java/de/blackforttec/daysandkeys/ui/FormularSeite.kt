@@ -105,7 +105,7 @@ fun FormularSeite(z: AppZustand, s: Seite.Formular) {
         if (r != null) {
             z.geaendert()
             z.meldung = if (s.korrektur != null) "Korrigiert" else "Festgehalten um ${uhrzeitAus(zeitpunkt?.utcMs ?: System.currentTimeMillis())}"
-            z.zu(if (f.schluessel == "krise") Seite.Hilfe else Seite.Start)
+            z.zu(if (f.schluessel == "krise") Seite.Hilfe else if (s.korrektur != null) Seite.Eintraege else Seite.Start)
         }
     }
 

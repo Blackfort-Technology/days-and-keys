@@ -2,11 +2,13 @@
 package de.blackforttec.daysandkeys.ui
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +20,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -47,51 +50,62 @@ import java.time.LocalDate
  * Verlauf (#43, #74, #105): jeder Eintrag als Punkt, auch mehrere am Tag. Grundniveau als
  * gleitender Mittelwert über Tageswerte, Lücken bleiben Lücken, keine Farbwertung.
  */
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun VerlaufSeite(z: AppZustand) {
-    val fragen = remember {
-        listOf("status_jetzt", "tagesabschluss", "aufgewacht").flatMap { s -> z.versuch { z.kern.formular(s) }?.gruppen.orEmpty().flatMap { it.fragen } }
-            .filter { it.feldart in setOf(Feldart.SKALA, Feldart.STUFEN, Feldart.ZAHL, Feldart.DAUER) }
-            .distinctBy { it.schluessel }
+    // Fragen nach Bezug gruppiert, Stimmung oben (#135, Vorgabe 4.7).
+    val gruppen = remember {
+        listOf("status_jetzt" to "Jetzt", "tagesabschluss" to "Tagesabschluss", "aufgewacht" to "Schlaf am Morgen").map { (schl, titel) ->
+            titel to z.versuch { z.kern.formular(schl) }?.gruppen.orEmpty().flatMap { it.fragen }
+                .filter { it.feldart in setOf(Feldart.SKALA, Feldart.STUFEN, Feldart.ZAHL, Feldart.DAUER) }
+        }
     }
+    val fragen = remember { gruppen.flatMap { it.second }.distinctBy { it.schluessel } }
     var frage by remember { mutableStateOf("stimmung") }
     var tage by remember { mutableIntStateOf(28) }
     var mittel by remember { mutableIntStateOf(7) }
+    var wahl by remember { mutableStateOf(false) }
+    var lesen by remember { mutableStateOf(false) }
+    var liste by remember { mutableStateOf(false) }
     val heute = remember { z.versuch { z.kern.heute() } ?: 0L }
     val v: Verlauf? = remember(frage, tage) { z.versuch { z.kern.verlauf(frage, heute - tage + 1, heute) } }
-    Column(Modifier.verticalScroll(rememberScrollState())) {
-        Abschnitt("Verlauf") {
-            // Klappmenü mit vollem Fragetext; die Knopfliste schob das Diagramm weit nach unten (#127).
-            var offen by remember { mutableStateOf(false) }
-            Box {
-                OutlinedButton(onClick = { offen = true }, modifier = Modifier.fillMaxWidth()) {
-                    Text((fragen.firstOrNull { it.schluessel == frage }?.frage ?: frage) + "  ▾", maxLines = 2, overflow = TextOverflow.Ellipsis)
-                }
-                DropdownMenu(expanded = offen, onDismissRequest = { offen = false }) {
-                    for (q in fragen) DropdownMenuItem(text = { Text(q.frage) }, onClick = { frage = q.schluessel; offen = false })
+    Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Abstand.rand), verticalArrangement = Arrangement.spacedBy(Abstand.m)) {
+        Klickzeile(fragen.firstOrNull { it.schluessel == frage }?.frage ?: frage, "Andere Frage wählen") { wahl = true }
+        Stufenwahl(listOf(28L to "4 Wochen", 91L to "3 Monate", 365L to "1 Jahr"), tage.toLong()) { it?.let { w -> tage = w.toInt() } }
+        if (v != null) {
+            if (v.punkte.isEmpty()) {
+                Text("In diesem Zeitraum gibt es noch keine Werte für diese Frage.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(vertical = Abstand.xl))
+            } else {
+                Diagramm(v, heute - tage + 1, heute, mittel)
+                Stufenwahl(listOf(7L to "Grundniveau 7 Tage", 28L to "28 Tage"), mittel.toLong()) { it?.let { w -> mittel = w.toInt() } }
+            }
+            Text(v.hinweis + (if (v.einnahmenMs.isNotEmpty()) " · ${v.einnahmenMs.size} Einnahmen" else ""), style = MaterialTheme.typography.bodyMedium)
+            if (v.marker.isNotEmpty()) Text("Marker: " + v.marker.groupBy { it.name }.map { "${it.key} (${it.value.size})" }.joinToString(", "), style = MaterialTheme.typography.bodyMedium)
+            Aufklappgruppe("So liest du das Diagramm", "Tageswert, Mittelwerte, Lücken", lesen, { lesen = !lesen }) {
+                Text(v.erklaerung, style = MaterialTheme.typography.bodyMedium)
+            }
+            Aufklappgruppe("Tageswerte als Liste", "${v.tage.size} Tage mit Wert", liste, { liste = !liste }) {
+                for (t in v.tage.reversed()) Row(Modifier.fillMaxWidth()) {
+                    Text(t.datum, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    Text("${t.letzter}" + if (t.anzahl > 1u) "  (${t.anzahl} Einträge, ${t.min} bis ${t.max})" else "", style = MaterialTheme.typography.bodyMedium)
                 }
             }
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                for ((t, n) in listOf(28 to "4 Wochen", 91 to "3 Monate", 365 to "1 Jahr")) FilterChip(selected = tage == t, onClick = { tage = t }, label = { Text(n) })
-                for (m in listOf(7, 28)) FilterChip(selected = mittel == m, onClick = { mittel = m }, label = { Text("Mittel $m Tage") })
+            if (v.vergleiche.isNotEmpty()) {
+                Kopf("Grundniveau mit und ohne", v.vergleiche.first().hinweis)
+                fun t(x: Double?) = x?.let { "%+.1f".format(it) } ?: "-"
+                for (f in v.vergleiche) Text("${f.faktor}: an ${f.tageMit} Tagen mit ${t(f.mittelMit)}, an ${f.tageOhne} Tagen ohne ${t(f.mittelOhne)}", style = MaterialTheme.typography.bodyMedium)
             }
         }
-        if (v != null) {
-            Abschnitt(v.frage, v.hinweis) {
-                Diagramm(v, heute - tage + 1, heute, mittel)
-                if (v.marker.isNotEmpty()) Text("Marker: " + v.marker.groupBy { it.name }.map { "${it.key} (${it.value.size})" }.joinToString(", "), style = MaterialTheme.typography.bodySmall)
-                if (v.einnahmenMs.isNotEmpty()) Text("Einnahmen im Zeitraum: ${v.einnahmenMs.size}", style = MaterialTheme.typography.bodySmall)
-            }
-            if (frage == "stimmung") {
-                Abschnitt("Grundniveau mit und ohne", "Rein beschreibend, mit Fallzahl. Kein Beleg für eine Ursache.") {
-                    for ((schl, name) in listOf("tag_bewegung" to "Bewegung", "tag_tageslicht" to "Tageslicht draußen")) {
-                        val f = z.versuch { z.kern.faktorvergleich(schl, heute - tage + 1, heute) } ?: continue
-                        if (f.tageMit + f.tageOhne == 0u) continue // ohne Angaben nichts zeigen (#127)
-                        fun t(x: Double?) = x?.let { "%+.1f".format(it) } ?: "-"
-                        Text("$name: an ${f.tageMit} Tagen mit ${t(f.mittelMit)}, an ${f.tageOhne} Tagen ohne ${t(f.mittelOhne)}")
-                    }
-                }
+        Abstand(24)
+    }
+    if (wahl) ModalBottomSheet(onDismissRequest = { wahl = false }) {
+        Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = Abstand.xl)) {
+            for ((titel, qs) in gruppen) if (qs.isNotEmpty()) {
+                Text(titel, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(horizontal = Abstand.rand, vertical = Abstand.s))
+                for (q in qs) Text(
+                    q.frage, style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.fillMaxWidth().clickable { frage = q.schluessel; wahl = false }.padding(horizontal = Abstand.rand, vertical = Abstand.m),
+                )
             }
         }
     }

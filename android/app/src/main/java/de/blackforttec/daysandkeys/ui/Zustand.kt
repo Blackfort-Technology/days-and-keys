@@ -32,6 +32,8 @@ sealed class Seite {
     ) : Seite()
     data object Verlauf : Seite()
     data object Eintraege : Seite()
+    /** Eintrag im Detail als eigene Seite (#135). */
+    data class Eintrag(val id: String) : Seite()
     data object Medikamente : Seite()
     data class Medikament(val p: PraeparatDaten?) : Seite()
     data object Einstellungen : Seite()

@@ -71,7 +71,8 @@ struct EintraegeSeite: View {
                         .swipeActions {
                             Button("Löschen", role: .destructive) { loeschen = e }
                             Button("Korrigieren") {
-                                let schl = e.istEreignis ? ((try? z.kern.startseite())?.ereignisse.first { $0.formularId == e.formularId }?.schluessel ?? (e.name == "Tablette genommen" ? "einnahme" : nil)) : formularSchluessel(z, e.formularId)
+                                // Schlüssel aus dem Kern statt Anzeigename (#135).
+                                let schl: String? = e.schluessel.isEmpty ? nil : e.schluessel
                                 if let schl { z.seite = .formular(schl, korrektur: e.datensatzId) }
                             }
                         }

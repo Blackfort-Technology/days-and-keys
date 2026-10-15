@@ -3445,6 +3445,16 @@ data class EintragZeile (
     var `uhrzeit`: kotlin.String
     , 
     var `zusammenfassung`: kotlin.String
+    , 
+    /**
+     * Schlüssel des Formulars, damit die Oberfläche nicht am Anzeigenamen hängt (#135).
+     */
+    var `schluessel`: kotlin.String
+    , 
+    /**
+     * Tageskopf der Liste: „Heute“, „Gestern“ oder „Mittwoch, 14. Oktober“ (#135).
+     */
+    var `tagText`: kotlin.String
     
 ){
     
@@ -3470,6 +3480,8 @@ public object FfiConverterTypeEintragZeile: FfiConverterRustBuffer<EintragZeile>
             FfiConverterString.read(buf),
             FfiConverterString.read(buf),
             FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
         )
     }
 
@@ -3482,7 +3494,9 @@ public object FfiConverterTypeEintragZeile: FfiConverterRustBuffer<EintragZeile>
             FfiConverterLong.allocationSize(value.`lebenstag`) +
             FfiConverterString.allocationSize(value.`datum`) +
             FfiConverterString.allocationSize(value.`uhrzeit`) +
-            FfiConverterString.allocationSize(value.`zusammenfassung`)
+            FfiConverterString.allocationSize(value.`zusammenfassung`) +
+            FfiConverterString.allocationSize(value.`schluessel`) +
+            FfiConverterString.allocationSize(value.`tagText`)
     )
 
     override fun write(value: EintragZeile, buf: ByteBuffer) {
@@ -3495,6 +3509,8 @@ public object FfiConverterTypeEintragZeile: FfiConverterRustBuffer<EintragZeile>
             FfiConverterString.write(value.`datum`, buf)
             FfiConverterString.write(value.`uhrzeit`, buf)
             FfiConverterString.write(value.`zusammenfassung`, buf)
+            FfiConverterString.write(value.`schluessel`, buf)
+            FfiConverterString.write(value.`tagText`, buf)
     }
 }
 
@@ -4767,7 +4783,20 @@ data class Verlauf (
     , 
     var `einnahmenMs`: List<kotlin.Long>
     , 
+    /**
+     * Kurz: „An 13 von 28 Tagen gibt es einen Wert.“
+     */
     var `hinweis`: kotlin.String
+    , 
+    /**
+     * Wie das Diagramm zu lesen ist (Tageswert, Mindesttage), auf Nachfrage (#135).
+     */
+    var `erklaerung`: kotlin.String
+    , 
+    /**
+     * Grundniveau mit und ohne Faktor, nur Faktoren mit Angaben; Auswahl durch den Kern (#135).
+     */
+    var `vergleiche`: List<Faktorvergleich>
     
 ){
     
@@ -4799,6 +4828,8 @@ public object FfiConverterTypeVerlauf: FfiConverterRustBuffer<Verlauf> {
             FfiConverterSequenceTypeMarker.read(buf),
             FfiConverterSequenceLong.read(buf),
             FfiConverterString.read(buf),
+            FfiConverterString.read(buf),
+            FfiConverterSequenceTypeFaktorvergleich.read(buf),
         )
     }
 
@@ -4817,7 +4848,9 @@ public object FfiConverterTypeVerlauf: FfiConverterRustBuffer<Verlauf> {
             FfiConverterSequenceTypeMittel.allocationSize(value.`gleitend28`) +
             FfiConverterSequenceTypeMarker.allocationSize(value.`marker`) +
             FfiConverterSequenceLong.allocationSize(value.`einnahmenMs`) +
-            FfiConverterString.allocationSize(value.`hinweis`)
+            FfiConverterString.allocationSize(value.`hinweis`) +
+            FfiConverterString.allocationSize(value.`erklaerung`) +
+            FfiConverterSequenceTypeFaktorvergleich.allocationSize(value.`vergleiche`)
     )
 
     override fun write(value: Verlauf, buf: ByteBuffer) {
@@ -4836,6 +4869,8 @@ public object FfiConverterTypeVerlauf: FfiConverterRustBuffer<Verlauf> {
             FfiConverterSequenceTypeMarker.write(value.`marker`, buf)
             FfiConverterSequenceLong.write(value.`einnahmenMs`, buf)
             FfiConverterString.write(value.`hinweis`, buf)
+            FfiConverterString.write(value.`erklaerung`, buf)
+            FfiConverterSequenceTypeFaktorvergleich.write(value.`vergleiche`, buf)
     }
 }
 
@@ -5936,6 +5971,34 @@ public object FfiConverterSequenceTypeErinnerungDaten: FfiConverterRustBuffer<Li
         buf.putInt(value.size)
         value.iterator().forEach {
             FfiConverterTypeErinnerungDaten.write(it, buf)
+        }
+    }
+}
+
+
+
+
+/**
+ * @suppress
+ */
+public object FfiConverterSequenceTypeFaktorvergleich: FfiConverterRustBuffer<List<Faktorvergleich>> {
+    override fun read(buf: ByteBuffer): List<Faktorvergleich> {
+        val len = buf.getInt()
+        return List<Faktorvergleich>(len) {
+            FfiConverterTypeFaktorvergleich.read(buf)
+        }
+    }
+
+    override fun allocationSize(value: List<Faktorvergleich>): ULong {
+        val sizeForLength = 4UL
+        val sizeForItems = value.map { FfiConverterTypeFaktorvergleich.allocationSize(it) }.sum()
+        return sizeForLength + sizeForItems
+    }
+
+    override fun write(value: List<Faktorvergleich>, buf: ByteBuffer) {
+        buf.putInt(value.size)
+        value.iterator().forEach {
+            FfiConverterTypeFaktorvergleich.write(it, buf)
         }
     }
 }

@@ -189,6 +189,8 @@ pub struct Messdef {
     pub mit_staerke: bool,
     pub einheit: Option<String>,
     pub hinweis: Option<String>,
+    /// Kurzname für Listen („Stimmung“), nur Anzeige (#135). Feld 18, fehlt ohne Kurznamen.
+    pub kurz: Option<String>,
 }
 
 impl Messdef {
@@ -235,6 +237,7 @@ impl Messdef {
             .mit(15, Wert::Bool(self.mit_staerke))
             .opt(16, self.einheit.as_deref().map(cbor::text))
             .opt(17, self.hinweis.as_deref().map(cbor::text))
+            .opt(18, self.kurz.as_deref().map(cbor::text))
             .fertig()
     }
 
@@ -282,6 +285,7 @@ impl Messdef {
         let mit_staerke = m.bool(15)?;
         let einheit = m.opt_text(16)?;
         let hinweis = m.opt_text(17)?;
+        let kurz = m.opt_text(18)?;
         m.ende()?;
         Ok(Messdef {
             id,
@@ -299,6 +303,7 @@ impl Messdef {
             mit_staerke,
             einheit,
             hinweis,
+            kurz,
         })
     }
 
