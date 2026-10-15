@@ -24,7 +24,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import de.blackforttec.daysandkeys.kern.EinnahmeStand
@@ -72,16 +71,17 @@ fun StartSeite(z: AppZustand) {
         if (s.einnahmenHeute.isNotEmpty() || s.bedarf.isNotEmpty()) {
             Abschnitt("Medikamente heute", "Einnahmen werden nie vorausgefüllt. Bestätige nur, was du genommen hast.") {
                 for (e in s.einnahmenHeute) {
-                    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween) {
-                        Column(Modifier.weight(1f)) {
+                    // Text über die volle Breite, Knöpfe darunter: daneben brach der Name mitten im Wort (#120).
+                    Column(Modifier.fillMaxWidth()) {
+                        Column {
                             Text("${uhrzeit(e.uhrzeitMin)}  ${e.name}" + (e.staerke?.let { " $it" } ?: ""))
-                            Text(e.dosis + "  " + when (e.stand) {
+                            Text(e.dosis + " · " + when (e.stand) {
                                 EinnahmeStand.GENOMMEN -> "genommen"
                                 EinnahmeStand.AUSGELASSEN -> "ausgelassen"
                                 EinnahmeStand.OFFEN -> "offen"
                             }, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
                         }
-                        if (e.stand == EinnahmeStand.OFFEN) {
+                        if (e.stand == EinnahmeStand.OFFEN) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             FilledTonalButton(onClick = {
                                 z.versuch { z.kern.einnahmeBestaetigen(e.praeparatId, null) }; z.geaendert(); z.meldung = "Einnahme festgehalten"
                             }) { Text("Genommen") }

@@ -215,8 +215,9 @@ fun Frage(q: FrageAnsicht, antworten: MutableMap<String, AntwortEingabe>) {
                 }
                 if (q.mitStaerke) for (x in a?.auswahl.orEmpty().filter { it.option.toInt() != 99 }) {
                     val name = q.optionen.firstOrNull { it.id == x.option }?.text ?: ""
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Text(name, style = MaterialTheme.typography.bodySmall, modifier = Modifier.width(110.dp))
+                    // Name über den Stufen; nebeneinander wurde „stark“ senkrecht gequetscht (#120).
+                    Text(name, style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp))
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         for ((w, t) in listOf(2L to "leicht", 5L to "mittel", 8L to "stark")) FilterChip(selected = x.staerke == w, onClick = {
                             val neu = a!!.auswahl.map { if (it.option == x.option) Auswahl(it.option, if (it.staerke == w) null else w) else it }
                             antworten[q.messdefId] = antwort(q, auswahl = neu)

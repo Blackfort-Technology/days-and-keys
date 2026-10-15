@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.compose.setContent
 import de.blackforttec.daysandkeys.ui.AppZustand
 import de.blackforttec.daysandkeys.ui.DaysAndKeysOberflaeche
@@ -14,6 +15,8 @@ class MainActivity : ComponentActivity() {
     private var imHintergrundSeit: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        // Symbole der Systemleisten dunkel auf hellem, hell auf dunklem Thema (#119).
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         // Kein Bildschirmfoto, kein Vorschaubild im App-Umschalter (Protokoll 14, #69).
         window.addFlags(WindowManager.LayoutParams.FLAG_SECURE)
