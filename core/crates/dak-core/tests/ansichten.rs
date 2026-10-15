@@ -176,6 +176,68 @@ fn eintragsdetail_zeigt_alle_antworten_mit_notiz() {
 }
 
 #[test]
+fn schlaf_morgens_anbieten_und_im_verlauf() {
+    // #139: Schlaf wird morgens mit „Aufgewacht“ erfasst und erscheint im Verlauf.
+    let t0 = tag_aus_datum(2026, 10, 3);
+    let (k, uhr) = kern(8, t0, 7 * 60 + 30);
+    assert!(
+        k.startseite().unwrap().schlaf_anbieten,
+        "morgens ohne Eintrag angeboten"
+    );
+    let f = k.formular("aufgewacht".into()).unwrap();
+    let id = |schl: &str| {
+        f.gruppen
+            .iter()
+            .flat_map(|g| g.fragen.iter())
+            .find(|q| q.schluessel == schl)
+            .unwrap()
+            .messdef_id
+            .clone()
+    };
+    let zahl = |schl: &str, w: i64| AntwortEingabe {
+        messdef_id: id(schl),
+        zustand: AntwortZustand::Beantwortet,
+        zahl: Some(w),
+        text: None,
+        auswahl: vec![],
+        aktiv_gesetzt: true,
+    };
+    k.ereignis_erfassen(EreignisEingabe {
+        formular_id: f.id.clone(),
+        zeitpunkt: None,
+        antworten: vec![zahl("schlaf_dauer", 7 * 60 + 15), zahl("schlaf_guete", 4)],
+        praeparat_id: None,
+        korrektur_von: None,
+    })
+    .unwrap();
+    assert!(
+        !k.startseite().unwrap().schlaf_anbieten,
+        "nach dem Eintrag nicht mehr"
+    );
+    let v = k.verlauf("schlaf_guete".into(), t0, t0).unwrap();
+    assert_eq!(v.punkte.len(), 1);
+    assert_eq!(v.punkte[0].wert, 4);
+    assert_eq!((v.min, v.max), (Some(1), Some(5)));
+    let d = k.verlauf("schlaf_dauer".into(), t0, t0).unwrap();
+    assert_eq!(d.punkte[0].wert, 435);
+    // Am nächsten Tag nachmittags nicht angeboten.
+    uhr.0
+        .fetch_add(24 * 3_600_000 + 8 * 3_600_000, Ordering::SeqCst);
+    assert!(
+        !k.startseite().unwrap().schlaf_anbieten,
+        "nachmittags nicht"
+    );
+    // Der Tagesabschluss fragt den Schlaf nicht mehr.
+    let ta = k.formular("tagesabschluss".into()).unwrap();
+    assert!(
+        !ta.gruppen
+            .iter()
+            .flat_map(|g| g.fragen.iter())
+            .any(|q| q.schluessel.contains("schlaf"))
+    );
+}
+
+#[test]
 fn verlauf_zeigt_jeden_eintrag_und_laesst_luecken() {
     let t0 = tag_aus_datum(2026, 9, 1);
     let (k, uhr) = kern(1, t0, 8 * 60);

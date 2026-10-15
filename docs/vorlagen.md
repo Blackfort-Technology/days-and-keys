@@ -89,7 +89,7 @@ Erscheinen als Knöpfe auf der Startseite; Zeitpunkt ist jetzt, änderbar.
 | Mahlzeit | Frühstück, Mittag, Abend, Snack; optional „ohne Appetit gegessen" |
 | Bewegung | Spaziergang, Sport, anderes; Dauer |
 | Schlafen gegangen | Uhrzeit |
-| Aufgewacht | Uhrzeit, wie geschlafen (0-10), nachts wach (0, 1, 2, 3+) |
+| Aufgewacht | Uhrzeit, wie lange geschlafen (Stunden und Minuten), wie gut (1 bis 5), nachts wach (0, 1, 2, 3+); morgens bis 14 Uhr bietet die Startseite ihn an (#139) |
 | Termin | pünktlich, knapp, zu spät |
 | Belastung oder Konflikt | Freitext optional |
 | Krise | optional, mit kurzer Rückfrage gegen Fehl-Tipps; zeigt danach die Hilfe-Seite. Die Hilfe selbst ist ein eigener Knopf, immer sichtbar, auch ohne Entsperren (Protokoll Abschnitt 13) |
@@ -110,9 +110,9 @@ Für Angaben, die einmal am Tag genügen. Standardmäßig eingeschaltet, Erinner
 ### Stimmungsverlauf im Tagesabschluss (#105)
 
 Der Tagesabschluss beginnt mit derselben Stimmungsfrage wie der Status jetzt; der Tageswert ist der
-letzte Eintrag des Tages, also meist der Abendwert. Dazu einzeln überspringbare Faktoren: Schlaf
-(Dauer, Qualität), Bewegung (ja/nein, Minuten), echte Gespräche (Anzahl), Tageslicht draußen
-(ja/nein), Handyzeit. Tagesmarker mit einem Tipp: Belastungsereignis, Therapiesitzung, besonderer
+letzte Eintrag des Tages, also meist der Abendwert. Dazu einzeln überspringbare Faktoren: Bewegung (ja/nein, Minuten), echte Gespräche (Anzahl), Tageslicht draußen
+(ja/nein), Handyzeit. Schlaf wird morgens mit „Aufgewacht“ erfasst, nicht abends (#139); die früheren
+Schlaffragen bleiben für vorhandene Einträge definiert. Tagesmarker mit einem Tipp: Belastungsereignis, Therapiesitzung, besonderer
 Tag und bis zu drei eigene Marker, deren Namen die Person selbst festlegt (nur verschlüsselt
 gespeichert). Im Verlauf erscheint jeder Eintrag als Punkt, das Grundniveau als gleitender
 Mittelwert über 7 oder 28 Tage (nur mit mindestens 4 bzw. 14 Tageswerten im Fenster, Lücken

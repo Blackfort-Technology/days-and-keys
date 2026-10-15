@@ -446,7 +446,51 @@ impl Kern {
             eintraege,
         });
         self.entwuerfe_aufraeumen()?;
+        self.vorlage_abgleichen()?;
         self.krisenplan_abgleichen(true)
+    }
+
+    /// Bringt Fragen und Formulare im Bund auf den Stand der mitgelieferten Vorlage (#139).
+    /// Die Vorlage wird bei der Einrichtung kopiert; ohne Abgleich erreichten spätere Änderungen
+    /// bestehende Konten nie. Fragen werden ergänzt oder im Wortlaut aktualisiert, nie entfernt,
+    /// damit alte Einträge lesbar bleiben (Bedeutung hängt am Schlüssel). Ob ein Formular
+    /// eingeschaltet ist, bleibt die Entscheidung der Person.
+    fn vorlage_abgleichen(&mut self) -> Ergebnis<()> {
+        let v = vorlagen::standard()?;
+        let s = self.sitzung.as_mut().ok_or(Fehler::Gesperrt)?;
+        let mut geaendert = false;
+        for m in v.messdefs {
+            match s.bund.messdefs.iter_mut().find(|x| x.id == m.id) {
+                Some(x) if *x != m => {
+                    *x = m;
+                    geaendert = true;
+                }
+                Some(_) => {}
+                None => {
+                    s.bund.messdefs.push(m);
+                    geaendert = true;
+                }
+            }
+        }
+        for mut f in v.formulare {
+            match s.bund.formulare.iter_mut().find(|x| x.id == f.id) {
+                Some(x) => {
+                    f.eingeschaltet = x.eingeschaltet;
+                    if *x != f {
+                        *x = f;
+                        geaendert = true;
+                    }
+                }
+                None => {
+                    s.bund.formulare.push(f);
+                    geaendert = true;
+                }
+            }
+        }
+        if geaendert {
+            self.bund_speichern()?;
+        }
+        Ok(())
     }
 
     // -----------------------------------------------------------------------------------------
@@ -1694,4 +1738,78 @@ pub fn feld_ist_zahl(f: Feldtyp) -> bool {
             | Feldtyp::Uhrzeit
             | Feldtyp::JaNein
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::sodium::TestZufall;
+
+    struct FesteUhr;
+    impl Uhr for FesteUhr {
+        fn jetzt(&self) -> Zeitpunkt {
+            Zeitpunkt {
+                utc_ms: 1_790_000_000_000,
+                versatz_min: 120,
+                zone: "Europe/Berlin".into(),
+            }
+        }
+    }
+
+    #[test]
+    fn vorlage_abgleich_bringt_alten_bestand_auf_stand() {
+        // #139: Ein Konto, das mit einer älteren Vorlage eingerichtet wurde, bekommt neue Fragen
+        // beim Entsperren; die Schalterstellung der Person bleibt, alte Fragen bleiben definiert.
+        let mut k = Kern::neu(
+            speicher::im_speicher().unwrap(),
+            Box::new(TestZufall::neu(31)),
+            Box::new(FesteUhr),
+        );
+        let (w, probe, sch) = k.einrichtung_beginnen(240).unwrap();
+        let antworten: Vec<String> = probe.iter().map(|i| w[*i].clone()).collect();
+        k.einrichtung_abschliessen(&antworten, None, None).unwrap();
+        let neu_id = vorlagen::messdef_id("schlaf_guete");
+        let alt_id = vorlagen::messdef_id("aufgewacht_schlaf");
+        // Bestand auf den alten Stand zurückdrehen.
+        {
+            let s = k.sitzung.as_mut().unwrap();
+            s.bund.messdefs.retain(|m| m.id != neu_id);
+            let f = s
+                .bund
+                .formulare
+                .iter_mut()
+                .find(|f| f.schluessel == "aufgewacht")
+                .unwrap();
+            f.gruppen[0].messdefs = vec![alt_id, vorlagen::messdef_id("aufgewacht_nachts_wach")];
+            f.eingeschaltet = false;
+        }
+        k.bund_speichern().unwrap();
+        k.sperren();
+        k.entsperren(sch.kk.clone(), sch.kk_h.clone()).unwrap();
+        let s = k.sitzung().unwrap();
+        let f = s
+            .bund
+            .formulare
+            .iter()
+            .find(|f| f.schluessel == "aufgewacht")
+            .unwrap();
+        assert!(
+            f.gruppen[0].messdefs.contains(&neu_id),
+            "neue Frage im Formular"
+        );
+        assert!(!f.eingeschaltet, "Schalter der Person bleibt");
+        assert!(
+            s.bund.messdefs.iter().any(|m| m.id == neu_id),
+            "neue Frage definiert"
+        );
+        assert!(
+            s.bund.messdefs.iter().any(|m| m.id == alt_id),
+            "alte Frage bleibt für alte Einträge"
+        );
+        // Zweites Entsperren ändert nichts mehr.
+        let version = s.bund.version;
+        k.sperren();
+        k.entsperren(sch.kk.clone(), sch.kk_h.clone()).unwrap();
+        assert_eq!(k.sitzung().unwrap().bund.version, version);
+    }
 }

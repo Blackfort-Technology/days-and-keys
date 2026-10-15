@@ -286,6 +286,8 @@ pub struct Startseite {
     pub sicherung_noetig: bool,
     /// Eigene Regel für den Krisenplan greift (höchstens einmal am Tag, nicht modal).
     pub krisenplan_hinweis: bool,
+    /// Morgens bis 14 Uhr, solange heute noch kein „Aufgewacht“ erfasst ist (#139).
+    pub schlaf_anbieten: bool,
 }
 
 #[derive(Debug, Clone)]

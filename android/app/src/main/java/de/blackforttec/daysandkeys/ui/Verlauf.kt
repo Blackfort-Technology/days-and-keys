@@ -45,7 +45,7 @@ import java.time.LocalDate
 @Composable
 fun VerlaufSeite(z: AppZustand) {
     val fragen = remember {
-        listOf("status_jetzt", "tagesabschluss").flatMap { s -> z.versuch { z.kern.formular(s) }?.gruppen.orEmpty().flatMap { it.fragen } }
+        listOf("status_jetzt", "tagesabschluss", "aufgewacht").flatMap { s -> z.versuch { z.kern.formular(s) }?.gruppen.orEmpty().flatMap { it.fragen } }
             .filter { it.feldart in setOf(Feldart.SKALA, Feldart.STUFEN, Feldart.ZAHL, Feldart.DAUER) }
             .distinctBy { it.schluessel }
     }

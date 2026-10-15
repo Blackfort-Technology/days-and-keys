@@ -56,6 +56,8 @@
     {"schluessel": "bewegung_art", "frage": "Welche Bewegung?", "feldtyp": "einfach", "optionen": [[1, "Spaziergang"], [2, "Sport"], [3, "anderes"]], "polung": "keine", "bezug": "ereignis"},
     {"schluessel": "bewegung_dauer", "frage": "Dauer", "feldtyp": "dauer", "min": 0, "max": 1440, "einheit": "Minuten", "polung": "keine", "bezug": "ereignis"},
     {"schluessel": "aufgewacht_schlaf", "frage": "Wie habe ich geschlafen?", "feldtyp": "skala", "min": 0, "max": 10, "anker": [[0, "sehr schlecht"], [10, "sehr gut"]], "polung": "hoeher_besser", "bezug": "ereignis"},
+    {"schluessel": "schlaf_dauer", "frage": "Wie lange habe ich geschlafen?", "feldtyp": "dauer", "min": 0, "max": 1440, "einheit": "Minuten", "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "schlaf_guete", "frage": "Wie gut habe ich geschlafen?", "feldtyp": "skala", "min": 1, "max": 5, "anker": [[1, "sehr schlecht"], [3, "mittel"], [5, "sehr gut"]], "polung": "hoeher_besser", "bezug": "ereignis"},
     {"schluessel": "aufgewacht_nachts_wach", "frage": "Wie oft war ich nachts wach?", "feldtyp": "einfach", "optionen": [[0, "nie"], [1, "einmal"], [2, "zweimal"], [3, "dreimal oder öfter"]], "polung": "keine", "bezug": "ereignis"},
     {"schluessel": "termin_puenktlich", "frage": "Wie war ich beim Termin?", "feldtyp": "einfach", "optionen": [[1, "pünktlich"], [2, "knapp"], [3, "zu spät"]], "polung": "keine", "bezug": "ereignis"},
     {"schluessel": "belastung_notiz", "frage": "Was war los? (optional)", "feldtyp": "text", "polung": "keine", "bezug": "ereignis"},
@@ -74,7 +76,7 @@
     ], "bedingungen": [["wirkung_jetzt", "einnahme_mit_wirkung_heute"], ["seit_viele_angefangen", "zwei_stunden_seit_letztem"]]},
     {"schluessel": "tagesabschluss", "name": "Tagesabschluss", "art": "tagesabschluss", "reihenfolge": 1, "gruppen": [
       {"titel": "Stimmung heute Abend", "fragen": ["stimmung", "tag_insgesamt", "tag_abends_erschoepft"]},
-      {"titel": "Faktoren", "hinweis": "jede Angabe lässt sich überspringen", "fragen": ["tag_schlaf_dauer", "tag_schlaf_qualitaet", "tag_bewegung", "tag_bewegung_dauer", "tag_kontakte", "tag_tageslicht", "tag_handyzeit"]},
+      {"titel": "Faktoren", "hinweis": "jede Angabe lässt sich überspringen", "fragen": ["tag_bewegung", "tag_bewegung_dauer", "tag_kontakte", "tag_tageslicht", "tag_handyzeit"]},
       {"titel": "Marker", "fragen": ["tag_marker", "tag_besonders"]}
     ], "bedingungen": []},
     {"schluessel": "wochenrueckblick", "name": "Wochenrückblick", "art": "wochenrueckblick", "reihenfolge": 2, "gruppen": [
@@ -86,7 +88,7 @@
     {"schluessel": "mahlzeit", "name": "Mahlzeit", "art": "ereignis", "reihenfolge": 13, "gruppen": [{"titel": "", "fragen": ["mahlzeit_art", "mahlzeit_ohne_appetit"]}], "bedingungen": []},
     {"schluessel": "bewegung", "name": "Bewegung", "art": "ereignis", "reihenfolge": 14, "gruppen": [{"titel": "", "fragen": ["bewegung_art", "bewegung_dauer"]}], "bedingungen": []},
     {"schluessel": "schlafen_gegangen", "name": "Schlafen gegangen", "art": "ereignis", "reihenfolge": 15, "gruppen": [], "bedingungen": []},
-    {"schluessel": "aufgewacht", "name": "Aufgewacht", "art": "ereignis", "reihenfolge": 16, "gruppen": [{"titel": "", "fragen": ["aufgewacht_schlaf", "aufgewacht_nachts_wach"]}], "bedingungen": []},
+    {"schluessel": "aufgewacht", "name": "Aufgewacht", "art": "ereignis", "reihenfolge": 16, "gruppen": [{"titel": "", "fragen": ["schlaf_dauer", "schlaf_guete", "aufgewacht_nachts_wach"]}], "bedingungen": []},
     {"schluessel": "termin", "name": "Termin", "art": "ereignis", "reihenfolge": 17, "gruppen": [{"titel": "", "fragen": ["termin_puenktlich"]}], "bedingungen": []},
     {"schluessel": "belastung", "name": "Belastung oder Konflikt", "art": "ereignis", "reihenfolge": 18, "gruppen": [{"titel": "", "fragen": ["belastung_notiz"]}], "bedingungen": []},
     {"schluessel": "krise", "name": "Krise", "art": "ereignis", "reihenfolge": 19, "gruppen": [], "bedingungen": []},
