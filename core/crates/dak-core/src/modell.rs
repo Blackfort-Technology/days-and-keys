@@ -391,6 +391,8 @@ pub struct Gruppe {
     pub hinweis: Option<String>,
     pub messdefs: Vec<Id>,
     pub zugeklappt: bool,
+    /// Nur Anzeige (#134): anfangs zugeklappt, auf Tipp aufklappbar. Feld 4, fehlt wenn falsch.
+    pub aufklappbar: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -432,6 +434,7 @@ impl Formular {
                                 .opt(1, g.hinweis.as_deref().map(cbor::text))
                                 .mit(2, ids(&g.messdefs))
                                 .mit(3, Wert::Bool(g.zugeklappt))
+                                .opt(4, g.aufklappbar.then_some(Wert::Bool(true)))
                                 .fertig()
                         })
                         .collect(),
@@ -471,6 +474,11 @@ impl Formular {
                 hinweis: gm.opt_text(1)?,
                 messdefs: ids_aus(gm.wert(2)?)?,
                 zugeklappt: gm.bool(3)?,
+                aufklappbar: match gm.opt_wert(4) {
+                    None => false,
+                    Some(Wert::Bool(b)) => b,
+                    Some(_) => return Err(Fehler::Format("aufklappbar")),
+                },
             });
             gm.ende()?;
         }

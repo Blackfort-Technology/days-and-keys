@@ -125,6 +125,7 @@ pub(crate) fn formular(k: &Kern, schluessel: &str) -> Ergebnis<FormularAnsicht> 
                 titel: g.titel.clone(),
                 hinweis: g.hinweis.clone(),
                 zugeklappt: g.zugeklappt,
+                aufklappbar: g.aufklappbar,
                 fragen,
             });
         }
@@ -273,6 +274,7 @@ pub(crate) fn startseite(k: &Kern) -> Ergebnis<Startseite> {
     };
     Ok(Startseite {
         heute: zeit::datum_text(heute),
+        heute_lang: zeit::datum_lang(heute),
         ereignisse: ereignisse.into_iter().map(knopf).collect(),
         einnahmen_heute,
         bedarf,

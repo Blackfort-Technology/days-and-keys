@@ -98,6 +98,41 @@ pub fn datum_text(t: i64) -> String {
     format!("{d:02}.{m:02}.{j}")
 }
 
+/// Wochentag und Datum, z. B. „Donnerstag, 15. Oktober“ (Startseite, #134).
+pub fn datum_lang(t: i64) -> String {
+    const TAGE: [&str; 7] = [
+        "Montag",
+        "Dienstag",
+        "Mittwoch",
+        "Donnerstag",
+        "Freitag",
+        "Samstag",
+        "Sonntag",
+    ];
+    const MONATE: [&str; 12] = [
+        "Januar",
+        "Februar",
+        "März",
+        "April",
+        "Mai",
+        "Juni",
+        "Juli",
+        "August",
+        "September",
+        "Oktober",
+        "November",
+        "Dezember",
+    ];
+    let (_, m, d) = datum_aus_tag(t);
+    // Tag 0 (1.1.1970) war ein Donnerstag.
+    format!(
+        "{}, {}. {}",
+        TAGE[(t + 3).rem_euclid(7) as usize],
+        d,
+        MONATE[(m - 1) as usize]
+    )
+}
+
 pub fn iso_datum(t: i64) -> String {
     let (j, m, d) = datum_aus_tag(t);
     format!("{j:04}-{m:02}-{d:02}")
@@ -110,6 +145,19 @@ pub fn uhrzeit_text(min: i32) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn datum_lang_mit_wochentag() {
+        assert_eq!(
+            datum_lang(tag_aus_datum(2026, 10, 15)),
+            "Donnerstag, 15. Oktober"
+        );
+        assert_eq!(datum_lang(tag_aus_datum(2026, 3, 1)), "Sonntag, 1. März");
+        assert_eq!(
+            datum_lang(tag_aus_datum(1970, 1, 1)),
+            "Donnerstag, 1. Januar"
+        );
+    }
 
     fn zp(utc_ms: i64, versatz: i32) -> Zeitpunkt {
         Zeitpunkt {
