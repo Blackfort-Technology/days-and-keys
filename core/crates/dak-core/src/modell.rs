@@ -955,6 +955,9 @@ pub struct Einstellungen {
     pub ausgeblendet: Vec<Id>,
     /// Selbst gewählte Bezeichnungen der eigenen Tagesmarker (Optionen 11 bis 13), nur im Bund.
     pub eigene_marker: Vec<String>,
+    /// Plan für Tiefs (#131). Die Klartextkopie für die Hilfe ohne Entsperren liegt in den
+    /// lokalen Metadaten; diese Kopie im Bund kommt mit in die Sicherung.
+    pub krisenplan: Option<String>,
 }
 
 impl Einstellungen {
@@ -981,6 +984,7 @@ impl Einstellungen {
             krisenregel: None,
             ausgeblendet: Vec::new(),
             eigene_marker: Vec::new(),
+            krisenplan: None,
         }
     }
 
@@ -1033,6 +1037,7 @@ impl Einstellungen {
                 10,
                 Wert::Feld(self.eigene_marker.iter().map(|t| cbor::text(t)).collect()),
             )
+            .opt(11, self.krisenplan.as_deref().map(cbor::text))
             .fertig()
     }
 
@@ -1087,6 +1092,7 @@ impl Einstellungen {
             .into_iter()
             .map(cbor::als_text)
             .collect::<Ergebnis<Vec<_>>>()?;
+        let krisenplan = m.opt_text(11)?;
         m.ende()?;
         Ok(Einstellungen {
             tageswechsel_min,
@@ -1097,10 +1103,14 @@ impl Einstellungen {
             krisenregel,
             ausgeblendet,
             eigene_marker,
+            krisenplan,
         })
     }
 
     pub fn pruefen(&self) -> Ergebnis<()> {
+        if self.krisenplan.as_ref().is_some_and(|t| t.len() > 8000) {
+            return Err(Fehler::Eingabe("Krisenplan zu lang"));
+        }
         if !(0..=12 * 60).contains(&self.tageswechsel_min) {
             return Err(Fehler::Eingabe("Tageswechsel zwischen 0 und 12 Uhr"));
         }

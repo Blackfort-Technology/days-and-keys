@@ -181,7 +181,11 @@ letzten Status, 2 Tag, 3 Woche, 4 Ereignis), `13 klasse`, `14 kam_nicht_vor`, `1
 `5 Erinnerungen [{0 art (1 Status, 2 Tagesabschluss, 3 Wochenrückblick), 1 uhrzeit_min,
 2 wochentage, 3 aktiv}]`, `6 max_benachrichtigungen` (Standard 8), `7 Vertrauenspersonen
 [{0 name, 1 telefon}]`, `8 Krisenregel {0 tage, 1 unter}`, `9 ausgeblendete messdef_ids`,
-`10 Namen der eigenen Marker` (höchstens drei).
+`10 Namen der eigenen Marker` (höchstens drei), `11 krisenplan` (Text, höchstens 8000 Byte,
+fehlt ohne Plan). Feld 11 ist mit #131 dazugekommen; ein Bund ohne es bleibt gültig. Die
+Klartextkopie für die Hilfe ohne Entsperren liegt in den lokalen Metadaten und wird beim
+Entsperren aus Feld 11 hergestellt; ein Plan, der nur dort steht (vor #131), wandert dabei einmalig
+in den Bund.
 
 **Entwurf** (`typ` 17), an `WS_g.pub` versiegelt nach `sodium_pad(…, 256)`: `3 entwurf_id`,
 `4 formular_id`, `5 erstellt (Zeitpunkt)`, `6 block_offen`, `7 Antworten`. Älter als zwölf

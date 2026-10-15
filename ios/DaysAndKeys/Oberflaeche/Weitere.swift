@@ -188,7 +188,7 @@ struct EinstellungenSeite: View {
                         }))
                     }
                 }
-                Section(header: Text("Mein Plan für Tiefs"), footer: Text("Über die Hilfe auch ohne Entsperren lesbar und deshalb nicht verschlüsselt.")) {
+                Section(header: Text("Mein Plan für Tiefs"), footer: Text("Über die Hilfe auch ohne Entsperren lesbar und dafür unverschlüsselt auf dem Gerät. In die Sicherung kommt er verschlüsselt mit.")) {
                     TextField("Frühwarnzeichen, was hilft, wen ich anrufe", text: $plan, axis: .vertical).lineLimit(3...8)
                     Button("Plan speichern") { if z.versuch({ try z.kern.krisenplanSetzen(text: plan.isEmpty ? nil : plan) }) != nil { z.hinweis = "Plan gespeichert" } }
                     Picker("Plan zeigen nach", selection: Binding(get: { e!.krisenregelTage ?? 0 }, set: { t in e!.krisenregelTage = t == 0 ? nil : t; e!.krisenregelUnter = t == 0 ? nil : (e!.krisenregelUnter ?? -2) })) {

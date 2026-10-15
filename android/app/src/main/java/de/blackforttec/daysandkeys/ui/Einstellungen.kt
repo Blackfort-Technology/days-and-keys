@@ -106,7 +106,7 @@ fun EinstellungenSeite(z: AppZustand) {
         Abschnitt("Eigene Tagesmarker", "Bis zu drei Marker mit selbst gewählten Namen, z. B. für besondere Tage. Die Namen liegen nur verschlüsselt auf dem Gerät.") {
             for (i in 0 until 3) OutlinedTextField(marker[i], { marker[i] = it.take(40) }, label = { Text("Marker ${i + 1}") }, singleLine = true, modifier = Modifier.fillMaxWidth())
         }
-        Abschnitt("Mein Plan für Tiefs", "Frühwarnzeichen, was hilft, wen ich anrufe. Dieser Text ist über die Hilfe auch ohne Entsperren lesbar und deshalb nicht verschlüsselt.") {
+        Abschnitt("Mein Plan für Tiefs", "Frühwarnzeichen, was hilft, wen ich anrufe. Dieser Text ist über die Hilfe auch ohne Entsperren lesbar und liegt dafür unverschlüsselt auf dem Gerät. In die Sicherung kommt er verschlüsselt mit.") {
             OutlinedTextField(plan, { plan = it.take(8000) }, minLines = 4, modifier = Modifier.fillMaxWidth())
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = { if (z.versuch { z.kern.krisenplanSetzen(plan.ifBlank { null }) } != null) z.meldung = "Plan gespeichert" }) { Text("Plan speichern") }

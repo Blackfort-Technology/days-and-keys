@@ -352,6 +352,54 @@ fn sicherung_und_wiederherstellung_auf_zweitem_geraet() {
 }
 
 #[test]
+fn plan_fuer_tiefs_kommt_mit_der_sicherung() {
+    // #131: Der Plan lag nur unverschlüsselt in den Metadaten und fehlte nach der Wiederherstellung.
+    let uhr = TestUhr::neu(20_200, 600);
+    let mut a = einrichten(21, &uhr);
+    let plan = "Erfundener Plan: spazieren gehen, Musik anmachen".to_string();
+    a.kern.krisenplan_setzen(Some(plan.clone())).unwrap();
+    // Einstellungen speichern lässt den Plan stehen, auch wenn sie ihn nicht mitbringen.
+    let mut e = a.kern.sitzung().unwrap().bund.einstellungen.clone();
+    e.krisenplan = None;
+    a.kern.einstellungen_setzen(e).unwrap();
+    assert_eq!(a.kern.krisenplan().unwrap().as_deref(), Some(plan.as_str()));
+    status(&mut a, 1);
+    let datei = sichern(&mut a);
+
+    let mut b = neues_geraet(22, &uhr);
+    b.wiederherstellung_beginnen(&a.woerter).unwrap();
+    b.wiederherstellen(std::slice::from_ref(&datei), &[], 0)
+        .unwrap();
+    b.vorbereitetes_abschliessen(None, None).unwrap();
+    assert_eq!(
+        b.krisenplan().unwrap().as_deref(),
+        Some(plan.as_str()),
+        "Plan ist nach der Wiederherstellung da"
+    );
+    b.sperren();
+    assert_eq!(
+        b.krisenplan().unwrap().as_deref(),
+        Some(plan.as_str()),
+        "und gesperrt für die Hilfe lesbar"
+    );
+
+    // Löschen entfernt beide Kopien.
+    a.kern.krisenplan_setzen(None).unwrap();
+    assert_eq!(a.kern.krisenplan().unwrap(), None);
+    assert_eq!(
+        a.kern.sitzung().unwrap().bund.einstellungen.krisenplan,
+        None
+    );
+    a.kern.sperren();
+    a.kern.entsperren(a.kk.clone(), a.kk_h.clone()).unwrap();
+    assert_eq!(
+        a.kern.krisenplan().unwrap(),
+        None,
+        "kommt beim Entsperren nicht zurück"
+    );
+}
+
+#[test]
 fn ersetztes_geraet_schreibt_weiter_wird_erkannt() {
     let uhr = TestUhr::neu(20_200, 600);
     let mut a = einrichten(7, &uhr);

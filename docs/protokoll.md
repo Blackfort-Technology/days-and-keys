@@ -392,8 +392,11 @@ nicht (verloren, defekt), sorgt die Rotation dafür, dass es nichts Neues lesen 
 - **Hilfe** ist eine native Ansicht, auch **ohne Entsperren** erreichbar (Sperrbildschirm der App):
   Notruf 112, TelefonSeelsorge 0800 111 0 111, 0800 111 0 222 und 116 123, Nummer gegen Kummer
   116 111, ärztlicher Bereitschaftsdienst 116 117. Auf Wunsch zeigt sie den eigenen Krisenplan
-  („Mein Plan für Tiefs", #105); er ist dann ohne Entsperren lesbar und deshalb unverschlüsselt
-  gespeichert, worauf die App beim Schreiben hinweist. Eigene Vertrauenspersonen nur entsperrt.
+  („Mein Plan für Tiefs", #105); er ist dann ohne Entsperren lesbar und deshalb zusätzlich
+  unverschlüsselt auf dem Gerät gespeichert, worauf die App beim Schreiben hinweist. Maßgeblich ist
+  die Kopie in den Einstellungen des Bundes; sie kommt mit in die Sicherung, und nach dem Entsperren
+  oder einer Wiederherstellung stellt die App daraus die Klartextkopie her (#131). Eigene
+  Vertrauenspersonen nur entsperrt.
   Die App benachrichtigt niemanden (#71).
 - Fremde oder wiederhergestellte Zeichenketten nur als Text; Prüfung in `dak-core`.
 
