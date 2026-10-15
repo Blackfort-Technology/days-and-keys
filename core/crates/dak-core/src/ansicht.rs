@@ -759,6 +759,8 @@ pub(crate) fn einstellungen_aus(e: EinstellungenDaten) -> Ergebnis<Einstellungen
             .map(|t| t.trim().to_owned())
             .filter(|t| !t.is_empty())
             .collect(),
+        // Der Plan hat einen eigenen Weg (krisenplan_setzen); einstellungen_setzen behält ihn.
+        krisenplan: None,
     })
 }
 

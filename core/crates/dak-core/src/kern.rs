@@ -446,7 +446,7 @@ impl Kern {
             eintraege,
         });
         self.entwuerfe_aufraeumen()?;
-        Ok(())
+        self.krisenplan_abgleichen(true)
     }
 
     // -----------------------------------------------------------------------------------------
@@ -467,13 +467,12 @@ impl Kern {
         Ok(())
     }
 
-    pub fn einstellungen_setzen(&mut self, e: Einstellungen) -> Ergebnis<()> {
+    pub fn einstellungen_setzen(&mut self, mut e: Einstellungen) -> Ergebnis<()> {
         e.pruefen()?;
-        self.sitzung
-            .as_mut()
-            .ok_or(Fehler::Gesperrt)?
-            .bund
-            .einstellungen = e;
+        let s = self.sitzung.as_mut().ok_or(Fehler::Gesperrt)?;
+        // Der Plan für Tiefs wird nur über krisenplan_setzen geändert (#131).
+        e.krisenplan = s.bund.einstellungen.krisenplan.take();
+        s.bund.einstellungen = e;
         self.bund_speichern()
     }
 
@@ -494,17 +493,45 @@ impl Kern {
         Ok(p.id)
     }
 
-    /// Krisenplan (#105): auf Wunsch der Person ohne Entsperren lesbar, deshalb unverschlüsselt.
+    /// Krisenplan (#105): auf Wunsch der Person ohne Entsperren lesbar, deshalb zusätzlich
+    /// unverschlüsselt in den Metadaten. Die Kopie im Bund kommt mit in die Sicherung (#131).
     pub fn krisenplan_setzen(&mut self, text: Option<String>) -> Ergebnis<()> {
-        self.sitzung()?;
-        match text {
-            Some(t) if !t.trim().is_empty() => {
-                if t.len() > 8000 {
-                    return Err(Fehler::Eingabe("Krisenplan zu lang"));
-                }
-                speicher::meta_setzen(&self.db, "krisenplan", t.as_bytes())
+        let text = text.filter(|t| !t.trim().is_empty());
+        if text.as_ref().is_some_and(|t| t.len() > 8000) {
+            return Err(Fehler::Eingabe("Krisenplan zu lang"));
+        }
+        self.sitzung
+            .as_mut()
+            .ok_or(Fehler::Gesperrt)?
+            .bund
+            .einstellungen
+            .krisenplan = text;
+        self.bund_speichern()?;
+        self.krisenplan_abgleichen(false)
+    }
+
+    /// Gleicht die Klartextkopie für die Hilfe mit dem Bund ab; der Bund ist maßgeblich.
+    /// Beim Entsperren (`altbestand`) wandert ein Plan aus der Zeit vor #131, der nur in den
+    /// Metadaten steht, einmalig in den Bund. Nach dem Löschen über krisenplan_setzen geht die
+    /// Klartextkopie mit.
+    fn krisenplan_abgleichen(&mut self, altbestand: bool) -> Ergebnis<()> {
+        let im_bund = self.sitzung()?.bund.einstellungen.krisenplan.clone();
+        let lokal = self.krisenplan()?;
+        match (im_bund, lokal) {
+            (Some(b), l) if l.as_deref() != Some(b.as_str()) => {
+                speicher::meta_setzen(&self.db, "krisenplan", b.as_bytes())
             }
-            _ => speicher::meta_loeschen(&self.db, "krisenplan"),
+            (None, Some(l)) if altbestand => {
+                self.sitzung
+                    .as_mut()
+                    .ok_or(Fehler::Gesperrt)?
+                    .bund
+                    .einstellungen
+                    .krisenplan = Some(l);
+                self.bund_speichern()
+            }
+            (None, Some(_)) => speicher::meta_loeschen(&self.db, "krisenplan"),
+            _ => Ok(()),
         }
     }
 
