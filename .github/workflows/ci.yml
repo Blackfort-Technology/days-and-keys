@@ -159,6 +159,12 @@ jobs:
           apk=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
           "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump permissions "$apk" | tee berechtigungen.txt
           if grep -q "android.permission.INTERNET" berechtigungen.txt; then echo "APK verlangt INTERNET"; exit 1; fi
+      - name: Nur freigegebene Komponenten exportiert (#116)
+        run: |
+          if python3 android/pruefung/exportierte_komponenten.py android/pruefung/negativ.xml; then
+            echo "Gegenprobe: die Negativ-Fixture muss scheitern"; exit 1
+          fi
+          python3 android/pruefung/exportierte_komponenten.py android/app/build/intermediates/merged_manifests/release/processReleaseManifest/AndroidManifest.xml
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: apk-unsigniert
