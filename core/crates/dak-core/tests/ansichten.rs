@@ -106,7 +106,11 @@ fn startseite_zuletzt_meint_denselben_status_wie_der_zaehler() {
     tagesabschluss(&k, 2);
     let s = k.startseite().unwrap();
     assert_eq!(s.status_heute, 1);
-    assert_eq!(s.letzter_status_ms, Some(status_ms), "zuletzt ist der Status von 08:00");
+    assert_eq!(
+        s.letzter_status_ms,
+        Some(status_ms),
+        "zuletzt ist der Status von 08:00"
+    );
 }
 
 #[test]
