@@ -306,6 +306,10 @@ pub struct EintragZeile {
     pub datum: String,
     pub uhrzeit: String,
     pub zusammenfassung: String,
+    /// Schlüssel des Formulars, damit die Oberfläche nicht am Anzeigenamen hängt (#135).
+    pub schluessel: String,
+    /// Tageskopf der Liste: „Heute“, „Gestern“ oder „Mittwoch, 14. Oktober“ (#135).
+    pub tag_text: String,
 }
 
 #[derive(Debug, Clone)]
@@ -431,7 +435,12 @@ pub struct Verlauf {
     pub gleitend28: Vec<Mittel>,
     pub marker: Vec<Marker>,
     pub einnahmen_ms: Vec<i64>,
+    /// Kurz: „An 13 von 28 Tagen gibt es einen Wert.“
     pub hinweis: String,
+    /// Wie das Diagramm zu lesen ist (Tageswert, Mindesttage), auf Nachfrage (#135).
+    pub erklaerung: String,
+    /// Grundniveau mit und ohne Faktor, nur Faktoren mit Angaben; Auswahl durch den Kern (#135).
+    pub vergleiche: Vec<Faktorvergleich>,
 }
 
 #[derive(Debug, Clone)]

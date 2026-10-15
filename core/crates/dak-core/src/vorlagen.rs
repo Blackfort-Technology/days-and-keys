@@ -56,6 +56,8 @@ struct MessdefQ {
     kam_nicht_vor: bool,
     einheit: Option<String>,
     hinweis: Option<String>,
+    #[serde(default)]
+    kurz: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -159,6 +161,7 @@ pub fn standard() -> Ergebnis<Vorlage> {
             mit_staerke: q.mit_staerke,
             einheit: q.einheit,
             hinweis: q.hinweis,
+            kurz: q.kurz,
         });
     }
     let mut formulare = Vec::new();

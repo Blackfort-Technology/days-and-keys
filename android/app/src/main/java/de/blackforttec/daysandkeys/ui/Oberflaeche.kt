@@ -44,6 +44,7 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
         val innen = s !is Seite.Sperre && s !is Seite.Einrichtung && s !is Seite.Wiederherstellung
         fun zurueckZiel(): Seite = when (s) {
             is Seite.Medikament -> Seite.Medikamente
+            is Seite.Eintrag -> Seite.Eintraege
             is Seite.Hilfe -> when {
                 z.entsperrt() -> Seite.Start
                 z.kern.lage() is KernLage.NichtEingerichtet -> Seite.Einrichtung
@@ -52,7 +53,13 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
             else -> Seite.Start
         }
         BackHandler(enabled = innen && s != Seite.Start) { z.zu(zurueckZiel()) }
-        val formularName = remember(s) { (s as? Seite.Formular)?.let { f -> z.versuch { z.kern.formular(f.schluessel) }?.name } }
+        val formularName = remember(s) {
+            when (s) {
+                is Seite.Formular -> z.versuch { z.kern.formular(s.schluessel) }?.name
+                is Seite.Eintrag -> z.versuch { z.kern.eintrag(s.id) }?.zeile?.name
+                else -> null
+            }
+        }
         Scaffold(
             snackbarHost = { SnackbarHost(snack) },
             containerColor = if (istFormular(s)) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background,
@@ -61,6 +68,7 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
                     val titel = when (s) {
                         Seite.Start -> "Heute"
                         Seite.Verlauf, Seite.Eintraege -> "Verlauf"
+                        is Seite.Eintrag -> formularName ?: "Eintrag"
                         Seite.Medikamente -> "Medikamente"
                         is Seite.Medikament -> if (s.p == null) "Neues Präparat" else "Präparat bearbeiten"
                         Seite.Einstellungen -> "Mehr"
@@ -78,7 +86,7 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
                         navigationIcon = {
                             when {
                                 istFormular(s) -> IconButton(onClick = { z.zu(zurueckZiel()) }) { Symbol(R.drawable.sym_close, "Schließen") }
-                                s == Seite.Hilfe -> IconButton(onClick = { z.zu(zurueckZiel()) }) { Symbol(R.drawable.sym_arrow_back, "Zurück") }
+                                s == Seite.Hilfe || s is Seite.Eintrag -> IconButton(onClick = { z.zu(zurueckZiel()) }) { Symbol(R.drawable.sym_arrow_back, "Zurück") }
                             }
                         },
                         actions = {
@@ -102,6 +110,7 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
                     is Seite.Formular -> FormularSeite(z, s)
                     Seite.Verlauf -> VerlaufReiter(z, eintraege = false)
                     Seite.Eintraege -> VerlaufReiter(z, eintraege = true)
+                    is Seite.Eintrag -> EintragSeite(z, s.id)
                     Seite.Medikamente -> MedikamenteSeite(z)
                     is Seite.Medikament -> MedikamentSeite(z, s.p)
                     Seite.Einstellungen -> EinstellungenSeite(z)
@@ -125,7 +134,7 @@ private fun Leiste(s: Seite, zu: (Seite) -> Unit) {
     val gross = LocalDensity.current.fontScale >= 1.5f
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         for ((titel, ziel, symbol) in eintraege) {
-            val gewaehlt = s == ziel || (ziel == Seite.Medikamente && s is Seite.Medikament) || (ziel == Seite.Verlauf && s == Seite.Eintraege)
+            val gewaehlt = s == ziel || (ziel == Seite.Medikamente && s is Seite.Medikament) || (ziel == Seite.Verlauf && (s == Seite.Eintraege || s is Seite.Eintrag))
             NavigationBarItem(
                 selected = gewaehlt,
                 onClick = { zu(ziel) },

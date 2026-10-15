@@ -2196,10 +2196,24 @@ public struct EintragZeile: Equatable, Hashable {
     public var datum: String
     public var uhrzeit: String
     public var zusammenfassung: String
+    /**
+     * Schlüssel des Formulars, damit die Oberfläche nicht am Anzeigenamen hängt (#135).
+     */
+    public var schluessel: String
+    /**
+     * Tageskopf der Liste: „Heute“, „Gestern“ oder „Mittwoch, 14. Oktober“ (#135).
+     */
+    public var tagText: String
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(datensatzId: String, istEreignis: Bool, formularId: String, name: String, utcMs: Int64, lebenstag: Int64, datum: String, uhrzeit: String, zusammenfassung: String) {
+    public init(datensatzId: String, istEreignis: Bool, formularId: String, name: String, utcMs: Int64, lebenstag: Int64, datum: String, uhrzeit: String, zusammenfassung: String, 
+        /**
+         * Schlüssel des Formulars, damit die Oberfläche nicht am Anzeigenamen hängt (#135).
+         */schluessel: String, 
+        /**
+         * Tageskopf der Liste: „Heute“, „Gestern“ oder „Mittwoch, 14. Oktober“ (#135).
+         */tagText: String) {
         self.datensatzId = datensatzId
         self.istEreignis = istEreignis
         self.formularId = formularId
@@ -2209,6 +2223,8 @@ public struct EintragZeile: Equatable, Hashable {
         self.datum = datum
         self.uhrzeit = uhrzeit
         self.zusammenfassung = zusammenfassung
+        self.schluessel = schluessel
+        self.tagText = tagText
     }
 
     
@@ -2235,7 +2251,9 @@ public struct FfiConverterTypeEintragZeile: FfiConverterRustBuffer {
                 lebenstag: FfiConverterInt64.read(from: &buf), 
                 datum: FfiConverterString.read(from: &buf), 
                 uhrzeit: FfiConverterString.read(from: &buf), 
-                zusammenfassung: FfiConverterString.read(from: &buf)
+                zusammenfassung: FfiConverterString.read(from: &buf), 
+                schluessel: FfiConverterString.read(from: &buf), 
+                tagText: FfiConverterString.read(from: &buf)
         )
     }
 
@@ -2249,6 +2267,8 @@ public struct FfiConverterTypeEintragZeile: FfiConverterRustBuffer {
         FfiConverterString.write(value.datum, into: &buf)
         FfiConverterString.write(value.uhrzeit, into: &buf)
         FfiConverterString.write(value.zusammenfassung, into: &buf)
+        FfiConverterString.write(value.schluessel, into: &buf)
+        FfiConverterString.write(value.tagText, into: &buf)
     }
 }
 
@@ -3820,14 +3840,34 @@ public struct Verlauf: Equatable, Hashable {
     public var gleitend28: [Mittel]
     public var marker: [Marker]
     public var einnahmenMs: [Int64]
+    /**
+     * Kurz: „An 13 von 28 Tagen gibt es einen Wert.“
+     */
     public var hinweis: String
+    /**
+     * Wie das Diagramm zu lesen ist (Tageswert, Mindesttage), auf Nachfrage (#135).
+     */
+    public var erklaerung: String
+    /**
+     * Grundniveau mit und ohne Faktor, nur Faktoren mit Angaben; Auswahl durch den Kern (#135).
+     */
+    public var vergleiche: [Faktorvergleich]
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
     public init(messdefId: String, frage: String, min: Int64?, max: Int64?, anker: [Anker], richtung: Richtung, 
         /**
          * Jeder einzelne Eintrag als Punkt, auch mehrere am Tag.
-         */punkte: [Punkt], tage: [Tageswert], tageGesamt: UInt32, tageMitWert: UInt32, gleitend7: [Mittel], gleitend28: [Mittel], marker: [Marker], einnahmenMs: [Int64], hinweis: String) {
+         */punkte: [Punkt], tage: [Tageswert], tageGesamt: UInt32, tageMitWert: UInt32, gleitend7: [Mittel], gleitend28: [Mittel], marker: [Marker], einnahmenMs: [Int64], 
+        /**
+         * Kurz: „An 13 von 28 Tagen gibt es einen Wert.“
+         */hinweis: String, 
+        /**
+         * Wie das Diagramm zu lesen ist (Tageswert, Mindesttage), auf Nachfrage (#135).
+         */erklaerung: String, 
+        /**
+         * Grundniveau mit und ohne Faktor, nur Faktoren mit Angaben; Auswahl durch den Kern (#135).
+         */vergleiche: [Faktorvergleich]) {
         self.messdefId = messdefId
         self.frage = frage
         self.min = min
@@ -3843,6 +3883,8 @@ public struct Verlauf: Equatable, Hashable {
         self.marker = marker
         self.einnahmenMs = einnahmenMs
         self.hinweis = hinweis
+        self.erklaerung = erklaerung
+        self.vergleiche = vergleiche
     }
 
     
@@ -3875,7 +3917,9 @@ public struct FfiConverterTypeVerlauf: FfiConverterRustBuffer {
                 gleitend28: FfiConverterSequenceTypeMittel.read(from: &buf), 
                 marker: FfiConverterSequenceTypeMarker.read(from: &buf), 
                 einnahmenMs: FfiConverterSequenceInt64.read(from: &buf), 
-                hinweis: FfiConverterString.read(from: &buf)
+                hinweis: FfiConverterString.read(from: &buf), 
+                erklaerung: FfiConverterString.read(from: &buf), 
+                vergleiche: FfiConverterSequenceTypeFaktorvergleich.read(from: &buf)
         )
     }
 
@@ -3895,6 +3939,8 @@ public struct FfiConverterTypeVerlauf: FfiConverterRustBuffer {
         FfiConverterSequenceTypeMarker.write(value.marker, into: &buf)
         FfiConverterSequenceInt64.write(value.einnahmenMs, into: &buf)
         FfiConverterString.write(value.hinweis, into: &buf)
+        FfiConverterString.write(value.erklaerung, into: &buf)
+        FfiConverterSequenceTypeFaktorvergleich.write(value.vergleiche, into: &buf)
     }
 }
 
@@ -5244,6 +5290,31 @@ fileprivate struct FfiConverterSequenceTypeErinnerungDaten: FfiConverterRustBuff
         seq.reserveCapacity(Int(len))
         for _ in 0 ..< len {
             seq.append(try FfiConverterTypeErinnerungDaten.read(from: &buf))
+        }
+        return seq
+    }
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+fileprivate struct FfiConverterSequenceTypeFaktorvergleich: FfiConverterRustBuffer {
+    typealias SwiftType = [Faktorvergleich]
+
+    public static func write(_ value: [Faktorvergleich], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterTypeFaktorvergleich.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [Faktorvergleich] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [Faktorvergleich]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterTypeFaktorvergleich.read(from: &buf))
         }
         return seq
     }

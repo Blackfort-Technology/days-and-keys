@@ -260,6 +260,57 @@ fn gruppen_aufklappbar_aus_der_vorlage() {
 }
 
 #[test]
+fn eintragsliste_kurz_lesbar_und_mit_tageskopf() {
+    // #135: Kurznamen statt ausgeschriebener Fragen, Dauer lesbar, Tagesköpfe, Schlüssel statt Name.
+    let t0 = tag_aus_datum(2026, 10, 6);
+    let (k, uhr) = kern(10, t0, 7 * 60 + 30);
+    let f = k.formular("aufgewacht".into()).unwrap();
+    let q = |schl: &str| {
+        f.gruppen
+            .iter()
+            .flat_map(|g| g.fragen.iter())
+            .find(|q| q.schluessel == schl)
+            .unwrap()
+            .messdef_id
+            .clone()
+    };
+    k.ereignis_erfassen(EreignisEingabe {
+        formular_id: f.id.clone(),
+        zeitpunkt: None,
+        antworten: vec![AntwortEingabe {
+            messdef_id: q("schlaf_dauer"),
+            zustand: AntwortZustand::Beantwortet,
+            zahl: Some(7 * 60 + 20),
+            text: None,
+            auswahl: vec![],
+            aktiv_gesetzt: true,
+        }],
+        praeparat_id: None,
+        korrektur_von: None,
+    })
+    .unwrap();
+    stimmung(&k, 2);
+    let heute = k.eintraege(t0, t0).unwrap();
+    let st = heute
+        .iter()
+        .find(|z| z.schluessel == "status_jetzt")
+        .unwrap();
+    assert_eq!(st.name, "Status");
+    assert_eq!(st.zusammenfassung, "Stimmung +2");
+    assert_eq!(st.tag_text, "Heute");
+    let sl = heute.iter().find(|z| z.schluessel == "aufgewacht").unwrap();
+    assert_eq!(sl.zusammenfassung, "Schlaf 7 Std. 20 Min.");
+    uhr.0.fetch_add(24 * 3_600_000, Ordering::SeqCst);
+    assert_eq!(k.eintraege(t0, t0).unwrap()[0].tag_text, "Gestern");
+    uhr.0.fetch_add(24 * 3_600_000, Ordering::SeqCst);
+    assert_eq!(
+        k.eintraege(t0, t0).unwrap()[0].tag_text,
+        "Dienstag, 6. Oktober"
+    );
+    assert_eq!(k.formular("einnahme".into()).unwrap().name, "Einnahme");
+}
+
+#[test]
 fn verlauf_zeigt_jeden_eintrag_und_laesst_luecken() {
     let t0 = tag_aus_datum(2026, 9, 1);
     let (k, uhr) = kern(1, t0, 8 * 60);

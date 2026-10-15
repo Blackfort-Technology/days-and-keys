@@ -483,11 +483,19 @@ pub(crate) fn verlauf(k: &Kern, schluessel: &str, von: i64, bis: i64) -> Ergebni
         tage: tage_v,
         marker,
         einnahmen_ms,
-        hinweis: format!(
-            "Jeder Punkt ist ein Eintrag. Der Tageswert ist der letzte Eintrag des Tages. Mittelwerte nur bei genügend Tagen (7 Tage: mindestens 4, 28 Tage: mindestens 14); Lücken bleiben Lücken. An {} von {} Tagen gibt es einen Wert.",
-            tw.len(),
-            gesamt
-        ),
+        // Kurz über dem Diagramm, die Methode auf Nachfrage (#135, Vorgabe 4.7).
+        hinweis: format!("An {} von {} Tagen gibt es einen Wert.", tw.len(), gesamt),
+        erklaerung: "Jeder Punkt ist ein Eintrag. Der Tageswert ist der letzte Eintrag des Tages. Mittelwerte nur bei genügend Tagen (7 Tage: mindestens 4, 28 Tage: mindestens 14); Lücken bleiben Lücken.".into(),
+        // Welche Faktoren verglichen werden, entscheidet der Kern, nicht die Oberfläche (AE-06).
+        vergleiche: if md.schluessel == STIMMUNG {
+            ["tag_bewegung", "tag_tageslicht"]
+                .iter()
+                .filter_map(|f| faktorvergleich(k, f, von, bis).ok())
+                .filter(|f| f.tage_mit + f.tage_ohne > 0)
+                .collect()
+        } else {
+            Vec::new()
+        },
     })
 }
 
@@ -528,7 +536,7 @@ pub(crate) fn faktorvergleich(
     }
     let m = |v: &Vec<i64>| (!v.is_empty()).then(|| v.iter().sum::<i64>() as f64 / v.len() as f64);
     Ok(Faktorvergleich {
-        faktor: f.frage.clone(),
+        faktor: f.kurz.clone().unwrap_or_else(|| f.frage.clone()),
         tage_mit: mit.len() as u32,
         mittel_mit: m(&mit),
         tage_ohne: ohne.len() as u32,
@@ -538,15 +546,33 @@ pub(crate) fn faktorvergleich(
 }
 
 /// Antworten als „Frage: Wert“. `voll` zeigt Freitexte im Wortlaut (Detail, #129), sonst nur „Text“.
+/// „7 Std. 20 Min.“ für Dauern in Minuten (#135).
+fn dauer_text(min: i64) -> String {
+    match (min / 60, min % 60) {
+        (0, m) => format!("{m} Min."),
+        (h, 0) => format!("{h} Std."),
+        (h, m) => format!("{h} Std. {m} Min."),
+    }
+}
+
+/// Antworten als Text. `voll` (Detail, #129): volle Frage, Freitexte im Wortlaut, „Frage: Wert“.
+/// Sonst (Liste, #135): Kurzname und Wert („Stimmung +2“), Freitexte nur mit ihrem Namen.
 fn antwort_texte(s: &Sitzung, a: &[Antwort], voll: bool) -> Vec<String> {
     a.iter()
         .filter(|x| x.zustand == Zustand::Beantwortet)
         .filter_map(|x| {
             let md = s.messdef(&x.messdef)?;
             let w = x.wert.as_ref();
+            let name = if voll {
+                md.frage.trim_end_matches('?').to_owned()
+            } else {
+                md.kurz
+                    .clone()
+                    .unwrap_or_else(|| md.frage.trim_end_matches('?').to_owned())
+            };
             let wert = match md.feldtyp {
                 Feldtyp::Text if voll => w.and_then(|w| w.text.clone()).unwrap_or_default(),
-                Feldtyp::Text => "Text".to_owned(),
+                Feldtyp::Text => return Some(name),
                 Feldtyp::Einfachauswahl | Feldtyp::Mehrfachauswahl => optionen(s, md)
                     .iter()
                     .filter(|o| w.is_some_and(|w| w.auswahl.iter().any(|(id, _)| *id == o.id)))
@@ -559,13 +585,27 @@ fn antwort_texte(s: &Sitzung, a: &[Antwort], voll: bool) -> Vec<String> {
                     "nein"
                 }
                 .to_owned(),
+                Feldtyp::Dauer => w.and_then(|w| w.zahl).map(dauer_text).unwrap_or_default(),
+                Feldtyp::Stufen => w
+                    .and_then(|w| w.zahl)
+                    .and_then(|z| {
+                        md.anker
+                            .iter()
+                            .find(|(v, _)| *v == z)
+                            .map(|(_, t)| t.clone())
+                    })
+                    .unwrap_or_default(),
                 _ => match (md.polung, w.and_then(|w| w.zahl)) {
                     (Polung::Bipolar, Some(z)) if z > 0 => format!("+{z}"),
                     (_, Some(z)) => z.to_string(),
                     _ => String::new(),
                 },
             };
-            Some(format!("{}: {}", md.frage.trim_end_matches('?'), wert))
+            Some(if voll {
+                format!("{name}: {wert}")
+            } else {
+                format!("{name} {wert}")
+            })
         })
         .collect()
 }
@@ -586,7 +626,15 @@ fn zusammenfassung(s: &Sitzung, a: &[Antwort], praeparat: Option<&Id>) -> String
     teile.join(" · ")
 }
 
-fn zeile(s: &Sitzung, e: &crate::kern::Eintrag) -> EintragZeile {
+fn tag_text(t: i64, heute: i64) -> String {
+    match heute - t {
+        0 => "Heute".into(),
+        1 => "Gestern".into(),
+        _ => zeit::datum_lang(t),
+    }
+}
+
+fn zeile(s: &Sitzung, e: &crate::kern::Eintrag, heute: i64) -> EintragZeile {
     let (ist_ereignis, formular, antworten, praeparat) = match &e.objekt {
         Objekt::Status(st) => (false, st.formular, &st.antworten, None),
         Objekt::Ereignis(ev) => (true, ev.formular, &ev.antworten, ev.praeparat.as_ref()),
@@ -605,16 +653,22 @@ fn zeile(s: &Sitzung, e: &crate::kern::Eintrag) -> EintragZeile {
         datum: zeit::datum_text(e.objekt.lebenstag()),
         uhrzeit: zeit::uhrzeit_text(z.uhrzeit_min()),
         zusammenfassung: zusammenfassung(s, antworten, praeparat),
+        schluessel: s
+            .formular(&formular)
+            .map(|f| f.schluessel.clone())
+            .unwrap_or_default(),
+        tag_text: tag_text(e.objekt.lebenstag(), heute),
     }
 }
 
 pub(crate) fn eintraege(k: &Kern, von: i64, bis: i64) -> Ergebnis<Vec<EintragZeile>> {
     let s = k.sitzung()?;
+    let heute = k.jetzt().lebenstag(s.tageswechsel());
     let mut v: Vec<EintragZeile> = s
         .eintraege
         .iter()
         .filter(|e| (von..=bis).contains(&e.objekt.lebenstag()))
-        .map(|e| zeile(s, e))
+        .map(|e| zeile(s, e, heute))
         .collect();
     v.sort_by_key(|z| std::cmp::Reverse(z.utc_ms));
     Ok(v)
@@ -622,6 +676,7 @@ pub(crate) fn eintraege(k: &Kern, von: i64, bis: i64) -> Ergebnis<Vec<EintragZei
 
 pub(crate) fn eintrag(k: &Kern, id: &Id) -> Ergebnis<EintragDetail> {
     let s = k.sitzung()?;
+    let heute = k.jetzt().lebenstag(s.tageswechsel());
     let e = s
         .eintraege
         .iter()
@@ -638,7 +693,7 @@ pub(crate) fn eintrag(k: &Kern, id: &Id) -> Ergebnis<EintragDetail> {
     let mut alle: Vec<String> = praeparat_name(s, praep_id).into_iter().collect();
     alle.extend(antwort_texte(s, antworten, true));
     Ok(EintragDetail {
-        zeile: zeile(s, e),
+        zeile: zeile(s, e, heute),
         alle_antworten: alle,
         zeitpunkt: e.objekt.zeitpunkt().clone(),
         antworten: antworten.iter().filter_map(antwort_zu).collect(),
