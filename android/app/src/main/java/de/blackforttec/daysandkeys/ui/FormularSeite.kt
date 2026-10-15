@@ -206,9 +206,7 @@ fun Frage(q: FrageAnsicht, antworten: MutableMap<String, AntwortEingabe>) {
                 if (stufen > 5) Stufenleiste(q, a?.zahl) { w -> if (w == null) antworten.remove(q.messdefId) else antworten[q.messdefId] = antwort(q, zahl = w) }
                 else Column {
                     Stufenwahl(((q.min ?: 0)..(q.max ?: 5)).map { it to (if ((q.min ?: 0) < 0 && it > 0) "+$it" else "$it") }, a?.zahl) { w -> if (w == null) antworten.remove(q.messdefId) else antworten[q.messdefId] = antwort(q, zahl = w) }
-                    if (q.anker.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-                        for (an in q.anker) Text(an.text, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                    Ankerzeile(q.anker.map { it.text })
                 }
             }
             Feldart.STUFEN -> Stufenwahl(q.anker.map { it.wert to it.text }, a?.zahl) { w ->

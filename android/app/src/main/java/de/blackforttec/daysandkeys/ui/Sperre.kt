@@ -37,6 +37,10 @@ fun SperrSeite(z: AppZustand) {
         Text("Days & Keys", style = MaterialTheme.typography.headlineSmall)
         Text("Gesperrt", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.weight(0.6f))
+        if (z.ersetzt) {
+            Hinweisfeld("Dieses Gerät wurde durch ein anderes ersetzt. Deine Einträge liegen auf dem neuen Gerät; hier wird nichts mehr gesichert. Entzieh diesem Gerät den Zugang zum Sicherungsordner.")
+            Spacer(Modifier.height(Abstand.m))
+        }
         Button(onClick = { z.entsperren() }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.hauptknopf)) { Text("Entsperren") }
         Spacer(Modifier.height(Abstand.m))
         OutlinedButton(onClick = { z.zu(Seite.Hilfe) }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.ziel)) { Text("Hilfe in einer Krise") }
