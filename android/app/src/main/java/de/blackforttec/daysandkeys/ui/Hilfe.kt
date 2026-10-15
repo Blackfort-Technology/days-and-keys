@@ -14,7 +14,10 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import de.blackforttec.daysandkeys.kern.Hilfe
 
 /** Hilfe ohne Entsperren (#71, AE-20): Nummern öffnen nur das Wählfeld, die App ruft nicht selbst an. */
@@ -29,7 +32,11 @@ fun HilfeSeite(z: AppZustand) {
             for (n in h?.nummern.orEmpty()) {
                 Row(Modifier.fillMaxWidth()) {
                     Button(onClick = { waehlen(n.nummer) }, modifier = Modifier.fillMaxWidth()) {
-                        Text("${n.name}: ${n.nummer}")
+                        // Nummer in eigener Zeile und ohne Umbruch, sonst zerfällt „116 117“ (#120).
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(n.name, textAlign = TextAlign.Center)
+                            Text(n.nummer, maxLines = 1, softWrap = false, fontWeight = FontWeight.SemiBold)
+                        }
                     }
                 }
                 Text(n.hinweis, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.secondary)
