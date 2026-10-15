@@ -76,7 +76,7 @@ fun VerlaufSeite(z: AppZustand) {
             if (v.punkte.isEmpty()) {
                 Text("In diesem Zeitraum gibt es noch keine Werte für diese Frage.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(vertical = Abstand.xl))
             } else {
-                Diagramm(v, heute - tage + 1, heute, mittel)
+                Diagramm(v, heute - tage + 1, heute, mittel, dauer = fragen.firstOrNull { it.schluessel == frage }?.feldart == Feldart.DAUER)
                 Stufenwahl(listOf(7L to "Grundniveau 7 Tage", 28L to "28 Tage"), mittel.toLong()) { it?.let { w -> mittel = w.toInt() } }
             }
             Text(v.hinweis + (if (v.einnahmenMs.isNotEmpty()) " · ${v.einnahmenMs.size} Einnahmen" else ""), style = MaterialTheme.typography.bodyMedium)
@@ -112,23 +112,25 @@ fun VerlaufSeite(z: AppZustand) {
 }
 
 @Composable
-fun Diagramm(v: Verlauf, von: Long, bis: Long, mittel: Int) {
+fun Diagramm(v: Verlauf, von: Long, bis: Long, mittel: Int, dauer: Boolean = false) {
     val farbePunkt = MaterialTheme.colorScheme.primary
     val farbeLinie = MaterialTheme.colorScheme.tertiary
     val farbeAchse = MaterialTheme.colorScheme.secondary
     val schrift = MaterialTheme.typography.labelSmall.copy(color = farbeAchse)
     val messer = rememberTextMeasurer()
-    val min = (v.min ?: v.punkte.minOfOrNull { it.wert } ?: 0).toFloat()
-    val max = (v.max ?: v.punkte.maxOfOrNull { it.wert } ?: 10).toFloat().let { if (it == min) min + 1 else it }
+    // Dauern in Stunden und nur so hoch wie nötig, mindestens 10 Std. (#153).
+    val min = if (dauer) 0f else (v.min ?: v.punkte.minOfOrNull { it.wert } ?: 0).toFloat()
+    val max = if (dauer) (((v.punkte.maxOfOrNull { it.wert } ?: 0) / 60 + 1) * 60).coerceAtLeast(600).toFloat()
+    else (v.max ?: v.punkte.maxOfOrNull { it.wert } ?: 10).toFloat().let { if (it == min) min + 1 else it }
     val reihe = if (mittel == 7) v.gleitend7 else v.gleitend28
     Canvas(Modifier.fillMaxWidth().height(240.dp).semantics { contentDescription = "Verlauf mit ${v.punkte.size} Einträgen an ${v.tageMitWert} von ${v.tageGesamt} Tagen" }) {
         // Ränder für die Beschriftung: Werte links, Datum unten (#127).
-        val links = 30.dp.toPx(); val unten = 18.dp.toPx(); val oben = 6.dp.toPx()
+        val links = (if (dauer) 48.dp else 30.dp).toPx(); val unten = 18.dp.toPx(); val oben = 6.dp.toPx()
         val breite = size.width - links; val hoehe = size.height - unten - oben
         val tage = (bis - von + 1).coerceAtLeast(1)
         fun x(tag: Double) = (links + (tag - von) / tage * breite).toFloat()
         fun y(w: Double) = (oben + hoehe - (w - min) / (max - min) * hoehe).toFloat()
-        fun wert(w: Double) = if (v.richtung == Richtung.BIPOLAR && w > 0) "+${w.toInt()}" else "${w.toInt()}"
+        fun wert(w: Double) = if (dauer) "${(w / 60).toInt()} Std." else if (v.richtung == Richtung.BIPOLAR && w > 0) "+${w.toInt()}" else "${w.toInt()}"
         // Hilfslinien und Werte: unten, Mitte (bei bipolaren Skalen die Null), oben
         val mitte = if (v.richtung == Richtung.BIPOLAR) 0.0 else ((min + max) / 2.0)
         for (w in listOf(min.toDouble(), mitte, max.toDouble())) {

@@ -177,7 +177,11 @@ fun EinrichtungSeite(z: AppZustand) {
                 Button(onClick = {
                     if (Build.VERSION.SDK_INT >= 33) erlaubnis.launch(Manifest.permission.POST_NOTIFICATIONS) else schritt = 7
                 }, modifier = Modifier.fillMaxWidth()) { Text("Benachrichtigungen erlauben") }
-                TextButton(onClick = { schritt = 7 }) { Text("Ohne Erinnerungen") }
+                TextButton(onClick = {
+                    // „Ohne Erinnerungen“ schaltet die voreingestellten Erinnerungen ab (#149).
+                    z.versuch { z.kern.einstellungen() }?.let { e -> z.versuch { z.kern.einstellungenSpeichern(e.copy(erinnerungen = e.erinnerungen.map { it.copy(aktiv = false) })) } }
+                    schritt = 7
+                }) { Text("Ohne Erinnerungen") }
             }
             else -> Schritt(7, "Fertig", if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) "Stell in den Akku-Einstellungen die App auf „Nicht eingeschränkt\", sonst kommen Erinnerungen unzuverlässig." else null) {
                 if (!de.blackforttec.daysandkeys.plattform.Planer.exaktErlaubt(z.activity)) {

@@ -86,6 +86,7 @@ fun MedikamentSeite(z: AppZustand, alt: PraeparatDaten?) {
     var statusNach by remember { mutableStateOf(alt?.statusNachMin?.toString() ?: "") }
     val plan = remember { mutableStateListOf(*(alt?.plan ?: emptyList()).toTypedArray()) }
     var zeitFuer by remember { mutableStateOf<Int?>(null) }
+    var neueZeile by remember { mutableStateOf(false) }
     var nameFehlt by remember { mutableStateOf(false) }
     var verlassen by remember { mutableStateOf(false) }
     fun daten() = PraeparatDaten(alt?.id ?: "", name.trim(), wirkstoff.ifBlank { null }, staerke.ifBlank { null }, form.ifBlank { null }, plan.toList(), bedarf, wirkung, aktiv, erinnerung, statusNach.toLongOrNull())
@@ -117,7 +118,7 @@ fun MedikamentSeite(z: AppZustand, alt: PraeparatDaten?) {
                 TextButton(onClick = {
                     // Neue Uhrzeit vier Stunden nach der letzten, damit nicht zweimal 08:00 entsteht.
                     val naechste = plan.maxOfOrNull { it.uhrzeitMin }?.let { (it + 4 * 60).coerceAtMost(23 * 60) } ?: (8 * 60)
-                    plan.add(Planzeit(naechste, "1", 0x7fu)); zeitFuer = plan.lastIndex
+                    plan.add(Planzeit(naechste, "1", 0x7fu)); zeitFuer = plan.lastIndex; neueZeile = true
                 }) { Text("Uhrzeit hinzufügen") }
             }
             Kopf("Erinnerung")
@@ -140,11 +141,12 @@ fun MedikamentSeite(z: AppZustand, alt: PraeparatDaten?) {
         val p = plan.getOrNull(i) ?: run { zeitFuer = null; return }
         val st = rememberTimePickerState(p.uhrzeitMin / 60, p.uhrzeitMin % 60, true)
         AlertDialog(
-            onDismissRequest = { zeitFuer = null },
+            // Abbrechen beim Hinzufügen nimmt die neue Zeile wieder heraus (#151).
+            onDismissRequest = { if (neueZeile) plan.removeAt(i); neueZeile = false; zeitFuer = null },
             title = { Text("Uhrzeit") },
             text = { TimePicker(st) },
-            confirmButton = { Button(onClick = { plan[i] = p.copy(uhrzeitMin = st.hour * 60 + st.minute); zeitFuer = null }) { Text("Übernehmen") } },
-            dismissButton = { TextButton(onClick = { zeitFuer = null }) { Text("Abbrechen") } },
+            confirmButton = { Button(onClick = { plan[i] = p.copy(uhrzeitMin = st.hour * 60 + st.minute); neueZeile = false; zeitFuer = null }) { Text("Übernehmen") } },
+            dismissButton = { TextButton(onClick = { if (neueZeile) plan.removeAt(i); neueZeile = false; zeitFuer = null }) { Text("Abbrechen") } },
         )
     }
     if (verlassen) AlertDialog(

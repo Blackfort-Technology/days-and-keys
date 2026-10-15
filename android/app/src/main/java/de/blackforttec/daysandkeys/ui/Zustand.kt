@@ -48,15 +48,23 @@ class AppZustand(val app: DaysAndKeysApp, val activity: MainActivity) {
     var start by mutableStateOf<Startseite?>(null)
     var arbeitet by mutableStateOf(false)
     var krisenhinweisGesehen by mutableStateOf(false)
+    /** Gerät wurde durch ein anderes ersetzt; die Sperrseite erklärt das dauerhaft (#150). */
+    var ersetzt by mutableStateOf(false)
+    /** Gewählte, noch nicht festgehaltene Stimmung auf Heute, übersteht den Reiterwechsel (#151). */
+    var schnellwert by mutableStateOf<Long?>(null)
     var ziel: String? = null
     private var sperrzeitMs: Long = 60_000
     val scope get() = activity.lifecycleScope
 
     init {
+        // Ein Neuaufbau der Activity darf einen entsperrten Kern nicht hinter eine Sperrseite
+        // stellen, deren Knopf dann nichts tut (#148).
         seite = when (kern.lage()) {
             is KernLage.NichtEingerichtet -> Seite.Einrichtung
+            is KernLage.Entsperrt -> Seite.Start
             else -> Seite.Sperre
         }
+        if (seite == Seite.Start) nachEntsperren(navigieren = false)
     }
 
     fun entsperrt() = kern.lage() is KernLage.Entsperrt
@@ -74,6 +82,7 @@ class AppZustand(val app: DaysAndKeysApp, val activity: MainActivity) {
 
     fun entsperren() {
         scope.launch {
+            if (kern.lage() is KernLage.Entsperrt) { nachEntsperren(); return@launch }
             val l = kern.lage() as? KernLage.Gesperrt ?: return@launch
             val umh = l.kkUmhuellung ?: run { meldung = "Kein geschützter Schlüssel gefunden."; return@launch }
             try {
@@ -150,7 +159,7 @@ class AppZustand(val app: DaysAndKeysApp, val activity: MainActivity) {
                     "Sicherung fehlgeschlagen: ${e.javaClass.simpleName}"
                 }
             }
-            if (ergebnis.startsWith("Dieses Gerät")) { meldung = ergebnis; sperren() }
+            if (ergebnis.startsWith("Dieses Gerät")) { ersetzt = true; sperren() }
             else { if (entsperrt()) neuLaden(); danach(ergebnis) }
         }
     }

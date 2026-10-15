@@ -199,9 +199,7 @@ fun Stufenleiste(q: FrageAnsicht, wert: Long?, setzen: (Long?) -> Unit) {
                 }
             }
         }
-        if (q.anker.isNotEmpty()) Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            for (an in q.anker) Text(an.text, style = MaterialTheme.typography.labelSmall, color = farbe.onSurfaceVariant)
-        }
+        Ankerzeile(q.anker.map { it.text })
     }
 }
 
@@ -320,5 +318,22 @@ fun Klickzeile(titel: String, zeile: String? = null, onClick: () -> Unit) {
             zeile?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
         Box { Symbol(R.drawable.sym_chevron_right) }
+    }
+}
+
+/**
+ * Skalenenden unter einer Leiste: jedes Ende mit eigener Spalte, links, mittig, rechts ausgerichtet,
+ * damit sie bei großer Schrift umbrechen statt ineinanderzulaufen (#152).
+ */
+@Composable
+fun Ankerzeile(anker: List<String>) {
+    if (anker.isEmpty()) return
+    Row(Modifier.fillMaxWidth().padding(top = 4.dp), horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
+        anker.forEachIndexed { i, t ->
+            Text(
+                t, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
+                textAlign = when (i) { 0 -> TextAlign.Start; anker.lastIndex -> TextAlign.End; else -> TextAlign.Center },
+            )
+        }
     }
 }

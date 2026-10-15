@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: MPL-2.0
 package de.blackforttec.daysandkeys.ui
 
+import android.Manifest
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -29,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import android.app.NotificationManager
 import de.blackforttec.daysandkeys.R
 import de.blackforttec.daysandkeys.kern.AntwortEingabe
 import de.blackforttec.daysandkeys.kern.AntwortZustand
@@ -48,7 +52,12 @@ fun StartSeite(z: AppZustand) {
     var alleEreignisse by remember { mutableStateOf(false) }
     val status = remember { z.versuch { z.kern.formular("status_jetzt") } }
     val stimmung = status?.gruppen?.firstOrNull()?.fragen?.firstOrNull()
-    var wert by remember { mutableStateOf<Long?>(null) }
+    var benachrichtigungenErlaubt by remember { mutableStateOf(z.activity.getSystemService(NotificationManager::class.java).areNotificationsEnabled()) }
+    val erlaubnis = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { ok ->
+        benachrichtigungenErlaubt = ok || z.activity.getSystemService(NotificationManager::class.java).areNotificationsEnabled()
+        if (benachrichtigungenErlaubt) z.planen()
+    }
+    var wert by z::schnellwert
 
     fun ereignis(k: Knopf) {
         // Ereignisse ohne Fragen werden mit dem Tipp gespeichert; „Krise“ fragt nach (Vorgabe 4.2).
@@ -74,12 +83,18 @@ fun StartSeite(z: AppZustand) {
                     TextButton(onClick = { z.zu(Seite.Formular("status_jetzt", vorbelegt = listOf(antwort))); wert = null }) { Text("Mehr angeben") }
                 } else {
                     if (s.statusHeute > 0u) s.letzterStatusMs?.let { Text("Zuletzt um ${uhrzeitAus(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                    Row(horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
                         TextButton(onClick = { z.zu(Seite.Formular("status_jetzt")) }) { Text("Ausführlich") }
                         if (s.tagesabschlussHeute) TextButton(onClick = { z.zu(Seite.Formular("tagesabschluss")) }) { Text("Tagesabschluss") }
                         if (s.wochenrueckblickHeute) TextButton(onClick = { z.zu(Seite.Formular("wochenrueckblick")) }) { Text("Wochenrückblick") }
                     }
                 }
+            }
+        }
+        // Ohne Erlaubnis kommen Erinnerungen nicht an, etwa nach einer Wiederherstellung (#149).
+        if (!benachrichtigungenErlaubt && z.versuch { z.kern.einstellungen() }?.erinnerungen?.any { it.aktiv } != false) {
+            Abschnitt("Erinnerungen sind ausgeschaltet", "Ohne Erlaubnis zeigt das Telefon keine Erinnerungen an.") {
+                FilledTonalButton(onClick = { erlaubnis.launch(Manifest.permission.POST_NOTIFICATIONS) }) { Text("Erlauben") }
             }
         }
         // Morgens bis 14 Uhr, solange heute noch nichts zum Schlaf erfasst ist; der Kern entscheidet (#139).
