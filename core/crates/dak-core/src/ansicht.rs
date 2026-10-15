@@ -518,19 +518,15 @@ pub(crate) fn faktorvergleich(
     })
 }
 
-fn zusammenfassung(s: &Sitzung, a: &[Antwort], praeparat: Option<&Id>) -> String {
-    let mut teile = Vec::new();
-    if let Some(p) = praeparat.and_then(|p| s.bund.praeparate.iter().find(|x| x.id == *p)) {
-        teile.push(p.handelsname.clone());
-    }
-    let beantwortet: Vec<&Antwort> = a
-        .iter()
+/// Antworten als „Frage: Wert“. `voll` zeigt Freitexte im Wortlaut (Detail, #129), sonst nur „Text“.
+fn antwort_texte(s: &Sitzung, a: &[Antwort], voll: bool) -> Vec<String> {
+    a.iter()
         .filter(|x| x.zustand == Zustand::Beantwortet)
-        .collect();
-    for x in beantwortet.iter().take(3) {
-        if let Some(md) = s.messdef(&x.messdef) {
+        .filter_map(|x| {
+            let md = s.messdef(&x.messdef)?;
             let w = x.wert.as_ref();
             let wert = match md.feldtyp {
+                Feldtyp::Text if voll => w.and_then(|w| w.text.clone()).unwrap_or_default(),
                 Feldtyp::Text => "Text".to_owned(),
                 Feldtyp::Einfachauswahl | Feldtyp::Mehrfachauswahl => optionen(s, md)
                     .iter()
@@ -550,12 +546,23 @@ fn zusammenfassung(s: &Sitzung, a: &[Antwort], praeparat: Option<&Id>) -> String
                     _ => String::new(),
                 },
             };
-            let kurz = md.frage.trim_end_matches('?');
-            teile.push(format!("{}: {}", kurz, wert));
-        }
-    }
-    if beantwortet.len() > 3 {
-        teile.push(format!("{} weitere", beantwortet.len() - 3));
+            Some(format!("{}: {}", md.frage.trim_end_matches('?'), wert))
+        })
+        .collect()
+}
+
+fn praeparat_name(s: &Sitzung, praeparat: Option<&Id>) -> Option<String> {
+    praeparat
+        .and_then(|p| s.bund.praeparate.iter().find(|x| x.id == *p))
+        .map(|p| p.handelsname.clone())
+}
+
+fn zusammenfassung(s: &Sitzung, a: &[Antwort], praeparat: Option<&Id>) -> String {
+    let mut teile: Vec<String> = praeparat_name(s, praeparat).into_iter().collect();
+    let alle = antwort_texte(s, a, false);
+    teile.extend(alle.iter().take(3).cloned());
+    if alle.len() > 3 {
+        teile.push(format!("{} weitere", alle.len() - 3));
     }
     teile.join(" · ")
 }
@@ -605,8 +612,15 @@ pub(crate) fn eintrag(k: &Kern, id: &Id) -> Ergebnis<EintragDetail> {
         Objekt::Status(st) => (&st.antworten, None, st.bezug_von.is_some()),
         Objekt::Ereignis(ev) => (&ev.antworten, ev.praeparat.map(|p| hex(&p)), true),
     };
+    let praep_id = match &e.objekt {
+        Objekt::Ereignis(ev) => ev.praeparat.as_ref(),
+        Objekt::Status(_) => None,
+    };
+    let mut alle: Vec<String> = praeparat_name(s, praep_id).into_iter().collect();
+    alle.extend(antwort_texte(s, antworten, true));
     Ok(EintragDetail {
         zeile: zeile(s, e),
+        alle_antworten: alle,
         zeitpunkt: e.objekt.zeitpunkt().clone(),
         antworten: antworten.iter().filter_map(antwort_zu).collect(),
         praeparat_id: praeparat,

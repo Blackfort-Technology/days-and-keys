@@ -3369,6 +3369,11 @@ public object FfiConverterTypeEinstellungenDaten: FfiConverterRustBuffer<Einstel
 data class EintragDetail (
     var `zeile`: EintragZeile
     , 
+    /**
+     * Alle Antworten als „Frage: Wert“, Freitexte im Wortlaut (#129).
+     */
+    var `alleAntworten`: List<kotlin.String>
+    , 
     var `zeitpunkt`: Zeitpunkt
     , 
     var `antworten`: List<AntwortEingabe>
@@ -3393,6 +3398,7 @@ public object FfiConverterTypeEintragDetail: FfiConverterRustBuffer<EintragDetai
     override fun read(buf: ByteBuffer): EintragDetail {
         return EintragDetail(
             FfiConverterTypeEintragZeile.read(buf),
+            FfiConverterSequenceString.read(buf),
             FfiConverterTypeZeitpunkt.read(buf),
             FfiConverterSequenceTypeAntwortEingabe.read(buf),
             FfiConverterOptionalString.read(buf),
@@ -3402,6 +3408,7 @@ public object FfiConverterTypeEintragDetail: FfiConverterRustBuffer<EintragDetai
 
     override fun allocationSize(value: EintragDetail) = (
             FfiConverterTypeEintragZeile.allocationSize(value.`zeile`) +
+            FfiConverterSequenceString.allocationSize(value.`alleAntworten`) +
             FfiConverterTypeZeitpunkt.allocationSize(value.`zeitpunkt`) +
             FfiConverterSequenceTypeAntwortEingabe.allocationSize(value.`antworten`) +
             FfiConverterOptionalString.allocationSize(value.`praeparatId`) +
@@ -3410,6 +3417,7 @@ public object FfiConverterTypeEintragDetail: FfiConverterRustBuffer<EintragDetai
 
     override fun write(value: EintragDetail, buf: ByteBuffer) {
             FfiConverterTypeEintragZeile.write(value.`zeile`, buf)
+            FfiConverterSequenceString.write(value.`alleAntworten`, buf)
             FfiConverterTypeZeitpunkt.write(value.`zeitpunkt`, buf)
             FfiConverterSequenceTypeAntwortEingabe.write(value.`antworten`, buf)
             FfiConverterOptionalString.write(value.`praeparatId`, buf)
