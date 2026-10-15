@@ -14,12 +14,19 @@ private val hell = lightColorScheme(
     secondary = Color(0xFF6B7A8F), secondaryContainer = Color(0xFFDDE3EA), onSecondaryContainer = Color(0xFF1D2733),
     background = Color(0xFFF7F6F3), surface = Color(0xFFFFFFFF), surfaceVariant = Color(0xFFECEAE5),
     tertiary = Color(0xFF8A6D3B),
+    // Dialoge, Menüs und Zeitauswahl nutzen diese Flächen; ohne Angabe wären sie lila (#129).
+    surfaceContainerLowest = Color(0xFFFFFFFF), surfaceContainerLow = Color(0xFFFAF9F7), surfaceContainer = Color(0xFFF3F2EF),
+    surfaceContainerHigh = Color(0xFFEFEDE9), surfaceContainerHighest = Color(0xFFE8E6E1),
+    primaryContainer = Color(0xFFDDE3EA), onPrimaryContainer = Color(0xFF1D2733), surfaceTint = Color(0xFF3D4A5C),
 )
 private val dunkel = darkColorScheme(
     primary = Color(0xFFB9C6D8), onPrimary = Color(0xFF1D2733),
     secondary = Color(0xFF9AA8BA), secondaryContainer = Color(0xFF34404F), onSecondaryContainer = Color(0xFFE3E8EE),
     background = Color(0xFF15181C), surface = Color(0xFF1D2126), surfaceVariant = Color(0xFF2A2F35),
     tertiary = Color(0xFFD8B979),
+    surfaceContainerLowest = Color(0xFF111316), surfaceContainerLow = Color(0xFF1A1D21), surfaceContainer = Color(0xFF1F2328),
+    surfaceContainerHigh = Color(0xFF262A30), surfaceContainerHighest = Color(0xFF2E3339),
+    primaryContainer = Color(0xFF34404F), onPrimaryContainer = Color(0xFFE3E8EE), surfaceTint = Color(0xFFB9C6D8),
 )
 
 @Composable

@@ -2112,6 +2112,10 @@ public func FfiConverterTypeEinstellungenDaten_lower(_ value: EinstellungenDaten
 
 public struct EintragDetail: Equatable, Hashable {
     public var zeile: EintragZeile
+    /**
+     * Alle Antworten als „Frage: Wert“, Freitexte im Wortlaut (#129).
+     */
+    public var alleAntworten: [String]
     public var zeitpunkt: Zeitpunkt
     public var antworten: [AntwortEingabe]
     public var praeparatId: String?
@@ -2119,8 +2123,12 @@ public struct EintragDetail: Equatable, Hashable {
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(zeile: EintragZeile, zeitpunkt: Zeitpunkt, antworten: [AntwortEingabe], praeparatId: String?, blockOffen: Bool) {
+    public init(zeile: EintragZeile, 
+        /**
+         * Alle Antworten als „Frage: Wert“, Freitexte im Wortlaut (#129).
+         */alleAntworten: [String], zeitpunkt: Zeitpunkt, antworten: [AntwortEingabe], praeparatId: String?, blockOffen: Bool) {
         self.zeile = zeile
+        self.alleAntworten = alleAntworten
         self.zeitpunkt = zeitpunkt
         self.antworten = antworten
         self.praeparatId = praeparatId
@@ -2144,6 +2152,7 @@ public struct FfiConverterTypeEintragDetail: FfiConverterRustBuffer {
         return
             try EintragDetail(
                 zeile: FfiConverterTypeEintragZeile.read(from: &buf), 
+                alleAntworten: FfiConverterSequenceString.read(from: &buf), 
                 zeitpunkt: FfiConverterTypeZeitpunkt.read(from: &buf), 
                 antworten: FfiConverterSequenceTypeAntwortEingabe.read(from: &buf), 
                 praeparatId: FfiConverterOptionString.read(from: &buf), 
@@ -2153,6 +2162,7 @@ public struct FfiConverterTypeEintragDetail: FfiConverterRustBuffer {
 
     public static func write(_ value: EintragDetail, into buf: inout [UInt8]) {
         FfiConverterTypeEintragZeile.write(value.zeile, into: &buf)
+        FfiConverterSequenceString.write(value.alleAntworten, into: &buf)
         FfiConverterTypeZeitpunkt.write(value.zeitpunkt, into: &buf)
         FfiConverterSequenceTypeAntwortEingabe.write(value.antworten, into: &buf)
         FfiConverterOptionString.write(value.praeparatId, into: &buf)

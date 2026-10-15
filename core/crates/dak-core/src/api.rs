@@ -306,6 +306,8 @@ pub struct EintragZeile {
 #[cfg_attr(feature = "ffi", derive(uniffi::Record))]
 pub struct EintragDetail {
     pub zeile: EintragZeile,
+    /// Alle Antworten als „Frage: Wert“, Freitexte im Wortlaut (#129).
+    pub alle_antworten: Vec<String>,
     pub zeitpunkt: Zeitpunkt,
     pub antworten: Vec<AntwortEingabe>,
     pub praeparat_id: Option<String>,
@@ -981,7 +983,7 @@ impl DakKern {
                 Aktion::ExportCsv => (
                     "export_csv",
                     "Alles als Tabelle exportieren?",
-                    "Die Datei enthält alle Einträge im Klartext. Sie verlässt die App über das Teilen-Menü; wohin sie geht, bestimmst du.",
+                    "Die Datei enthält alle Einträge im Klartext. Du wählst danach, wo sie gespeichert wird. Nimm nicht den Sicherungsordner und keinen Ordner, der in eine Cloud synchronisiert wird.",
                 ),
                 Aktion::RotationAufWunsch => ("rotation", "Schlüssel erneuern?", "Neue Schlüssel für alle Einträge. Alte Sicherungen bleiben mit den alten Schlüsseln lesbar, bis sie aus der Aufbewahrung fallen."),
             };

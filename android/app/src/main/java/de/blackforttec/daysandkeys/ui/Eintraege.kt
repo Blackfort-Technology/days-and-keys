@@ -6,9 +6,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
@@ -50,10 +53,18 @@ fun EintraegeSeite(z: AppZustand) {
     }
     gewaehlt?.let { e ->
         var loeschen by remember { mutableStateOf(false) }
+        // Im Detail alle Antworten, Freitexte im Wortlaut; die Liste zeigt nur drei (#129).
+        val alle = remember(e.datensatzId) { z.versuch { z.kern.eintrag(e.datensatzId) }?.alleAntworten.orEmpty() }
         AlertDialog(
             onDismissRequest = { gewaehlt = null },
             title = { Text("${e.name}, ${e.datum} ${e.uhrzeit}") },
-            text = { Text(if (loeschen) "Wirklich löschen? Aus dem Bestand ist der Eintrag sofort weg; in älteren Sicherungen steht er noch, bis sie nach höchstens 30 Tagen aus der Aufbewahrung fallen." else e.zusammenfassung.ifEmpty { "Ohne Angaben" }) },
+            text = {
+                if (loeschen) Text("Wirklich löschen? Aus dem Bestand ist der Eintrag sofort weg; in älteren Sicherungen steht er noch, bis sie nach höchstens 30 Tagen aus der Aufbewahrung fallen.")
+                else Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    if (alle.isEmpty()) Text("Ohne Angaben")
+                    for (a in alle) Text(a, style = MaterialTheme.typography.bodyMedium)
+                }
+            },
             confirmButton = {
                 if (loeschen) Button(onClick = { z.versuch { z.kern.eintragLoeschen(e.datensatzId) }; z.geaendert(); gewaehlt = null; stand++ }) { Text("Löschen") }
                 else Button(onClick = {

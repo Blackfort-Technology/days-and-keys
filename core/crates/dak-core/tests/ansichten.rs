@@ -114,6 +114,68 @@ fn startseite_zuletzt_meint_denselben_status_wie_der_zaehler() {
 }
 
 #[test]
+fn eintragsdetail_zeigt_alle_antworten_mit_notiz() {
+    // #129: Die Liste kürzt auf drei Antworten, das Detail zeigt alle, Freitext im Wortlaut.
+    let t0 = tag_aus_datum(2026, 10, 2);
+    let (k, _uhr) = kern(7, t0, 9 * 60);
+    let f = k.formular("status_jetzt".into()).unwrap();
+    let id = |schl: &str| {
+        f.gruppen
+            .iter()
+            .flat_map(|g| g.fragen.iter())
+            .find(|q| q.schluessel == schl)
+            .unwrap()
+            .messdef_id
+            .clone()
+    };
+    let zahl = |schl: &str, w: i64| AntwortEingabe {
+        messdef_id: id(schl),
+        zustand: AntwortZustand::Beantwortet,
+        zahl: Some(w),
+        text: None,
+        auswahl: vec![],
+        aktiv_gesetzt: true,
+    };
+    let mut antworten = vec![
+        zahl("stimmung", 2),
+        zahl("antrieb", 6),
+        zahl("konzentration", 5),
+        zahl("muedigkeit", 3),
+    ];
+    antworten.push(AntwortEingabe {
+        messdef_id: id("notiz_jetzt"),
+        zustand: AntwortZustand::Beantwortet,
+        zahl: None,
+        text: Some("Erfundene Notiz".into()),
+        auswahl: vec![],
+        aktiv_gesetzt: true,
+    });
+    k.status_speichern(StatusEingabe {
+        formular_id: f.id.clone(),
+        zeitpunkt: None,
+        antworten,
+        block_offen: false,
+        aus_entwurf: None,
+        korrektur_von: None,
+    })
+    .unwrap();
+    let z = k.eintraege(t0, t0).unwrap().remove(0);
+    assert!(
+        z.zusammenfassung.ends_with("2 weitere"),
+        "{}",
+        z.zusammenfassung
+    );
+    assert!(!z.zusammenfassung.contains("Erfundene Notiz"));
+    let d = k.eintrag(z.datensatz_id).unwrap();
+    assert_eq!(d.alle_antworten.len(), 5, "{:?}", d.alle_antworten);
+    assert!(
+        d.alle_antworten
+            .iter()
+            .any(|a| a.ends_with(": Erfundene Notiz"))
+    );
+}
+
+#[test]
 fn verlauf_zeigt_jeden_eintrag_und_laesst_luecken() {
     let t0 = tag_aus_datum(2026, 9, 1);
     let (k, uhr) = kern(1, t0, 8 * 60);
