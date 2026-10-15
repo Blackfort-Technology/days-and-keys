@@ -213,7 +213,10 @@ fun Stufenleiste(q: FrageAnsicht, wert: Long?, setzen: (Long?) -> Unit) {
 @Composable
 fun Stufenwahl(optionen: List<Pair<Long, String>>, gewaehlt: Long?, setzen: (Long?) -> Unit) {
     val farbe = MaterialTheme.colorScheme
-    val senkrecht = LocalDensity.current.fontScale >= 1.5f || optionen.size > 5
+    // Senkrecht bei großer Schrift, mehr als fünf Antworten oder langen Texten in engen Segmenten.
+    val senkrecht = LocalDensity.current.fontScale >= 1.5f || optionen.size > 6 ||
+        (optionen.size == 6 && optionen.any { it.second.length > 3 }) ||
+        (optionen.size >= 4 && optionen.any { it.second.length > 11 })
     if (senkrecht) {
         Column(Modifier.fillMaxWidth()) {
             for ((w, t) in optionen) Row(

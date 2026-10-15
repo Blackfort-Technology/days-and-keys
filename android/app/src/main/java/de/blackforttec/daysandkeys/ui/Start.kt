@@ -119,11 +119,11 @@ fun StartSeite(z: AppZustand) {
                             when (e.stand) {
                                 EinnahmeStand.OFFEN -> {
                                     Text("Dosis ${e.dosis}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                                    Row(horizontalArrangement = Arrangement.spacedBy(Abstand.s), modifier = Modifier.padding(top = Abstand.xs)) {
+                                    FlowRow(horizontalArrangement = Arrangement.spacedBy(Abstand.s), modifier = Modifier.padding(top = Abstand.xs)) {
                                         FilledTonalButton(onClick = {
                                             z.versuch { z.kern.einnahmeBestaetigen(e.praeparatId, null) }; z.geaendert(); z.meldung = "Einnahme festgehalten"
                                         }) { Text("Genommen") }
-                                        TextButton(onClick = { z.zu(Seite.Formular("einnahme_ausgelassen", praeparat = e.praeparatId)) }) { Text("Ausgelassen", maxLines = 1, softWrap = false) }
+                                        TextButton(onClick = { z.zu(Seite.Formular("einnahme_ausgelassen", praeparat = e.praeparatId)) }) { Text("Ausgelassen", maxLines = 1) }
                                     }
                                 }
                                 // Erledigt ohne Farbe für den Stand (AE-27).
