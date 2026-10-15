@@ -44,6 +44,10 @@ je Person, Android (Compose) und iOS (SwiftUI) über UniFFI am selben Kern, kein
 - [x] Android-APK aus der CI, signiert im Release-Lauf (#9)
 - [ ] iOS über TestFlight (#8, #78): wartet auf das Apple-Konto der UG (#10)
 - [x] interne Sicherheitsprüfungen des Lab-Jenkins als Pflicht-Check (#109, #113, #116)
+- [x] Darstellungsfehler aus dem Emulatortest (#119 bis #122, #125, #127, #129), Plan für Tiefs in der Sicherung (#131)
+- [x] Schlaf morgens erfassen, Stunden und Güte 1 bis 5 (#139); Vorlagenabgleich beim Entsperren
+- [x] Neugestaltung Android nach docs/design/designvorgabe.md (#133 bis #136)
+- [ ] Neugestaltung iOS (#137), Texte nach strings.xml (#144)
 - [ ] Lieferkette: Gradle-Lockfile, Prüfsummen (#68); Schutzklassen-Feinschliff (#70)
 - [ ] Messungen auf den Zielgeräten: Entsperrzeit, Erinnerungen nach Neustart, Sicherungsordner (#80, #67)
 - [ ] Rechtliche Einordnung der Rollen (#77)
