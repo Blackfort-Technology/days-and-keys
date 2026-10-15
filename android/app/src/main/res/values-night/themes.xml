@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dunkler Startbildschirm, damit nichts hell aufblitzt (#133). -->
+    <style name="Thema" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/hintergrund</item>
+        <item name="android:statusBarColor">@color/hintergrund</item>
+    </style>
+    <color name="hintergrund">#FF131211</color>
+</resources>
