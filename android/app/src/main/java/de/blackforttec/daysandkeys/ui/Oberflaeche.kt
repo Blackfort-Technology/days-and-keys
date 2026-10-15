@@ -2,6 +2,7 @@
 package de.blackforttec.daysandkeys.ui
 
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -53,6 +54,7 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
             else -> Seite.Start
         }
         BackHandler(enabled = innen && s != Seite.Start) { z.zu(zurueckZiel()) }
+        val zurueck = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
         val formularName = remember(s) {
             when (s) {
                 is Seite.Formular -> z.versuch { z.kern.formular(s.schluessel) }?.name
@@ -79,14 +81,15 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
                     TopAppBar(
                         title = {
                             Column {
-                                Text(titel, style = MaterialTheme.typography.headlineSmall)
+                                Text(titel, style = if (istFormular(s) || s is Seite.Eintrag) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall, maxLines = 1)
                                 if (s == Seite.Start) z.start?.let { Text(it.heuteLang, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                             }
                         },
                         navigationIcon = {
                             when {
-                                istFormular(s) -> IconButton(onClick = { z.zu(zurueckZiel()) }) { Symbol(R.drawable.sym_close, "Schließen") }
-                                s == Seite.Hilfe || s is Seite.Eintrag -> IconButton(onClick = { z.zu(zurueckZiel()) }) { Symbol(R.drawable.sym_arrow_back, "Zurück") }
+                                // Wie die Systemgeste, damit Rückfragen der Seite greifen (ungespeicherte Änderungen).
+                                istFormular(s) -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_close, "Schließen") }
+                                s == Seite.Hilfe || s is Seite.Eintrag -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_arrow_back, "Zurück") }
                             }
                         },
                         actions = {
