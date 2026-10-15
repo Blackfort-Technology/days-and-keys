@@ -281,7 +281,7 @@ pub(crate) fn startseite(k: &Kern) -> Ergebnis<Startseite> {
             .iter()
             .filter(|st| st.art == FormularArt::StatusJetzt)
             .count() as u32,
-        letzter_status_ms: k.letzter_status_ms()?,
+        letzter_status_ms: k.letzter_status_jetzt_ms()?,
         tagesabschluss_heute: !status_heute
             .iter()
             .any(|st| st.art == FormularArt::Tagesabschluss),
