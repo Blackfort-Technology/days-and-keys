@@ -619,9 +619,19 @@ impl Kern {
 
     /// Letzter nicht vorläufiger Status (für den Zwei-Stunden-Abstand).
     pub fn letzter_status_ms(&self) -> Ergebnis<Option<i64>> {
+        self.letzter_status_ms_wo(|_| true)
+    }
+
+    /// Letzter „Status jetzt“, ohne Tagesabschluss und Wochenrückblick; so zählt auch die
+    /// Startseite (#122).
+    pub fn letzter_status_jetzt_ms(&self) -> Ergebnis<Option<i64>> {
+        self.letzter_status_ms_wo(|st| st.art == FormularArt::StatusJetzt)
+    }
+
+    fn letzter_status_ms_wo(&self, passt: impl Fn(&Status) -> bool) -> Ergebnis<Option<i64>> {
         let s = self.sitzung()?;
         Ok(s.eintraege.iter().rev().find_map(|e| match &e.objekt {
-            Objekt::Status(st) if !st.vorlaeufig => Some(st.zeitpunkt.utc_ms),
+            Objekt::Status(st) if !st.vorlaeufig && passt(st) => Some(st.zeitpunkt.utc_ms),
             _ => None,
         }))
     }

@@ -75,6 +75,44 @@ fn stimmung(k: &DakKern, w: i64) {
     .unwrap();
 }
 
+fn tagesabschluss(k: &DakKern, w: i64) {
+    let (f, q) = frage_id(k, "tagesabschluss", "stimmung");
+    k.status_speichern(StatusEingabe {
+        formular_id: f,
+        zeitpunkt: None,
+        antworten: vec![AntwortEingabe {
+            messdef_id: q,
+            zustand: AntwortZustand::Beantwortet,
+            zahl: Some(w),
+            text: None,
+            auswahl: vec![],
+            aktiv_gesetzt: true,
+        }],
+        block_offen: false,
+        aus_entwurf: None,
+        korrektur_von: None,
+    })
+    .unwrap();
+}
+
+#[test]
+fn startseite_zuletzt_meint_denselben_status_wie_der_zaehler() {
+    // #122: Zähler und „zuletzt“ betrachten beide nur „Status jetzt“, nicht den Tagesabschluss.
+    let t0 = tag_aus_datum(2026, 10, 1);
+    let (k, uhr) = kern(6, t0, 8 * 60);
+    stimmung(&k, 1);
+    let status_ms = uhr.0.load(Ordering::SeqCst);
+    uhr.0.fetch_add(13 * 3_600_000, Ordering::SeqCst);
+    tagesabschluss(&k, 2);
+    let s = k.startseite().unwrap();
+    assert_eq!(s.status_heute, 1);
+    assert_eq!(
+        s.letzter_status_ms,
+        Some(status_ms),
+        "zuletzt ist der Status von 08:00"
+    );
+}
+
 #[test]
 fn verlauf_zeigt_jeden_eintrag_und_laesst_luecken() {
     let t0 = tag_aus_datum(2026, 9, 1);
