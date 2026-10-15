@@ -3,6 +3,7 @@ package de.blackforttec.daysandkeys.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -10,8 +11,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -24,10 +28,14 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.drawText
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import de.blackforttec.daysandkeys.kern.Feldart
 import de.blackforttec.daysandkeys.kern.Richtung
 import de.blackforttec.daysandkeys.kern.Verlauf
+import java.time.LocalDate
 
 /**
  * Verlauf (#43, #74, #105): jeder Eintrag als Punkt, auch mehrere am Tag. Grundniveau als
@@ -48,8 +56,15 @@ fun VerlaufSeite(z: AppZustand) {
     val v: Verlauf? = remember(frage, tage) { z.versuch { z.kern.verlauf(frage, heute - tage + 1, heute) } }
     Column(Modifier.verticalScroll(rememberScrollState())) {
         Abschnitt("Verlauf") {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                for (q in fragen) FilterChip(selected = frage == q.schluessel, onClick = { frage = q.schluessel }, label = { Text(q.frage.removeSuffix("?").take(28)) })
+            // Klappmenü mit vollem Fragetext; die Knopfliste schob das Diagramm weit nach unten (#127).
+            var offen by remember { mutableStateOf(false) }
+            Box {
+                OutlinedButton(onClick = { offen = true }, modifier = Modifier.fillMaxWidth()) {
+                    Text((fragen.firstOrNull { it.schluessel == frage }?.frage ?: frage) + "  ▾", maxLines = 2, overflow = TextOverflow.Ellipsis)
+                }
+                DropdownMenu(expanded = offen, onDismissRequest = { offen = false }) {
+                    for (q in fragen) DropdownMenuItem(text = { Text(q.frage) }, onClick = { frage = q.schluessel; offen = false })
+                }
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 for ((t, n) in listOf(28 to "4 Wochen", 91 to "3 Monate", 365 to "1 Jahr")) FilterChip(selected = tage == t, onClick = { tage = t }, label = { Text(n) })
@@ -66,6 +81,7 @@ fun VerlaufSeite(z: AppZustand) {
                 Abschnitt("Grundniveau mit und ohne", "Rein beschreibend, mit Fallzahl. Kein Beleg für eine Ursache.") {
                     for ((schl, name) in listOf("tag_bewegung" to "Bewegung", "tag_tageslicht" to "Tageslicht draußen")) {
                         val f = z.versuch { z.kern.faktorvergleich(schl, heute - tage + 1, heute) } ?: continue
+                        if (f.tageMit + f.tageOhne == 0u) continue // ohne Angaben nichts zeigen (#127)
                         fun t(x: Double?) = x?.let { "%+.1f".format(it) } ?: "-"
                         Text("$name: an ${f.tageMit} Tagen mit ${t(f.mittelMit)}, an ${f.tageOhne} Tagen ohne ${t(f.mittelOhne)}")
                     }
@@ -80,18 +96,39 @@ fun Diagramm(v: Verlauf, von: Long, bis: Long, mittel: Int) {
     val farbePunkt = MaterialTheme.colorScheme.primary
     val farbeLinie = MaterialTheme.colorScheme.tertiary
     val farbeAchse = MaterialTheme.colorScheme.secondary
+    val schrift = MaterialTheme.typography.labelSmall.copy(color = farbeAchse)
+    val messer = rememberTextMeasurer()
     val min = (v.min ?: v.punkte.minOfOrNull { it.wert } ?: 0).toFloat()
     val max = (v.max ?: v.punkte.maxOfOrNull { it.wert } ?: 10).toFloat().let { if (it == min) min + 1 else it }
     val reihe = if (mittel == 7) v.gleitend7 else v.gleitend28
-    Canvas(Modifier.fillMaxWidth().height(220.dp).semantics { contentDescription = "Verlauf mit ${v.punkte.size} Einträgen an ${v.tageMitWert} von ${v.tageGesamt} Tagen" }) {
-        val breite = size.width; val hoehe = size.height
+    Canvas(Modifier.fillMaxWidth().height(240.dp).semantics { contentDescription = "Verlauf mit ${v.punkte.size} Einträgen an ${v.tageMitWert} von ${v.tageGesamt} Tagen" }) {
+        // Ränder für die Beschriftung: Werte links, Datum unten (#127).
+        val links = 30.dp.toPx(); val unten = 18.dp.toPx(); val oben = 6.dp.toPx()
+        val breite = size.width - links; val hoehe = size.height - unten - oben
         val tage = (bis - von + 1).coerceAtLeast(1)
-        fun x(tag: Double) = ((tag - von) / tage * breite).toFloat()
-        fun y(w: Double) = (hoehe - (w - min) / (max - min) * hoehe).toFloat()
-        // Nulllinie bei bipolaren Skalen, sonst Grundlinie
-        val null0 = if (v.richtung == Richtung.BIPOLAR) 0.0 else min.toDouble()
-        drawLine(farbeAchse, Offset(0f, y(null0)), Offset(breite, y(null0)), strokeWidth = 2f)
-        for (m in v.marker) drawLine(farbeAchse.copy(alpha = 0.4f), Offset(x(m.lebenstag + 0.5), 0f), Offset(x(m.lebenstag + 0.5), hoehe), pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)))
+        fun x(tag: Double) = (links + (tag - von) / tage * breite).toFloat()
+        fun y(w: Double) = (oben + hoehe - (w - min) / (max - min) * hoehe).toFloat()
+        fun wert(w: Double) = if (v.richtung == Richtung.BIPOLAR && w > 0) "+${w.toInt()}" else "${w.toInt()}"
+        // Hilfslinien und Werte: unten, Mitte (bei bipolaren Skalen die Null), oben
+        val mitte = if (v.richtung == Richtung.BIPOLAR) 0.0 else ((min + max) / 2.0)
+        for (w in listOf(min.toDouble(), mitte, max.toDouble())) {
+            val stark = v.richtung == Richtung.BIPOLAR && w == 0.0
+            drawLine(farbeAchse.copy(alpha = if (stark) 0.9f else 0.25f), Offset(links, y(w)), Offset(size.width, y(w)), strokeWidth = if (stark) 2f else 1f)
+            val t = messer.measure(wert(w), schrift)
+            drawText(t, topLeft = Offset(links - t.size.width - 6f, y(w) - t.size.height / 2f))
+        }
+        // Datum etwa wöchentlich, vom letzten Tag aus gezählt
+        val schritt = if (tage <= 35) 7 else if (tage <= 100) 28 else 91
+        var d = bis
+        while (d >= von) {
+            val datum = LocalDate.ofEpochDay(d)
+            val t = messer.measure("%02d.%02d.".format(datum.dayOfMonth, datum.monthValue), schrift)
+            val mx = x(d + 0.5)
+            drawLine(farbeAchse.copy(alpha = 0.25f), Offset(mx, oben), Offset(mx, oben + hoehe), strokeWidth = 1f)
+            drawText(t, topLeft = Offset((mx - t.size.width / 2f).coerceIn(links, size.width - t.size.width), oben + hoehe + 3f))
+            d -= schritt
+        }
+        for (m in v.marker) drawLine(farbeAchse.copy(alpha = 0.4f), Offset(x(m.lebenstag + 0.5), oben), Offset(x(m.lebenstag + 0.5), oben + hoehe), pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f)))
         // Jeder Eintrag ein Punkt, innerhalb des Tages nach Uhrzeit verteilt.
         for (p in v.punkte) drawCircle(farbePunkt, radius = 6f, center = Offset(x(p.lebenstag + p.uhrzeitMin / 1440.0), y(p.wert.toDouble())))
         // Grundniveau: nur über Tage mit genügend Werten, Lücken bleiben offen.
@@ -104,5 +141,9 @@ fun Diagramm(v: Verlauf, von: Long, bis: Long, mittel: Int) {
             vorher = o
         }
     }
-    Text("${v.anker.firstOrNull()?.text ?: ""} … ${v.anker.lastOrNull()?.text ?: ""}", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.secondary)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("● Eintrag", style = MaterialTheme.typography.labelSmall, color = farbePunkt)
+        Text("━ Grundniveau ($mittel Tage)", style = MaterialTheme.typography.labelSmall, color = farbeLinie)
+        Text("${v.anker.firstOrNull()?.text ?: ""} … ${v.anker.lastOrNull()?.text ?: ""}", style = MaterialTheme.typography.labelSmall, color = farbeAchse)
+    }
 }
