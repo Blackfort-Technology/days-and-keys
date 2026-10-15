@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,7 +36,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import de.blackforttec.daysandkeys.kern.KernLage
@@ -118,11 +119,15 @@ private fun Leiste(s: Seite, zu: (Seite) -> Unit) {
                         .selectable(selected = gewaehlt, role = Role.Tab, onClick = { zu(ziel) }),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text(
-                        titel, maxLines = 1, softWrap = false, overflow = TextOverflow.Visible,
-                        style = MaterialTheme.typography.labelMedium.copy(fontSize = 12.sp),
-                        fontWeight = if (gewaehlt) FontWeight.SemiBold else FontWeight.Normal,
-                        color = if (gewaehlt) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.secondary,
+                    // Schrumpft bei schmalen Geräten oder großer Systemschrift, statt abzuschneiden.
+                    BasicText(
+                        titel, maxLines = 1, softWrap = false,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = if (gewaehlt) FontWeight.SemiBold else FontWeight.Normal,
+                            color = if (gewaehlt) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.secondary,
+                        ),
+                        autoSize = TextAutoSize.StepBased(minFontSize = 8.sp, maxFontSize = 12.sp, stepSize = 0.5.sp),
+                        modifier = Modifier.padding(horizontal = 2.dp),
                     )
                 }
             }
