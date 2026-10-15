@@ -43,7 +43,7 @@ je Person, Android (Compose) und iOS (SwiftUI) über UniFFI am selben Kern, kein
 - [x] automatische Sicherung und Restore (#91, #79), Erinnerungen (#42), Client-Härtung (#69)
 - [x] Android-APK aus der CI, signiert im Release-Lauf (#9)
 - [ ] iOS über TestFlight (#8, #78): wartet auf das Apple-Konto der UG (#10)
-- [ ] interne Sicherheitsprüfungen des Lab-Jenkins als Pflicht-Check (#109)
+- [x] interne Sicherheitsprüfungen des Lab-Jenkins als Pflicht-Check (#109, #113, #116)
 - [ ] Lieferkette: Gradle-Lockfile, Prüfsummen (#68); Schutzklassen-Feinschliff (#70)
 - [ ] Messungen auf den Zielgeräten: Entsperrzeit, Erinnerungen nach Neustart, Sicherungsordner (#80, #67)
 - [ ] Rechtliche Einordnung der Rollen (#77)

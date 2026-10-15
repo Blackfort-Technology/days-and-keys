@@ -34,9 +34,14 @@ Noch kein Deploy-Ziel. Konzept und Leitplanken: `README.md`.
 
 `.github/workflows/ci.yml` läuft bei jedem PR und auf `main`: `governance` (Pflichtdateien,
 Issue-Bezug in Titel und Commits, keine langen Gedankenstriche), `sicherheit` (Gitleaks über die
-Historie, `cargo-deny`, `cargo-audit`), `kern` (fmt, clippy, Tests, Lastprobe). `main` ist
-geschützt: Merge nur per PR mit grünen Pflicht-Checks, keine Force-Pushes. Actions sind auf
-Commits gepinnt.
+Historie, `cargo-deny`, `cargo-audit`), `kern` (fmt, clippy, Tests, Lastprobe), `android`
+(unter anderem keine INTERNET-Berechtigung, nur freigegebene exportierte Komponenten nach
+`android/pruefung/`), `ios`. Zusätzlich prüft das Lab-Jenkins jeden `main`-Stand und jeden PR
+aus diesem Repo mit den Scans der internen Pipeline-Bibliothek (Gitleaks, Semgrep, Bandit,
+Dependency-Check, Trivy, SBOM) und meldet den Commit-Status `blackfort/sicherheit` (#109).
+`main` ist geschützt: Merge nur per PR mit allen sechs grünen Pflicht-Checks, keine
+Force-Pushes. Actions sind auf Commits gepinnt. Ausnahmen von Scanner-Regeln nur gezielt an der
+Fundstelle (`nosemgrep: <regel>`, `# nosec <id>`) mit Begründung, nie global.
 
 ## Bauen
 
