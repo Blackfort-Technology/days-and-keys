@@ -30,7 +30,8 @@ def voller_name(name):
 
 
 def befunde(pfad):
-    # Eingabe ist das eigene Build-Ergebnis, keine fremde Datei.
+    # Eingabe ist das eigene Build-Ergebnis, keine fremde Datei; expat lädt keine externen Entitäten.
+    # nosemgrep: python.lang.security.use-defused-xml-parse.use-defused-xml-parse
     wurzel = ET.parse(pfad).getroot()  # nosec B314
     app = wurzel.find("application")
     if app is None:
