@@ -5,6 +5,13 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -13,6 +20,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
+import androidx.compose.material3.NavigationRailItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -25,6 +35,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.sp
 import de.blackforttec.daysandkeys.R
@@ -42,6 +53,9 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
             z.meldung?.let { snack.showSnackbar(it); z.meldung = null }
         }
         val s = z.seite
+        // Querformat auf dem Telefon: Reiter an den linken Rand, die Höhe gehört dem Inhalt (#155).
+        val konf = LocalConfiguration.current
+        val seitlich = konf.screenWidthDp > konf.screenHeightDp && konf.screenHeightDp < 480
         val innen = s !is Seite.Sperre && s !is Seite.Einrichtung && s !is Seite.Wiederherstellung
         fun zurueckZiel(): Seite = when (s) {
             is Seite.Medikament -> Seite.Medikamente
@@ -62,64 +76,72 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
                 else -> null
             }
         }
-        Scaffold(
-            snackbarHost = { SnackbarHost(snack) },
-            containerColor = if (istFormular(s)) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background,
-            topBar = {
-                if (innen) {
-                    val titel = when (s) {
-                        Seite.Start -> "Heute"
-                        Seite.Verlauf, Seite.Eintraege -> "Verlauf"
-                        is Seite.Eintrag -> formularName ?: "Eintrag"
-                        Seite.Medikamente -> "Medikamente"
-                        is Seite.Medikament -> if (s.p == null) "Neues Präparat" else "Präparat bearbeiten"
-                        Seite.Einstellungen -> "Mehr"
-                        Seite.Hilfe -> "Hilfe"
-                        is Seite.Formular -> (if (s.korrektur != null) "Korrektur: " else "") + (formularName ?: "")
-                        else -> ""
+        val zeigeLeiste = innen && z.entsperrt() && !istFormular(s)
+        Row {
+            if (seitlich && zeigeLeiste) Leiste(s, seitlich = true) { z.zu(it) }
+            Scaffold(
+                // Die Leiste hat den linken Rand schon eingerückt, der Inhalt nicht noch einmal.
+                modifier = Modifier.weight(1f).then(
+                    if (seitlich && zeigeLeiste) Modifier.consumeWindowInsets(WindowInsets.safeDrawing.only(WindowInsetsSides.Start)) else Modifier,
+                ),
+                snackbarHost = { SnackbarHost(snack) },
+                containerColor = if (istFormular(s)) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background,
+                topBar = {
+                    if (innen) {
+                        val titel = when (s) {
+                            Seite.Start -> "Heute"
+                            Seite.Verlauf, Seite.Eintraege -> "Verlauf"
+                            is Seite.Eintrag -> formularName ?: "Eintrag"
+                            Seite.Medikamente -> "Medikamente"
+                            is Seite.Medikament -> if (s.p == null) "Neues Präparat" else "Präparat bearbeiten"
+                            Seite.Einstellungen -> "Mehr"
+                            Seite.Hilfe -> "Hilfe"
+                            is Seite.Formular -> (if (s.korrektur != null) "Korrektur: " else "") + (formularName ?: "")
+                            else -> ""
+                        }
+                        TopAppBar(
+                            title = {
+                                Column {
+                                    Text(titel, style = if (istFormular(s) || s is Seite.Eintrag) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall, maxLines = 1)
+                                    if (s == Seite.Start) z.start?.let { Text(it.heuteLang, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                                }
+                            },
+                            navigationIcon = {
+                                when {
+                                    // Wie die Systemgeste, damit Rückfragen der Seite greifen (ungespeicherte Änderungen).
+                                    istFormular(s) -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_close, "Schließen") }
+                                    s == Seite.Hilfe || s is Seite.Eintrag -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_arrow_back, "Zurück") }
+                                }
+                            },
+                            actions = {
+                                if (s != Seite.Hilfe) TextButton(onClick = { z.zu(Seite.Hilfe) }) { Text("Hilfe") }
+                                if (z.entsperrt() && s != Seite.Hilfe && !istFormular(s)) IconButton(onClick = { z.sperren() }) { Symbol(R.drawable.sym_lock, "Sperren") }
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = if (istFormular(s)) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background,
+                            ),
+                        )
                     }
-                    TopAppBar(
-                        title = {
-                            Column {
-                                Text(titel, style = if (istFormular(s) || s is Seite.Eintrag) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineSmall, maxLines = 1)
-                                if (s == Seite.Start) z.start?.let { Text(it.heuteLang, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                            }
-                        },
-                        navigationIcon = {
-                            when {
-                                // Wie die Systemgeste, damit Rückfragen der Seite greifen (ungespeicherte Änderungen).
-                                istFormular(s) -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_close, "Schließen") }
-                                s == Seite.Hilfe || s is Seite.Eintrag -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_arrow_back, "Zurück") }
-                            }
-                        },
-                        actions = {
-                            if (s != Seite.Hilfe) TextButton(onClick = { z.zu(Seite.Hilfe) }) { Text("Hilfe") }
-                            if (z.entsperrt() && s != Seite.Hilfe && !istFormular(s)) IconButton(onClick = { z.sperren() }) { Symbol(R.drawable.sym_lock, "Sperren") }
-                        },
-                        colors = TopAppBarDefaults.topAppBarColors(
-                            containerColor = if (istFormular(s)) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background,
-                        ),
-                    )
+                },
+                bottomBar = { if (!seitlich && zeigeLeiste) Leiste(s) { z.zu(it) } },
+            ) { pad ->
+                Box(Modifier.padding(pad)) {
+                    when (s) {
+                        Seite.Sperre -> SperrSeite(z)
+                        Seite.Einrichtung -> EinrichtungSeite(z)
+                        Seite.Wiederherstellung -> WiederherstellungSeite(z)
+                        Seite.Start -> StartSeite(z)
+                        is Seite.Formular -> FormularSeite(z, s)
+                        Seite.Verlauf -> VerlaufReiter(z, eintraege = false)
+                        Seite.Eintraege -> VerlaufReiter(z, eintraege = true)
+                        is Seite.Eintrag -> EintragSeite(z, s.id)
+                        Seite.Medikamente -> MedikamenteSeite(z)
+                        is Seite.Medikament -> MedikamentSeite(z, s.p)
+                        Seite.Einstellungen -> EinstellungenSeite(z)
+                        Seite.Hilfe -> HilfeSeite(z)
+                    }
+                    if (z.arbeitet) CircularProgressIndicator(Modifier.align(Alignment.Center))
                 }
-            },
-            bottomBar = { if (innen && z.entsperrt() && !istFormular(s)) Leiste(s) { z.zu(it) } },
-        ) { pad ->
-            Box(Modifier.padding(pad)) {
-                when (s) {
-                    Seite.Sperre -> SperrSeite(z)
-                    Seite.Einrichtung -> EinrichtungSeite(z)
-                    Seite.Wiederherstellung -> WiederherstellungSeite(z)
-                    Seite.Start -> StartSeite(z)
-                    is Seite.Formular -> FormularSeite(z, s)
-                    Seite.Verlauf -> VerlaufReiter(z, eintraege = false)
-                    Seite.Eintraege -> VerlaufReiter(z, eintraege = true)
-                    is Seite.Eintrag -> EintragSeite(z, s.id)
-                    Seite.Medikamente -> MedikamenteSeite(z)
-                    is Seite.Medikament -> MedikamentSeite(z, s.p)
-                    Seite.Einstellungen -> EinstellungenSeite(z)
-                    Seite.Hilfe -> HilfeSeite(z)
-                }
-                if (z.arbeitet) CircularProgressIndicator(Modifier.align(Alignment.Center))
             }
         }
     }
@@ -127,7 +149,7 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
 
 /** Vier Reiter mit Symbol und Namen (Vorgabe 5); ab 150 % Schrift nur der gewählte mit Namen. */
 @Composable
-private fun Leiste(s: Seite, zu: (Seite) -> Unit) {
+private fun Leiste(s: Seite, seitlich: Boolean = false, zu: (Seite) -> Unit) {
     val eintraege = listOf(
         Triple("Heute", Seite.Start, R.drawable.sym_wb_twilight),
         Triple("Verlauf", Seite.Verlauf, R.drawable.sym_timeline),
@@ -135,11 +157,35 @@ private fun Leiste(s: Seite, zu: (Seite) -> Unit) {
         Triple("Mehr", Seite.Einstellungen, R.drawable.sym_more_horiz),
     )
     val gross = LocalDensity.current.fontScale >= 1.5f
+    fun gewaehlt(ziel: Seite) = s == ziel || (ziel == Seite.Medikamente && s is Seite.Medikament) || (ziel == Seite.Verlauf && (s == Seite.Eintraege || s is Seite.Eintrag))
+    if (seitlich) {
+        NavigationRail(
+            Modifier.fillMaxHeight(),
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            // Kameraaussparung im Querformat liegt am Rand der Leiste.
+            windowInsets = WindowInsets.safeDrawing.only(WindowInsetsSides.Vertical + WindowInsetsSides.Start),
+        ) {
+            for ((titel, ziel, symbol) in eintraege) NavigationRailItem(
+                selected = gewaehlt(ziel),
+                onClick = { zu(ziel) },
+                icon = { Symbol(symbol, if (gross) titel else null) },
+                label = { Text(titel, style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp), maxLines = 1, softWrap = false) },
+                alwaysShowLabel = !gross,
+                colors = NavigationRailItemDefaults.colors(
+                    indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    selectedIconColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                    selectedTextColor = MaterialTheme.colorScheme.onSurface,
+                    unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    unselectedTextColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                ),
+            )
+        }
+        return
+    }
     NavigationBar(containerColor = MaterialTheme.colorScheme.surfaceContainer) {
         for ((titel, ziel, symbol) in eintraege) {
-            val gewaehlt = s == ziel || (ziel == Seite.Medikamente && s is Seite.Medikament) || (ziel == Seite.Verlauf && (s == Seite.Eintraege || s is Seite.Eintrag))
             NavigationBarItem(
-                selected = gewaehlt,
+                selected = gewaehlt(ziel),
                 onClick = { zu(ziel) },
                 icon = { Symbol(symbol, if (gross) titel else null) },
                 label = { Text(titel, style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp), maxLines = 1, softWrap = false) },

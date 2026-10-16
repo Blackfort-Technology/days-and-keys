@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -70,13 +71,14 @@ fun VerlaufSeite(z: AppZustand) {
     val heute = remember { z.versuch { z.kern.heute() } ?: 0L }
     val v: Verlauf? = remember(frage, tage) { z.versuch { z.kern.verlauf(frage, heute - tage + 1, heute) } }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Abstand.rand), verticalArrangement = Arrangement.spacedBy(Abstand.m)) {
-        Klickzeile(fragen.firstOrNull { it.schluessel == frage }?.frage ?: frage, "Andere Frage wählen") { wahl = true }
+        val gewaehlt = fragen.firstOrNull { it.schluessel == frage }
+        Klickzeile(gewaehlt?.frage ?: frage, "Andere Frage wählen") { wahl = true }
         Stufenwahl(listOf(28L to "4 Wochen", 91L to "3 Monate", 365L to "1 Jahr"), tage.toLong()) { it?.let { w -> tage = w.toInt() } }
         if (v != null) {
             if (v.punkte.isEmpty()) {
                 Text("In diesem Zeitraum gibt es noch keine Werte für diese Frage.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(vertical = Abstand.xl))
             } else {
-                Diagramm(v, heute - tage + 1, heute, mittel, dauer = fragen.firstOrNull { it.schluessel == frage }?.feldart == Feldart.DAUER)
+                Diagramm(v, heute - tage + 1, heute, mittel, dauer = gewaehlt?.feldart == Feldart.DAUER)
                 Stufenwahl(listOf(7L to "Grundniveau 7 Tage", 28L to "28 Tage"), mittel.toLong()) { it?.let { w -> mittel = w.toInt() } }
             }
             Text(v.hinweis + (if (v.einnahmenMs.isNotEmpty()) " · ${v.einnahmenMs.size} Einnahmen" else ""), style = MaterialTheme.typography.bodyMedium)
@@ -102,10 +104,11 @@ fun VerlaufSeite(z: AppZustand) {
         Column(Modifier.verticalScroll(rememberScrollState()).padding(bottom = Abstand.xl)) {
             for ((titel, qs) in gruppen) if (qs.isNotEmpty()) {
                 Text(titel, style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(horizontal = Abstand.rand, vertical = Abstand.s))
-                for (q in qs) Text(
-                    q.frage, style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.fillMaxWidth().clickable { frage = q.schluessel; wahl = false }.padding(horizontal = Abstand.rand, vertical = Abstand.m),
-                )
+                // Kurzname zuerst, damit Folgefragen wie „Wie lange ungefähr?“ ihren Bezug behalten (#153).
+                for (q in qs) Column(Modifier.fillMaxWidth().heightIn(min = Abstand.ziel).clickable { frage = q.schluessel; wahl = false }.padding(horizontal = Abstand.rand, vertical = Abstand.s), verticalArrangement = Arrangement.Center) {
+                    Text(q.kurz ?: q.frage, style = MaterialTheme.typography.bodyLarge)
+                    if (q.kurz != null) Text(q.frage, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         }
     }

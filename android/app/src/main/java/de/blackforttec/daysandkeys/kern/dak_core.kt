@@ -3815,6 +3815,11 @@ data class FrageAnsicht (
     , 
     var `frage`: kotlin.String
     , 
+    /**
+     * Kurzname für Listen und Verlauf, etwa „Bewegung, Dauer“ (#153).
+     */
+    var `kurz`: kotlin.String?
+    , 
     var `feldart`: Feldart
     , 
     var `min`: kotlin.Long?
@@ -3853,6 +3858,7 @@ public object FfiConverterTypeFrageAnsicht: FfiConverterRustBuffer<FrageAnsicht>
             FfiConverterString.read(buf),
             FfiConverterString.read(buf),
             FfiConverterString.read(buf),
+            FfiConverterOptionalString.read(buf),
             FfiConverterTypeFeldart.read(buf),
             FfiConverterOptionalLong.read(buf),
             FfiConverterOptionalLong.read(buf),
@@ -3870,6 +3876,7 @@ public object FfiConverterTypeFrageAnsicht: FfiConverterRustBuffer<FrageAnsicht>
             FfiConverterString.allocationSize(value.`messdefId`) +
             FfiConverterString.allocationSize(value.`schluessel`) +
             FfiConverterString.allocationSize(value.`frage`) +
+            FfiConverterOptionalString.allocationSize(value.`kurz`) +
             FfiConverterTypeFeldart.allocationSize(value.`feldart`) +
             FfiConverterOptionalLong.allocationSize(value.`min`) +
             FfiConverterOptionalLong.allocationSize(value.`max`) +
@@ -3886,6 +3893,7 @@ public object FfiConverterTypeFrageAnsicht: FfiConverterRustBuffer<FrageAnsicht>
             FfiConverterString.write(value.`messdefId`, buf)
             FfiConverterString.write(value.`schluessel`, buf)
             FfiConverterString.write(value.`frage`, buf)
+            FfiConverterOptionalString.write(value.`kurz`, buf)
             FfiConverterTypeFeldart.write(value.`feldart`, buf)
             FfiConverterOptionalLong.write(value.`min`, buf)
             FfiConverterOptionalLong.write(value.`max`, buf)

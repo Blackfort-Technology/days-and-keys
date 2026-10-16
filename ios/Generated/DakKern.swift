@@ -2658,6 +2658,10 @@ public struct FrageAnsicht: Equatable, Hashable {
     public var messdefId: String
     public var schluessel: String
     public var frage: String
+    /**
+     * Kurzname für Listen und Verlauf, etwa „Bewegung, Dauer“ (#153).
+     */
+    public var kurz: String?
     public var feldart: Feldart
     public var min: Int64?
     public var max: Int64?
@@ -2671,10 +2675,14 @@ public struct FrageAnsicht: Equatable, Hashable {
 
     // Default memberwise initializers are never public by default, so we
     // declare one manually.
-    public init(messdefId: String, schluessel: String, frage: String, feldart: Feldart, min: Int64?, max: Int64?, anker: [Anker], optionen: [Wahl], mitStaerke: Bool, kamNichtVor: Bool, richtung: Richtung, einheit: String?, hinweis: String?) {
+    public init(messdefId: String, schluessel: String, frage: String, 
+        /**
+         * Kurzname für Listen und Verlauf, etwa „Bewegung, Dauer“ (#153).
+         */kurz: String?, feldart: Feldart, min: Int64?, max: Int64?, anker: [Anker], optionen: [Wahl], mitStaerke: Bool, kamNichtVor: Bool, richtung: Richtung, einheit: String?, hinweis: String?) {
         self.messdefId = messdefId
         self.schluessel = schluessel
         self.frage = frage
+        self.kurz = kurz
         self.feldart = feldart
         self.min = min
         self.max = max
@@ -2706,6 +2714,7 @@ public struct FfiConverterTypeFrageAnsicht: FfiConverterRustBuffer {
                 messdefId: FfiConverterString.read(from: &buf), 
                 schluessel: FfiConverterString.read(from: &buf), 
                 frage: FfiConverterString.read(from: &buf), 
+                kurz: FfiConverterOptionString.read(from: &buf), 
                 feldart: FfiConverterTypeFeldart.read(from: &buf), 
                 min: FfiConverterOptionInt64.read(from: &buf), 
                 max: FfiConverterOptionInt64.read(from: &buf), 
@@ -2723,6 +2732,7 @@ public struct FfiConverterTypeFrageAnsicht: FfiConverterRustBuffer {
         FfiConverterString.write(value.messdefId, into: &buf)
         FfiConverterString.write(value.schluessel, into: &buf)
         FfiConverterString.write(value.frage, into: &buf)
+        FfiConverterOptionString.write(value.kurz, into: &buf)
         FfiConverterTypeFeldart.write(value.feldart, into: &buf)
         FfiConverterOptionInt64.write(value.min, into: &buf)
         FfiConverterOptionInt64.write(value.max, into: &buf)
