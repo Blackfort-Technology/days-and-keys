@@ -57,6 +57,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.Role
@@ -70,6 +71,7 @@ import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import de.blackforttec.daysandkeys.DaysAndKeysAppHolder
 import de.blackforttec.daysandkeys.R
 import de.blackforttec.daysandkeys.kern.FrageAnsicht
 import java.time.Instant
@@ -102,14 +104,16 @@ fun zeitText(ms: Long): String =
 
 fun uhrzeitAus(ms: Long): String = DateTimeFormatter.ofPattern("HH:mm").format(Instant.ofEpochMilli(ms).atZone(ZoneId.systemDefault()))
 
+/** Ohne Composable-Kontext; die Texte kommen über die Anwendung aus strings.xml (#144). */
 fun vorText(ms: Long): String {
     val min = (System.currentTimeMillis() - ms) / 60_000
+    val res = DaysAndKeysAppHolder.app.resources
     return when {
-        min < 2 -> "gerade eben"
-        min < 60 -> "vor $min Minuten"
-        min < 120 -> "vor 1 Stunde"
-        min < 48 * 60 -> "vor ${min / 60} Stunden"
-        else -> "vor ${min / 1440} Tagen"
+        min < 2 -> res.getString(R.string.baustein_gerade_eben)
+        min < 60 -> res.getString(R.string.baustein_vor_minuten, min)
+        min < 120 -> res.getQuantityString(R.plurals.baustein_vor_stunden, 1, 1)
+        min < 48 * 60 -> res.getQuantityString(R.plurals.baustein_vor_stunden, (min / 60).toInt(), min / 60)
+        else -> res.getString(R.string.baustein_vor_tagen, min / 1440)
     }
 }
 
@@ -118,7 +122,10 @@ fun Symbol(id: Int, beschreibung: String? = null, modifier: Modifier = Modifier.
     Icon(painterResource(id), beschreibung, modifier)
 
 private fun wertText(w: Long, bipolar: Boolean) = if (bipolar && w > 0) "+$w" else "$w"
-private fun sprechWert(w: Long) = if (w < 0) "minus ${-w}" else if (w > 0) "plus $w" else "null"
+private fun sprechWert(w: Long): String {
+    val res = DaysAndKeysAppHolder.app.resources
+    return if (w < 0) res.getString(R.string.baustein_minus, -w) else if (w > 0) res.getString(R.string.baustein_plus, w) else res.getString(R.string.baustein_null)
+}
 
 /**
  * Stufenleiste für Skalen mit mehr als fünf Stufen (#134, Designvorgabe 4.0). Ohne Antwort keine
@@ -145,6 +152,13 @@ fun Stufenleiste(q: FrageAnsicht, wert: Long?, setzen: (Long?) -> Unit) {
         (min + ((x - rand) / (breite - 2 * rand) * n).roundToLong()).coerceIn(min, max)
     val anker = q.anker.firstOrNull()?.text to q.anker.lastOrNull()?.text
     val mitte = if (bipolar) 0L else min + n / 2
+    // Semantik-Blöcke sind keine Composables, die Texte stehen vorher fest.
+    val beschreibung = stringResource(
+        R.string.baustein_leiste_beschreibung,
+        q.frage, sprechWert(min), anker.first?.let { ", $it" } ?: "", sprechWert(max), anker.second?.let { ", $it" } ?: "",
+    )
+    val nichtBeantwortet = stringResource(R.string.baustein_nicht_beantwortet)
+    val antwortEntfernen = stringResource(R.string.baustein_antwort_entfernen)
     Column(Modifier.fillMaxWidth()) {
         Canvas(
             Modifier.fillMaxWidth().height(48.dp)
@@ -167,11 +181,11 @@ fun Stufenleiste(q: FrageAnsicht, wert: Long?, setzen: (Long?) -> Unit) {
                     )
                 }
                 .semantics(mergeDescendants = true) {
-                    contentDescription = "${q.frage} Von ${sprechWert(min)}${anker.first?.let { ", $it" } ?: ""}, bis ${sprechWert(max)}${anker.second?.let { ", $it" } ?: ""}"
-                    stateDescription = wert?.let { sprechWert(it) } ?: "nicht beantwortet"
+                    contentDescription = beschreibung
+                    stateDescription = wert?.let { sprechWert(it) } ?: nichtBeantwortet
                     progressBarRangeInfo = ProgressBarRangeInfo((wert ?: mitte).toFloat(), min.toFloat()..max.toFloat(), (n - 1).toInt())
                     setProgress { v -> setze(v.roundToLong().coerceIn(min, max)); true }
-                    customActions = listOf(CustomAccessibilityAction("Antwort entfernen") { setze(null); true })
+                    customActions = listOf(CustomAccessibilityAction(antwortEntfernen) { setze(null); true })
                 },
         ) {
             val b = size.width
@@ -259,11 +273,12 @@ fun AuswahlChip(text: String, gewaehlt: Boolean, umschalten: () -> Unit) {
 /** Gruppe mit Kopfzeile, auf Tipp auf- und zuklappbar (#134). */
 @Composable
 fun Aufklappgruppe(titel: String, zeile: String, offen: Boolean, umschalten: () -> Unit, inhalt: @Composable () -> Unit) {
+    val stand = if (offen) stringResource(R.string.baustein_aufgeklappt) else stringResource(R.string.baustein_zugeklappt)
     Column(Modifier.fillMaxWidth()) {
         Row(
             Modifier.fillMaxWidth().heightIn(min = 56.dp)
-                .clickable(role = Role.Button, onClickLabel = if (offen) "zuklappen" else "aufklappen") { umschalten() }
-                .semantics { stateDescription = if (offen) "aufgeklappt" else "zugeklappt" }
+                .clickable(role = Role.Button, onClickLabel = if (offen) stringResource(R.string.baustein_zuklappen) else stringResource(R.string.baustein_aufklappen)) { umschalten() }
+                .semantics { stateDescription = stand }
                 .padding(vertical = Abstand.s),
             verticalAlignment = Alignment.CenterVertically,
         ) {

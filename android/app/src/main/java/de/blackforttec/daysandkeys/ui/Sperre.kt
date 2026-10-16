@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import de.blackforttec.daysandkeys.R
@@ -34,18 +35,18 @@ fun SperrSeite(z: AppZustand) {
         Spacer(Modifier.weight(0.4f))
         Image(painterResource(R.drawable.ic_vordergrund), null, Modifier.size(96.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
         Spacer(Modifier.height(Abstand.l))
-        Text("Days & Keys", style = MaterialTheme.typography.headlineSmall)
-        Text("Gesperrt", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.allgemein_app_name), style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.sperre_gesperrt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.weight(0.6f))
         if (z.ersetzt) {
-            Hinweisfeld("Dieses Gerät wurde durch ein anderes ersetzt. Deine Einträge liegen auf dem neuen Gerät; hier wird nichts mehr gesichert. Entzieh diesem Gerät den Zugang zum Sicherungsordner.")
+            Hinweisfeld(stringResource(R.string.sperre_ersetzt))
             Spacer(Modifier.height(Abstand.m))
         }
-        Button(onClick = { z.entsperren() }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.hauptknopf)) { Text("Entsperren") }
+        Button(onClick = { z.entsperren() }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.hauptknopf)) { Text(stringResource(R.string.sperre_entsperren)) }
         Spacer(Modifier.height(Abstand.m))
-        OutlinedButton(onClick = { z.zu(Seite.Hilfe) }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.ziel)) { Text("Hilfe in einer Krise") }
+        OutlinedButton(onClick = { z.zu(Seite.Hilfe) }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.ziel)) { Text(stringResource(R.string.allgemein_hilfe_krise)) }
         Text(
-            "Zum Entsperren genügt Fingerabdruck, Gesicht oder der Geräte-Code.",
+            stringResource(R.string.sperre_hinweis),
             style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(vertical = Abstand.l),
         )

@@ -9,6 +9,7 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.security.keystore.StrongBoxUnavailableException
 import androidx.activity.ComponentActivity
+import de.blackforttec.daysandkeys.R
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -63,7 +64,7 @@ class Schluesselspeicher {
             k.invokeOnCancellation { abbruch.cancel() }
             val prompt = BiometricPrompt.Builder(activity)
                 .setTitle(titel)
-                .setSubtitle("Mit Fingerabdruck, Gesicht oder Geräte-Code")
+                .setSubtitle(activity.getString(R.string.geraeteschutz_untertitel))
                 .setAllowedAuthenticators(BIOMETRIC_STRONG or DEVICE_CREDENTIAL)
                 .setConfirmationRequired(false)
                 .build()
@@ -97,7 +98,7 @@ class Schluesselspeicher {
     suspend fun umhuellen(activity: ComponentActivity, generation: ULong, kk: ByteArray, kkH: ByteArray): ByteArray {
         val c = Cipher.getInstance("AES/GCM/NoPadding")
         c.init(Cipher.ENCRYPT_MODE, schluessel(generation, neu = true))
-        val ok = authentifizieren(activity, c, "Schlüssel schützen")
+        val ok = authentifizieren(activity, c, activity.getString(R.string.geraeteschutz_schuetzen))
         val klar = kk + kkH
         try {
             return ok.iv + ok.doFinal(klar)
@@ -110,7 +111,7 @@ class Schluesselspeicher {
     suspend fun enthuellen(activity: ComponentActivity, generation: ULong, umhuellung: ByteArray): Pair<ByteArray, ByteArray> {
         val c = Cipher.getInstance("AES/GCM/NoPadding")
         c.init(Cipher.DECRYPT_MODE, schluessel(generation, neu = false), GCMParameterSpec(128, umhuellung.copyOfRange(0, 12)))
-        val ok = authentifizieren(activity, c, "Days & Keys entsperren")
+        val ok = authentifizieren(activity, c, activity.getString(R.string.geraeteschutz_entsperren))
         val klar = ok.doFinal(umhuellung.copyOfRange(12, umhuellung.size))
         val a = klar.copyOfRange(0, 32)
         val b = klar.copyOfRange(32, 64)

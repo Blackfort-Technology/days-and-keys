@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.lifecycleScope
 import de.blackforttec.daysandkeys.DaysAndKeysApp
 import de.blackforttec.daysandkeys.MainActivity
+import de.blackforttec.daysandkeys.R
 import de.blackforttec.daysandkeys.kern.AntwortEingabe
 import de.blackforttec.daysandkeys.kern.DakFehler
 import de.blackforttec.daysandkeys.kern.EintragDetail
@@ -77,14 +78,14 @@ class AppZustand(val app: DaysAndKeysApp, val activity: MainActivity) {
     } catch (e: Schluesselspeicher.Abgebrochen) {
         meldung = e.message; null
     } catch (e: Exception) {
-        meldung = "Unerwarteter Fehler: ${e.javaClass.simpleName}"; null
+        meldung = activity.getString(R.string.allgemein_fehler_unerwartet, e.javaClass.simpleName); null
     }
 
     fun entsperren() {
         scope.launch {
             if (kern.lage() is KernLage.Entsperrt) { nachEntsperren(); return@launch }
             val l = kern.lage() as? KernLage.Gesperrt ?: return@launch
-            val umh = l.kkUmhuellung ?: run { meldung = "Kein geschützter Schlüssel gefunden."; return@launch }
+            val umh = l.kkUmhuellung ?: run { meldung = activity.getString(R.string.sperre_kein_schluessel); return@launch }
             try {
                 arbeitet = true
                 val (a, b) = app.schluessel.enthuellen(activity, l.generation, umh)
@@ -145,21 +146,22 @@ class AppZustand(val app: DaysAndKeysApp, val activity: MainActivity) {
     }
 
     fun sichernImHintergrund(danach: (String) -> Unit = {}) {
+        val ersetztText = activity.getString(R.string.sicherung_ersetzt)
         scope.launch {
             val ergebnis = withContext(Dispatchers.IO) {
                 try {
                     when (val r = app.ordner.sichern(kern)) {
-                        is Sicherungsordner.Ergebnis.Gesichert -> "Gesichert"
-                        Sicherungsordner.Ergebnis.KeinOrdner -> "Noch kein Sicherungsordner gewählt"
-                        Sicherungsordner.Ergebnis.Ersetzt -> "Dieses Gerät wurde durch ein anderes ersetzt und sichert nicht mehr."
+                        is Sicherungsordner.Ergebnis.Gesichert -> activity.getString(R.string.sicherung_gesichert)
+                        Sicherungsordner.Ergebnis.KeinOrdner -> activity.getString(R.string.sicherung_kein_ordner)
+                        Sicherungsordner.Ergebnis.Ersetzt -> ersetztText
                     }
                 } catch (e: DakFehler.Fehler) {
-                    "Sicherung fehlgeschlagen: ${e.meldung}"
+                    activity.getString(R.string.sicherung_fehlgeschlagen, e.meldung)
                 } catch (e: Exception) {
-                    "Sicherung fehlgeschlagen: ${e.javaClass.simpleName}"
+                    activity.getString(R.string.sicherung_fehlgeschlagen, e.javaClass.simpleName)
                 }
             }
-            if (ergebnis.startsWith("Dieses Gerät")) { ersetzt = true; sperren() }
+            if (ergebnis == ersetztText) { ersetzt = true; sperren() }
             else { if (entsperrt()) neuLaden(); danach(ergebnis) }
         }
     }

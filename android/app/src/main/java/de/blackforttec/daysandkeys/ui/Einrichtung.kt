@@ -50,6 +50,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -78,7 +79,7 @@ fun WortFeld(z: AppZustand, nr: Int, wert: String, aendern: (String) -> Unit) {
         OutlinedTextField(
             value = wert,
             onValueChange = { aendern(it.trim().lowercase()) },
-            label = { Text("Wort $nr") },
+            label = { Text(stringResource(R.string.einrichtung_wort, nr)) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, autoCorrectEnabled = false),
             modifier = Modifier.fillMaxWidth(),
@@ -106,22 +107,23 @@ fun EinrichtungSeite(z: AppZustand) {
     }
     val erlaubnis = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { schritt = 7 }
 
+    val probeFalsch = stringResource(R.string.einrichtung_probe_falsch)
     BackHandler(enabled = schritt in 2..3) { schritt -= 1 }
     if (schritt == 0) { Begruessung(z) { schritt = 1 }; return }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(vertical = 16.dp)) {
         when (schritt) {
-            1 -> Schritt(1, "Wann beginnt dein Tag?", "Wenn du nach Mitternacht noch wach bist, zählt das bis zu dieser Uhrzeit zum Vortag. Spätere Änderungen gelten nur für neue Einträge.") {
+            1 -> Schritt(1, stringResource(R.string.einrichtung_tag_titel), stringResource(R.string.einrichtung_tag_text)) {
                 Stufenwahl(listOf(0L to "0", 2L to "2", 3L to "3", 4L to "4", 5L to "5", 6L to "6"), tageswechsel.toLong()) { it?.let { w -> tageswechsel = w.toInt() } }
-                Text("Uhr", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(stringResource(R.string.einrichtung_uhr), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Button(onClick = {
                     einrichtung = z.versuch { z.kern.einrichtungBeginnen(tageswechsel * 60) }
                     if (einrichtung != null) schritt = 2
-                }, modifier = Modifier.fillMaxWidth()) { Text("Weiter") }
+                }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.allgemein_weiter)) }
             }
             2 -> {
                 SensibleAnsicht()
                 val e = einrichtung!!
-                Schritt(2, "Deine 24 Recovery-Wörter", "Schreib sie auf Papier. Nur mit ihnen kommst du auf einem neuen Gerät wieder an deine Einträge. Kein Foto, keine Notiz-App.") {
+                Schritt(2, stringResource(R.string.einrichtung_woerter_titel), stringResource(R.string.einrichtung_woerter_text)) {
                     // Zwei Spalten: drei passen bei 360 dp Breite nicht, Nummer und Wort brachen um (#120).
                     for (zeile in e.woerter.chunked(2).withIndex()) {
                         Row(Modifier.fillMaxWidth()) {
@@ -133,22 +135,22 @@ fun EinrichtungSeite(z: AppZustand) {
                             }
                         }
                     }
-                    Button(onClick = { schritt = 3 }, modifier = Modifier.fillMaxWidth()) { Text("Ich habe sie aufgeschrieben") }
+                    Button(onClick = { schritt = 3 }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_aufgeschrieben)) }
                 }
             }
             3 -> {
                 SensibleAnsicht()
                 val e = einrichtung!!
-                Schritt(3, "Kurze Probe", "Gib diese drei Wörter von deinem Zettel ein.") {
+                Schritt(3, stringResource(R.string.einrichtung_probe_titel), stringResource(R.string.einrichtung_probe_text)) {
                     for ((i, pos) in e.probe.withIndex()) WortFeld(z, pos.toInt() + 1, probe[i]) { probe[i] = it }
                     Button(onClick = {
                         if (z.versuch { z.kern.einrichtungProbePruefen(probe.toList()) } == true) schritt = 4
-                        else z.meldung = "Die Wörter passen nicht. Schau noch einmal auf deinen Zettel."
-                    }, modifier = Modifier.fillMaxWidth()) { Text("Prüfen") }
-                    TextButton(onClick = { schritt = 2 }) { Text("Wörter noch einmal zeigen") }
+                        else z.meldung = probeFalsch
+                    }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.allgemein_pruefen)) }
+                    TextButton(onClick = { schritt = 2 }) { Text(stringResource(R.string.einrichtung_woerter_zeigen)) }
                 }
             }
-            4 -> Schritt(4, "Mit dem Gerät schützen", "Days & Keys öffnet sich mit Fingerabdruck, Gesicht oder Geräte-Code. Der Schlüssel liegt im Sicherheitschip.") {
+            4 -> Schritt(4, stringResource(R.string.einrichtung_schutz_titel), stringResource(R.string.einrichtung_schutz_text)) {
                 Button(onClick = {
                     val e = einrichtung!!
                     scope.launch {
@@ -167,29 +169,29 @@ fun EinrichtungSeite(z: AppZustand) {
                             z.arbeitet = false
                         }
                     }
-                }, modifier = Modifier.fillMaxWidth()) { Text("Schützen") }
+                }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_schuetzen)) }
             }
-            5 -> Schritt(5, "Automatische Sicherung", "Wähle einen Ordner, in den die App verschlüsselte Sicherungen legt, zum Beispiel einen Cloud-Ordner. Ohne Sicherung sind die Einträge weg, wenn das Gerät verloren geht.") {
-                Button(onClick = { ordnerWahl.launch(null) }, modifier = Modifier.fillMaxWidth()) { Text("Ordner wählen") }
-                TextButton(onClick = { schritt = 6 }) { Text("Später") }
+            5 -> Schritt(5, stringResource(R.string.einrichtung_sicherung_titel), stringResource(R.string.einrichtung_sicherung_text)) {
+                Button(onClick = { ordnerWahl.launch(null) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_ordner_waehlen)) }
+                TextButton(onClick = { schritt = 6 }) { Text(stringResource(R.string.einrichtung_spaeter)) }
             }
-            6 -> Schritt(6, "Erinnerungen", "Erinnerungen haben neutrale Texte ohne Medikamentennamen. Sie ersetzen keinen Medikamentenwecker.") {
+            6 -> Schritt(6, stringResource(R.string.allgemein_erinnerungen), stringResource(R.string.einrichtung_erinnerungen_text)) {
                 Button(onClick = {
                     if (Build.VERSION.SDK_INT >= 33) erlaubnis.launch(Manifest.permission.POST_NOTIFICATIONS) else schritt = 7
-                }, modifier = Modifier.fillMaxWidth()) { Text("Benachrichtigungen erlauben") }
+                }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_benachrichtigungen_erlauben)) }
                 TextButton(onClick = {
                     // „Ohne Erinnerungen“ schaltet die voreingestellten Erinnerungen ab (#149).
                     z.versuch { z.kern.einstellungen() }?.let { e -> z.versuch { z.kern.einstellungenSpeichern(e.copy(erinnerungen = e.erinnerungen.map { it.copy(aktiv = false) })) } }
                     schritt = 7
-                }) { Text("Ohne Erinnerungen") }
+                }) { Text(stringResource(R.string.einrichtung_ohne_erinnerungen)) }
             }
-            else -> Schritt(7, "Fertig", if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) "Stell in den Akku-Einstellungen die App auf „Nicht eingeschränkt\", sonst kommen Erinnerungen unzuverlässig." else null) {
+            else -> Schritt(7, stringResource(R.string.einrichtung_fertig), if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) stringResource(R.string.einrichtung_samsung) else null) {
                 if (!de.blackforttec.daysandkeys.plattform.Planer.exaktErlaubt(z.activity)) {
                     OutlinedButton(onClick = {
                         z.activity.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + z.activity.packageName)))
-                    }, modifier = Modifier.fillMaxWidth()) { Text("Pünktliche Erinnerungen erlauben") }
+                    }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_puenktlich)) }
                 }
-                Button(onClick = { z.planen(); z.zu(Seite.Start) }, modifier = Modifier.fillMaxWidth()) { Text("Zur Startseite") }
+                Button(onClick = { z.planen(); z.zu(Seite.Start) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_zur_startseite)) }
             }
         }
     }
@@ -202,6 +204,7 @@ fun WiederherstellungSeite(z: AppZustand) {
     var kandidaten by remember { mutableStateOf<List<de.blackforttec.daysandkeys.kern.Kandidat>?>(null) }
     var baum by remember { mutableStateOf<Uri?>(null) }
     val scope = rememberCoroutineScope()
+    val wiederhergestellt = stringResource(R.string.einrichtung_wiederhergestellt)
     val ordnerWahl = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
         if (uri != null) {
             baum = uri
@@ -211,20 +214,20 @@ fun WiederherstellungSeite(z: AppZustand) {
     }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(vertical = 16.dp)) {
         if (kandidaten == null) {
-            Abschnitt("Wiederherstellen", "Gib deine 24 Wörter ein und wähle dann den Ordner mit den Sicherungen.") {
+            Abschnitt(stringResource(R.string.einrichtung_wiederherstellen_titel), stringResource(R.string.einrichtung_wiederherstellen_text)) {
                 for (i in 0 until 24) WortFeld(z, i + 1, woerter[i]) { woerter[i] = it }
                 Button(onClick = {
                     if (z.versuch { z.kern.wiederherstellungBeginnen(woerter.toList()) } != null) ordnerWahl.launch(null)
-                }, modifier = Modifier.fillMaxWidth()) { Text("Ordner mit Sicherungen wählen") }
-                TextButton(onClick = { z.zu(Seite.Einrichtung) }) { Text("Zurück") }
+                }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_ordner_sicherungen)) }
+                TextButton(onClick = { z.zu(Seite.Einrichtung) }) { Text(stringResource(R.string.allgemein_zurueck)) }
             }
         } else {
             val k = kandidaten!!
             val gueltig = k.filter { it.gueltig }
-            Abschnitt("Gefundene Sicherungen", if (gueltig.size > 1 && gueltig.none { it.empfohlen }) "Es gibt zwei verschiedene Stände. Wähle den richtigen." else null) {
-                if (k.isEmpty()) Text("In diesem Ordner liegt keine Sicherung.")
+            Abschnitt(stringResource(R.string.einrichtung_gefunden), if (gueltig.size > 1 && gueltig.none { it.empfohlen }) stringResource(R.string.einrichtung_zwei_staende) else null) {
+                if (k.isEmpty()) Text(stringResource(R.string.einrichtung_keine_sicherung))
                 for (c in k.sortedByDescending { it.erstelltMs }) {
-                    val text = if (c.gueltig) "Nr. ${c.sicherungNr} vom ${zeitText(c.erstelltMs)}" + (if (c.empfohlen) " (neueste)" else "") else "${c.name}: ${c.grund}"
+                    val text = if (c.gueltig) stringResource(if (c.empfohlen) R.string.einrichtung_sicherung_nr_neueste else R.string.einrichtung_sicherung_nr, c.sicherungNr.toLong(), zeitText(c.erstelltMs)) else "${c.name}: ${c.grund}"
                     if (c.gueltig) Button(onClick = {
                         val u = baum ?: return@Button
                         scope.launch {
@@ -236,7 +239,7 @@ fun WiederherstellungSeite(z: AppZustand) {
                                 z.app.ordner.schreiben(w.markerName, w.marker, u)
                                 z.app.schluessel.aufraeumen(w.schluessel.generation)
                                 z.nachEntsperren()
-                                z.meldung = "Wiederhergestellt. Entziehe dem alten Gerät den Zugang zum Sicherungsordner, falls es noch existiert."
+                                z.meldung = wiederhergestellt
                             } catch (x: Schluesselspeicher.Abgebrochen) {
                                 z.meldung = x.message
                             } catch (x: DakFehler.Fehler) {
@@ -247,7 +250,7 @@ fun WiederherstellungSeite(z: AppZustand) {
                         }
                     }, modifier = Modifier.fillMaxWidth()) { Text(text) } else Text(text, color = MaterialTheme.colorScheme.secondary)
                 }
-                TextButton(onClick = { kandidaten = null }) { Text("Anderen Ordner wählen") }
+                TextButton(onClick = { kandidaten = null }) { Text(stringResource(R.string.einrichtung_anderer_ordner)) }
             }
         }
     }
@@ -258,7 +261,7 @@ fun WiederherstellungSeite(z: AppZustand) {
 fun Schritt(nr: Int, titel: String, text: String?, inhalt: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(horizontal = Abstand.rand), verticalArrangement = Arrangement.spacedBy(Abstand.m)) {
         LinearProgressIndicator(progress = { nr / 7f }, modifier = Modifier.fillMaxWidth().padding(top = Abstand.s))
-        Text("Schritt $nr von 7", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.einrichtung_schritt, nr), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(titel, style = MaterialTheme.typography.headlineSmall)
         text?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
         Abstand(4)
@@ -272,20 +275,20 @@ fun Begruessung(z: AppZustand, weiter: () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = Abstand.rand), verticalArrangement = Arrangement.spacedBy(Abstand.l)) {
         Abstand(48)
         Image(painterResource(R.drawable.ic_vordergrund), null, Modifier.size(96.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
-        Text("Willkommen", style = MaterialTheme.typography.headlineSmall)
+        Text(stringResource(R.string.einrichtung_willkommen), style = MaterialTheme.typography.headlineSmall)
         for ((symbol, text) in listOf(
-            R.drawable.sym_lock to "Alles bleibt verschlüsselt auf diesem Gerät.",
-            R.drawable.sym_close to "Kein Internet, kein Konto, kein Server.",
-            R.drawable.sym_schedule to "Halte fest, wie es dir geht, so oft du willst.",
+            R.drawable.sym_lock to stringResource(R.string.einrichtung_zusage_verschluesselt),
+            R.drawable.sym_close to stringResource(R.string.einrichtung_zusage_offline),
+            R.drawable.sym_schedule to stringResource(R.string.einrichtung_zusage_festhalten),
         )) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Abstand.m)) {
             Icon(painterResource(symbol), null, tint = MaterialTheme.colorScheme.primary)
             Text(text, style = MaterialTheme.typography.bodyLarge)
         }
-        Hinweisfeld("Wer den Code dieses Geräts kennt, kann die Einträge lesen.")
+        Hinweisfeld(stringResource(R.string.einrichtung_code_hinweis))
         Abstand(16)
-        Button(onClick = weiter, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.hauptknopf)) { Text("Einrichten") }
-        OutlinedButton(onClick = { z.zu(Seite.Wiederherstellung) }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.ziel)) { Text("Aus einer Sicherung wiederherstellen") }
-        TextButton(onClick = { z.zu(Seite.Hilfe) }) { Text("Hilfe in einer Krise") }
+        Button(onClick = weiter, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.hauptknopf)) { Text(stringResource(R.string.einrichtung_einrichten)) }
+        OutlinedButton(onClick = { z.zu(Seite.Wiederherstellung) }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.ziel)) { Text(stringResource(R.string.einrichtung_aus_sicherung)) }
+        TextButton(onClick = { z.zu(Seite.Hilfe) }) { Text(stringResource(R.string.allgemein_hilfe_krise)) }
         Abstand(24)
     }
 }
