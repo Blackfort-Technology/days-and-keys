@@ -37,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
 import de.blackforttec.daysandkeys.R
 import de.blackforttec.daysandkeys.kern.KernLage
@@ -89,14 +90,14 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
                 topBar = {
                     if (innen) {
                         val titel = when (s) {
-                            Seite.Start -> "Heute"
-                            Seite.Verlauf, Seite.Eintraege -> "Verlauf"
-                            is Seite.Eintrag -> formularName ?: "Eintrag"
-                            Seite.Medikamente -> "Medikamente"
-                            is Seite.Medikament -> if (s.p == null) "Neues Präparat" else "Präparat bearbeiten"
-                            Seite.Einstellungen -> "Mehr"
-                            Seite.Hilfe -> "Hilfe"
-                            is Seite.Formular -> (if (s.korrektur != null) "Korrektur: " else "") + (formularName ?: "")
+                            Seite.Start -> stringResource(R.string.oberflaeche_heute)
+                            Seite.Verlauf, Seite.Eintraege -> stringResource(R.string.oberflaeche_verlauf)
+                            is Seite.Eintrag -> formularName ?: stringResource(R.string.oberflaeche_eintrag)
+                            Seite.Medikamente -> stringResource(R.string.oberflaeche_medikamente)
+                            is Seite.Medikament -> if (s.p == null) stringResource(R.string.oberflaeche_praeparat_neu) else stringResource(R.string.oberflaeche_praeparat_bearbeiten)
+                            Seite.Einstellungen -> stringResource(R.string.oberflaeche_mehr)
+                            Seite.Hilfe -> stringResource(R.string.allgemein_hilfe)
+                            is Seite.Formular -> if (s.korrektur != null) stringResource(R.string.oberflaeche_korrektur, formularName ?: "") else (formularName ?: "")
                             else -> ""
                         }
                         TopAppBar(
@@ -109,13 +110,13 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
                             navigationIcon = {
                                 when {
                                     // Wie die Systemgeste, damit Rückfragen der Seite greifen (ungespeicherte Änderungen).
-                                    istFormular(s) -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_close, "Schließen") }
-                                    s == Seite.Hilfe || s is Seite.Eintrag -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_arrow_back, "Zurück") }
+                                    istFormular(s) -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_close, stringResource(R.string.oberflaeche_schliessen)) }
+                                    s == Seite.Hilfe || s is Seite.Eintrag -> IconButton(onClick = { zurueck?.onBackPressed() }) { Symbol(R.drawable.sym_arrow_back, stringResource(R.string.allgemein_zurueck)) }
                                 }
                             },
                             actions = {
-                                if (s != Seite.Hilfe) TextButton(onClick = { z.zu(Seite.Hilfe) }) { Text("Hilfe") }
-                                if (z.entsperrt() && s != Seite.Hilfe && !istFormular(s)) IconButton(onClick = { z.sperren() }) { Symbol(R.drawable.sym_lock, "Sperren") }
+                                if (s != Seite.Hilfe) TextButton(onClick = { z.zu(Seite.Hilfe) }) { Text(stringResource(R.string.allgemein_hilfe)) }
+                                if (z.entsperrt() && s != Seite.Hilfe && !istFormular(s)) IconButton(onClick = { z.sperren() }) { Symbol(R.drawable.sym_lock, stringResource(R.string.oberflaeche_sperren)) }
                             },
                             colors = TopAppBarDefaults.topAppBarColors(
                                 containerColor = if (istFormular(s)) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.background,
@@ -151,10 +152,10 @@ fun DaysAndKeysOberflaeche(z: AppZustand) {
 @Composable
 private fun Leiste(s: Seite, seitlich: Boolean = false, zu: (Seite) -> Unit) {
     val eintraege = listOf(
-        Triple("Heute", Seite.Start, R.drawable.sym_wb_twilight),
-        Triple("Verlauf", Seite.Verlauf, R.drawable.sym_timeline),
-        Triple("Medikamente", Seite.Medikamente, R.drawable.sym_medication),
-        Triple("Mehr", Seite.Einstellungen, R.drawable.sym_more_horiz),
+        Triple(stringResource(R.string.oberflaeche_heute), Seite.Start, R.drawable.sym_wb_twilight),
+        Triple(stringResource(R.string.oberflaeche_verlauf), Seite.Verlauf, R.drawable.sym_timeline),
+        Triple(stringResource(R.string.oberflaeche_medikamente), Seite.Medikamente, R.drawable.sym_medication),
+        Triple(stringResource(R.string.oberflaeche_mehr), Seite.Einstellungen, R.drawable.sym_more_horiz),
     )
     val gross = LocalDensity.current.fontScale >= 1.5f
     fun gewaehlt(ziel: Seite) = s == ziel || (ziel == Seite.Medikamente && s is Seite.Medikament) || (ziel == Seite.Verlauf && (s == Seite.Eintraege || s is Seite.Eintrag))

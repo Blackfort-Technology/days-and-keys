@@ -31,6 +31,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import android.app.NotificationManager
 import de.blackforttec.daysandkeys.R
@@ -58,6 +60,8 @@ fun StartSeite(z: AppZustand) {
         if (benachrichtigungenErlaubt) z.planen()
     }
     var wert by z::schnellwert
+    val einnahmeFestgehalten = stringResource(R.string.start_einnahme_festgehalten)
+    val vorPraefix = stringResource(R.string.baustein_vor_praefix)
 
     fun ereignis(k: Knopf) {
         // Ereignisse ohne Fragen werden mit dem Tipp gespeichert; „Krise“ fragt nach (Vorgabe 4.2).
@@ -65,7 +69,7 @@ fun StartSeite(z: AppZustand) {
         val f = z.versuch { z.kern.formular(k.schluessel) } ?: return
         if (f.gruppen.all { it.fragen.isEmpty() } && !f.brauchtPraeparat) {
             z.versuch { z.kern.ereignisErfassen(EreignisEingabe(f.id, null, emptyList(), null, null)) } ?: return
-            z.geaendert(); z.meldung = "${k.name} um ${uhrzeitAus(System.currentTimeMillis())} festgehalten"
+            z.geaendert(); z.meldung = z.activity.getString(R.string.start_ereignis_festgehalten, k.name, uhrzeitAus(System.currentTimeMillis()))
         } else z.zu(Seite.Formular(k.schluessel))
     }
 
@@ -78,54 +82,54 @@ fun StartSeite(z: AppZustand) {
                     val antwort = AntwortEingabe(stimmung.messdefId, AntwortZustand.BEANTWORTET, wert, null, emptyList(), true)
                     Button(onClick = {
                         z.versuch { z.kern.statusSpeichern(StatusEingabe(status.id, null, listOf(antwort), false, null, null)) } ?: return@Button
-                        wert = null; z.geaendert(); z.meldung = "Festgehalten um ${uhrzeitAus(System.currentTimeMillis())}"
-                    }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.hauptknopf)) { Text("Festhalten") }
-                    TextButton(onClick = { z.zu(Seite.Formular("status_jetzt", vorbelegt = listOf(antwort))); wert = null }) { Text("Mehr angeben") }
+                        wert = null; z.geaendert(); z.meldung = z.activity.getString(R.string.allgemein_festgehalten_um, uhrzeitAus(System.currentTimeMillis()))
+                    }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.hauptknopf)) { Text(stringResource(R.string.allgemein_festhalten)) }
+                    TextButton(onClick = { z.zu(Seite.Formular("status_jetzt", vorbelegt = listOf(antwort))); wert = null }) { Text(stringResource(R.string.start_mehr_angeben)) }
                 } else {
-                    if (s.statusHeute > 0u) s.letzterStatusMs?.let { Text("Zuletzt um ${uhrzeitAus(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                    if (s.statusHeute > 0u) s.letzterStatusMs?.let { Text(stringResource(R.string.start_zuletzt_um, uhrzeitAus(it)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
-                        TextButton(onClick = { z.zu(Seite.Formular("status_jetzt")) }) { Text("Ausführlich") }
-                        if (s.tagesabschlussHeute) TextButton(onClick = { z.zu(Seite.Formular("tagesabschluss")) }) { Text("Tagesabschluss") }
-                        if (s.wochenrueckblickHeute) TextButton(onClick = { z.zu(Seite.Formular("wochenrueckblick")) }) { Text("Wochenrückblick") }
+                        TextButton(onClick = { z.zu(Seite.Formular("status_jetzt")) }) { Text(stringResource(R.string.start_ausfuehrlich)) }
+                        if (s.tagesabschlussHeute) TextButton(onClick = { z.zu(Seite.Formular("tagesabschluss")) }) { Text(stringResource(R.string.allgemein_tagesabschluss)) }
+                        if (s.wochenrueckblickHeute) TextButton(onClick = { z.zu(Seite.Formular("wochenrueckblick")) }) { Text(stringResource(R.string.start_wochenrueckblick)) }
                     }
                 }
             }
         }
         // Ohne Erlaubnis kommen Erinnerungen nicht an, etwa nach einer Wiederherstellung (#149).
         if (!benachrichtigungenErlaubt && z.versuch { z.kern.einstellungen() }?.erinnerungen?.any { it.aktiv } != false) {
-            Abschnitt("Erinnerungen sind ausgeschaltet", "Ohne Erlaubnis zeigt das Telefon keine Erinnerungen an.") {
-                FilledTonalButton(onClick = { erlaubnis.launch(Manifest.permission.POST_NOTIFICATIONS) }) { Text("Erlauben") }
+            Abschnitt(stringResource(R.string.start_erinnerungen_aus_titel), stringResource(R.string.start_erinnerungen_aus_text)) {
+                FilledTonalButton(onClick = { erlaubnis.launch(Manifest.permission.POST_NOTIFICATIONS) }) { Text(stringResource(R.string.start_erlauben)) }
             }
         }
         // Morgens bis 14 Uhr, solange heute noch nichts zum Schlaf erfasst ist; der Kern entscheidet (#139).
         if (s.schlafAnbieten) {
-            Abschnitt("Wie hast du geschlafen?", "Wie lange und wie gut, in ein paar Sekunden.") {
-                FilledTonalButton(onClick = { z.zu(Seite.Formular("aufgewacht")) }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.ziel)) { Text("Schlaf festhalten") }
+            Abschnitt(stringResource(R.string.start_schlaf_titel), stringResource(R.string.start_schlaf_text)) {
+                FilledTonalButton(onClick = { z.zu(Seite.Formular("aufgewacht")) }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.ziel)) { Text(stringResource(R.string.start_schlaf_knopf)) }
             }
         }
         if (s.krisenplanHinweis && !z.krisenhinweisGesehen) {
-            Abschnitt("Dein Plan für Tiefs", "Du hast eingestellt, dass die App ihn dir zeigt, wenn deine Tageswerte eine Weile niedrig sind.") {
+            Abschnitt(stringResource(R.string.start_plan_titel), stringResource(R.string.start_plan_text)) {
                 Row(horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
-                    FilledTonalButton(onClick = { z.zu(Seite.Hilfe) }) { Text("Plan ansehen") }
-                    TextButton(onClick = { z.krisenhinweisGesehen = true }) { Text("Ausblenden") }
+                    FilledTonalButton(onClick = { z.zu(Seite.Hilfe) }) { Text(stringResource(R.string.start_plan_ansehen)) }
+                    TextButton(onClick = { z.krisenhinweisGesehen = true }) { Text(stringResource(R.string.start_ausblenden)) }
                 }
             }
         }
         for (e in s.entwuerfe) {
-            Abschnitt("${e.formularName}, angefangen", "${vorText(e.erstelltMs)} · ${e.antworten} " + if (e.antworten == 1u) "Antwort" else "Antworten") {
+            Abschnitt(stringResource(R.string.start_entwurf_titel, e.formularName), pluralStringResource(R.plurals.start_entwurf_zeile, e.antworten.toInt(), vorText(e.erstelltMs), e.antworten.toInt())) {
                 Row(horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
                     FilledTonalButton(onClick = {
                         val f = z.versuch { z.kern.entwurfLaden(e.id) } ?: return@FilledTonalButton
                         val schl = formularSchluessel(z, f.formularId) ?: return@FilledTonalButton
                         z.zu(Seite.Formular(schl, entwurf = e.id))
-                    }) { Text("Weiter") }
-                    TextButton(onClick = { z.versuch { z.kern.entwurfVerwerfen(e.id) }; z.neuLaden() }) { Text("Verwerfen") }
+                    }) { Text(stringResource(R.string.allgemein_weiter)) }
+                    TextButton(onClick = { z.versuch { z.kern.entwurfVerwerfen(e.id) }; z.neuLaden() }) { Text(stringResource(R.string.allgemein_verwerfen)) }
                 }
             }
         }
         if (s.einnahmenHeute.isNotEmpty() || s.bedarf.isNotEmpty()) {
             val nochNichts = s.einnahmenHeute.none { it.stand != EinnahmeStand.OFFEN }
-            Abschnitt("Medikamente heute", if (nochNichts) "Bestätige nur, was du genommen hast." else null) {
+            Abschnitt(stringResource(R.string.start_medikamente_titel), if (nochNichts) stringResource(R.string.start_medikamente_hinweis) else null) {
                 for (e in s.einnahmenHeute) {
                     Row(Modifier.fillMaxWidth().padding(vertical = Abstand.xs), verticalAlignment = Alignment.Top) {
                         Text(uhrzeit(e.uhrzeitMin), style = MaterialTheme.typography.labelLarge, modifier = Modifier.width(56.dp).padding(top = 2.dp))
@@ -133,32 +137,32 @@ fun StartSeite(z: AppZustand) {
                             Text(e.name + (e.staerke?.let { " $it" } ?: ""), style = MaterialTheme.typography.bodyLarge)
                             when (e.stand) {
                                 EinnahmeStand.OFFEN -> {
-                                    Text("Dosis ${e.dosis}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(stringResource(R.string.start_dosis, e.dosis), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                     FlowRow(horizontalArrangement = Arrangement.spacedBy(Abstand.s), modifier = Modifier.padding(top = Abstand.xs)) {
                                         FilledTonalButton(onClick = {
-                                            z.versuch { z.kern.einnahmeBestaetigen(e.praeparatId, null) }; z.geaendert(); z.meldung = "Einnahme festgehalten"
-                                        }) { Text("Genommen") }
-                                        TextButton(onClick = { z.zu(Seite.Formular("einnahme_ausgelassen", praeparat = e.praeparatId)) }) { Text("Ausgelassen", maxLines = 1) }
+                                            z.versuch { z.kern.einnahmeBestaetigen(e.praeparatId, null) }; z.geaendert(); z.meldung = einnahmeFestgehalten
+                                        }) { Text(stringResource(R.string.start_genommen_knopf)) }
+                                        TextButton(onClick = { z.zu(Seite.Formular("einnahme_ausgelassen", praeparat = e.praeparatId)) }) { Text(stringResource(R.string.start_ausgelassen_knopf), maxLines = 1) }
                                     }
                                 }
                                 // Erledigt ohne Farbe für den Stand (AE-27).
                                 EinnahmeStand.GENOMMEN -> Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Symbol(R.drawable.sym_check, null, Modifier.size(18.dp)); Text(" genommen", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Symbol(R.drawable.sym_check, null, Modifier.size(18.dp)); Text(" " + stringResource(R.string.start_genommen_stand), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
-                                EinnahmeStand.AUSGELASSEN -> Text("ausgelassen", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                EinnahmeStand.AUSGELASSEN -> Text(stringResource(R.string.start_ausgelassen_stand), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                         }
                     }
                 }
                 if (s.bedarf.isNotEmpty()) {
-                    Text("Bei Bedarf", style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(R.string.allgemein_bei_bedarf), style = MaterialTheme.typography.titleSmall)
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
                         for (b in s.bedarf) OutlinedButton(onClick = { bedarf = b }) { Text(b.name) }
                     }
                 }
             }
         }
-        Abschnitt("Ereignis festhalten", "Ein Tipp hält es mit der Uhrzeit von jetzt fest. Ändern kannst du sie danach.") {
+        Abschnitt(stringResource(R.string.start_ereignis_titel), stringResource(R.string.start_ereignis_text)) {
             val zeige = if (alleEreignisse) s.ereignisse else s.ereignisse.take(6)
             for (paar in zeige.chunked(2)) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
                 for (k in paar) OutlinedButton(onClick = { ereignis(k) }, modifier = Modifier.weight(1f).heightIn(min = Abstand.ziel)) {
@@ -166,40 +170,40 @@ fun StartSeite(z: AppZustand) {
                 }
                 if (paar.size == 1) Column(Modifier.weight(1f)) {}
             }
-            if (s.ereignisse.size > 6) TextButton(onClick = { alleEreignisse = !alleEreignisse }) { Text(if (alleEreignisse) "Weniger zeigen" else "Alle Ereignisse") }
+            if (s.ereignisse.size > 6) TextButton(onClick = { alleEreignisse = !alleEreignisse }) { Text(if (alleEreignisse) stringResource(R.string.start_weniger_zeigen) else stringResource(R.string.start_alle_ereignisse)) }
         }
         if (s.sicherungWarnung) {
             Abschnitt(
-                "Sicherung",
-                s.letzteSicherungMs?.let { "Die letzte Sicherung ist ${vorText(it).removePrefix("vor ")} alt." }
-                    ?: "Noch keine Sicherung eingerichtet. Geht das Gerät verloren, sind die Einträge sonst weg.",
-            ) { FilledTonalButton(onClick = { z.zu(Seite.Einstellungen) }) { Text("Sicherung einrichten") } }
+                stringResource(R.string.allgemein_sicherung),
+                s.letzteSicherungMs?.let { stringResource(R.string.start_sicherung_alt, vorText(it).removePrefix(vorPraefix)) }
+                    ?: stringResource(R.string.start_sicherung_fehlt),
+            ) { FilledTonalButton(onClick = { z.zu(Seite.Einstellungen) }) { Text(stringResource(R.string.start_sicherung_einrichten)) } }
         } else s.letzteSicherungMs?.let {
-            Text("Gesichert ${vorText(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = Abstand.rand, vertical = Abstand.s))
+            Text(stringResource(R.string.start_gesichert, vorText(it)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = Abstand.rand, vertical = Abstand.s))
         }
     }
     bedarf?.let { b ->
         AlertDialog(
             onDismissRequest = { bedarf = null },
             title = { Text(b.name) },
-            text = { Text("Jetzt eingenommen?") },
-            confirmButton = { Button(onClick = { z.versuch { z.kern.einnahmeBestaetigen(b.formularId, null) }; bedarf = null; z.geaendert() }) { Text("Ja, genommen") } },
-            dismissButton = { TextButton(onClick = { bedarf = null }) { Text("Abbrechen") } },
+            text = { Text(stringResource(R.string.start_bedarf_frage)) },
+            confirmButton = { Button(onClick = { z.versuch { z.kern.einnahmeBestaetigen(b.formularId, null) }; bedarf = null; z.geaendert() }) { Text(stringResource(R.string.start_bedarf_ja)) } },
+            dismissButton = { TextButton(onClick = { bedarf = null }) { Text(stringResource(R.string.allgemein_abbrechen)) } },
         )
     }
     krise?.let { k ->
         AlertDialog(
             onDismissRequest = { krise = null },
-            title = { Text("Krise festhalten?") },
-            text = { Text("Danach zeigt die App die Hilfe-Seite mit Nummern. Die App benachrichtigt niemanden.") },
+            title = { Text(stringResource(R.string.start_krise_titel)) },
+            text = { Text(stringResource(R.string.allgemein_krise_hinweis)) },
             confirmButton = {
                 Button(onClick = {
                     val f = z.versuch { z.kern.formular(k.schluessel) }
                     if (f != null && z.versuch { z.kern.ereignisErfassen(EreignisEingabe(f.id, null, emptyList(), null, null)) } != null) z.geaendert()
                     krise = null; z.zu(Seite.Hilfe)
-                }) { Text("Festhalten und Hilfe zeigen") }
+                }) { Text(stringResource(R.string.start_krise_knopf)) }
             },
-            dismissButton = { TextButton(onClick = { krise = null }) { Text("Abbrechen") } },
+            dismissButton = { TextButton(onClick = { krise = null }) { Text(stringResource(R.string.allgemein_abbrechen)) } },
         )
     }
 }

@@ -10,6 +10,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import de.blackforttec.daysandkeys.MainActivity
+import de.blackforttec.daysandkeys.R
 import de.blackforttec.daysandkeys.kern.Benachrichtigung
 import java.time.LocalDate
 import java.time.LocalTime
@@ -28,10 +29,10 @@ object Planer {
 
     fun kanaeleAnlegen(ctx: Context) {
         val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel(KANAL_MEDIKAMENT, "Einnahme", NotificationManager.IMPORTANCE_HIGH).apply {
+        nm.createNotificationChannel(NotificationChannel(KANAL_MEDIKAMENT, ctx.getString(R.string.benachrichtigung_kanal_einnahme), NotificationManager.IMPORTANCE_HIGH).apply {
             lockscreenVisibility = Notification.VISIBILITY_PRIVATE
         })
-        nm.createNotificationChannel(NotificationChannel(KANAL_ERINNERUNG, "Erinnerungen", NotificationManager.IMPORTANCE_DEFAULT).apply {
+        nm.createNotificationChannel(NotificationChannel(KANAL_ERINNERUNG, ctx.getString(R.string.benachrichtigung_kanal_erinnerungen), NotificationManager.IMPORTANCE_DEFAULT).apply {
             lockscreenVisibility = Notification.VISIBILITY_PRIVATE
         })
     }

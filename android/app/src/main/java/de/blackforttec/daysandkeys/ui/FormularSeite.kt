@@ -41,12 +41,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import de.blackforttec.daysandkeys.DaysAndKeysAppHolder
+import de.blackforttec.daysandkeys.R
 import de.blackforttec.daysandkeys.kern.AntwortEingabe
 import de.blackforttec.daysandkeys.kern.AntwortZustand
 import de.blackforttec.daysandkeys.kern.Auswahl
@@ -96,6 +99,7 @@ fun FormularSeite(z: AppZustand, s: Seite.Formular) {
         }
     }
 
+    val korrigiert = stringResource(R.string.formular_korrigiert)
     fun speichern() {
         val r = if (istEreignis) z.versuch {
             z.kern.ereignisErfassen(EreignisEingabe(f.id, zeitpunkt, antworten.values.toList(), praeparat, s.korrektur?.zeile?.datensatzId))
@@ -104,7 +108,7 @@ fun FormularSeite(z: AppZustand, s: Seite.Formular) {
         }
         if (r != null) {
             z.geaendert()
-            z.meldung = if (s.korrektur != null) "Korrigiert" else "Festgehalten um ${uhrzeitAus(zeitpunkt?.utcMs ?: System.currentTimeMillis())}"
+            z.meldung = if (s.korrektur != null) korrigiert else z.activity.getString(R.string.allgemein_festgehalten_um, uhrzeitAus(zeitpunkt?.utcMs ?: System.currentTimeMillis()))
             z.zu(if (f.schluessel == "krise") Seite.Hilfe else if (s.korrektur != null) Seite.Eintraege else Seite.Start)
         }
     }
@@ -113,19 +117,19 @@ fun FormularSeite(z: AppZustand, s: Seite.Formular) {
     Column(Modifier.fillMaxSize().imePadding()) {
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState()).padding(horizontal = Abstand.rand)) {
             Row(Modifier.fillMaxWidth().padding(top = Abstand.s), verticalAlignment = Alignment.CenterVertically) {
-                Zeitchip(zeitpunkt?.let { zeitchipText(it) } ?: "Jetzt") { zeitWahl = true }
+                Zeitchip(zeitpunkt?.let { zeitchipText(it) } ?: stringResource(R.string.formular_jetzt)) { zeitWahl = true }
                 Spacer(Modifier.weight(1f))
                 if (entwurfId != null && s.korrektur == null) TextButton(onClick = {
                     entwurfId?.let { id -> z.versuch { z.kern.entwurfVerwerfen(id) } }
                     z.zu(Seite.Start)
-                }) { Text("Entwurf verwerfen") }
+                }) { Text(stringResource(R.string.formular_entwurf_verwerfen)) }
             }
             if (f.schluessel == "krise") {
-                Text("Danach zeigt die App die Hilfe-Seite mit Nummern. Die App benachrichtigt niemanden.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = Abstand.m))
+                Text(stringResource(R.string.allgemein_krise_hinweis), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = Abstand.m))
             }
             if (f.brauchtPraeparat) {
-                Kopf("Präparat")
-                if (praeparate.isEmpty()) Text("Noch kein Präparat angelegt. Du kannst es unter Medikamente anlegen.", style = MaterialTheme.typography.bodyMedium)
+                Kopf(stringResource(R.string.allgemein_praeparat))
+                if (praeparate.isEmpty()) Text(stringResource(R.string.formular_kein_praeparat), style = MaterialTheme.typography.bodyMedium)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
                     for (p in praeparate) AuswahlChip(p.handelsname + (p.staerke?.let { " $it" } ?: ""), praeparat == p.id) { praeparat = p.id }
                 }
@@ -136,8 +140,8 @@ fun FormularSeite(z: AppZustand, s: Seite.Formular) {
                     g.zugeklappt -> {
                         if (!f.blockAnbieten && !blockOffen) continue
                         Aufklappgruppe(
-                            f.bezugText?.let { "Seit dem letzten Status, $it" } ?: g.titel,
-                            if (beantwortet > 0) "$beantwortet beantwortet" else "optional · ${g.fragen.size} Fragen",
+                            f.bezugText?.let { stringResource(R.string.formular_seit_status, it) } ?: g.titel,
+                            if (beantwortet > 0) stringResource(R.string.formular_beantwortet, beantwortet) else stringResource(R.string.formular_optional_fragen, g.fragen.size),
                             blockOffen, { blockOffen = !blockOffen },
                         ) { for (q in g.fragen) Frage(q, antworten) }
                     }
@@ -145,7 +149,7 @@ fun FormularSeite(z: AppZustand, s: Seite.Formular) {
                         val offen = auf[i] ?: (beantwortet > 0)
                         Aufklappgruppe(
                             g.titel + (g.hinweis?.let { " · $it" } ?: ""),
-                            if (beantwortet > 0) "$beantwortet beantwortet" else "optional · ${g.fragen.size} Fragen",
+                            if (beantwortet > 0) stringResource(R.string.formular_beantwortet, beantwortet) else stringResource(R.string.formular_optional_fragen, g.fragen.size),
                             offen, { auf[i] = !offen },
                         ) { for (q in g.fragen) Frage(q, antworten) }
                     }
@@ -156,12 +160,12 @@ fun FormularSeite(z: AppZustand, s: Seite.Formular) {
                 }
             }
             Text(
-                "Was du auslässt, bleibt leer. Nichts wird aus früheren Einträgen übernommen.",
+                stringResource(R.string.formular_leer_hinweis),
                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(vertical = Abstand.xl),
             )
         }
-        Aktionsleiste(if (s.korrektur != null) "Korrektur festhalten" else "Festhalten") { speichern() }
+        Aktionsleiste(if (s.korrektur != null) stringResource(R.string.formular_korrektur_festhalten) else stringResource(R.string.allgemein_festhalten)) { speichern() }
     }
 
     if (zeitWahl) {
@@ -170,14 +174,14 @@ fun FormularSeite(z: AppZustand, s: Seite.Formular) {
         var gestern by remember { mutableStateOf(false) }
         AlertDialog(
             onDismissRequest = { zeitWahl = false },
-            title = { Text("Wann war das?") },
+            title = { Text(stringResource(R.string.formular_wann)) },
             text = {
                 Column {
                     TimePicker(st)
                     Row(verticalAlignment = Alignment.CenterVertically) {
-                        FilterChip(selected = !gestern, onClick = { gestern = false }, label = { Text("heute") })
+                        FilterChip(selected = !gestern, onClick = { gestern = false }, label = { Text(stringResource(R.string.formular_heute)) })
                         Box(Modifier.width(8.dp))
-                        FilterChip(selected = gestern, onClick = { gestern = true }, label = { Text("gestern") })
+                        FilterChip(selected = gestern, onClick = { gestern = true }, label = { Text(stringResource(R.string.formular_gestern)) })
                     }
                 }
             },
@@ -186,9 +190,9 @@ fun FormularSeite(z: AppZustand, s: Seite.Formular) {
                     val zdt = LocalDate.now().minusDays(if (gestern) 1 else 0).atTime(st.hour, st.minute).atZone(ZoneId.systemDefault())
                     zeitpunkt = Zeitpunkt(zdt.toInstant().toEpochMilli(), zdt.offset.totalSeconds / 60, zdt.zone.id)
                     zeitWahl = false
-                }) { Text("Übernehmen") }
+                }) { Text(stringResource(R.string.allgemein_uebernehmen)) }
             },
-            dismissButton = { TextButton(onClick = { zeitpunkt = null; zeitWahl = false }) { Text("Jetzt") } },
+            dismissButton = { TextButton(onClick = { zeitpunkt = null; zeitWahl = false }) { Text(stringResource(R.string.formular_jetzt)) } },
         )
     }
 }
@@ -212,7 +216,7 @@ fun Frage(q: FrageAnsicht, antworten: MutableMap<String, AntwortEingabe>) {
             Feldart.STUFEN -> Stufenwahl(q.anker.map { it.wert to it.text }, a?.zahl) { w ->
                 if (w == null) antworten.remove(q.messdefId) else antworten[q.messdefId] = antwort(q, zahl = w)
             }
-            Feldart.JA_NEIN -> Stufenwahl(listOf(1L to "ja", 0L to "nein"), a?.zahl) { w ->
+            Feldart.JA_NEIN -> Stufenwahl(listOf(1L to stringResource(R.string.formular_ja), 0L to stringResource(R.string.formular_nein)), a?.zahl) { w ->
                 if (w == null) antworten.remove(q.messdefId) else antworten[q.messdefId] = antwort(q, zahl = w)
             }
             Feldart.EINFACHAUSWAHL -> if (q.optionen.size <= 5) Stufenwahl(q.optionen.map { it.id.toLong() to it.text }, a?.auswahl?.firstOrNull()?.option?.toLong()) { w ->
@@ -239,7 +243,7 @@ fun Frage(q: FrageAnsicht, antworten: MutableMap<String, AntwortEingabe>) {
                 if (q.mitStaerke) for (x in a?.auswahl.orEmpty().filter { it.option.toInt() != 99 }) {
                     val name = q.optionen.firstOrNull { it.id == x.option }?.text ?: ""
                     Text(name, style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(top = Abstand.m, bottom = Abstand.xs))
-                    Stufenwahl(listOf(2L to "leicht", 5L to "mittel", 8L to "stark"), x.staerke) { w ->
+                    Stufenwahl(listOf(2L to stringResource(R.string.formular_leicht), 5L to stringResource(R.string.formular_mittel), 8L to stringResource(R.string.formular_stark)), x.staerke) { w ->
                         val neu = a!!.auswahl.map { if (it.option == x.option) Auswahl(it.option, w) else it }
                         antworten[q.messdefId] = antwort(q, auswahl = neu)
                     }
@@ -259,7 +263,7 @@ fun Frage(q: FrageAnsicht, antworten: MutableMap<String, AntwortEingabe>) {
         }
         if (q.kamNichtVor) {
             val kam = a?.zustand == AntwortZustand.KAM_NICHT_VOR
-            AuswahlChip("kam nicht vor", kam) {
+            AuswahlChip(stringResource(R.string.formular_kam_nicht_vor), kam) {
                 if (kam) antworten.remove(q.messdefId) else antworten[q.messdefId] = AntwortEingabe(q.messdefId, AntwortZustand.KAM_NICHT_VOR, null, null, emptyList(), true)
             }
         }
@@ -275,14 +279,15 @@ fun DauerFeld(wert: Long?, setzen: (Long?) -> Unit) {
         setzen(if (hh == null && mm == null) null else ((hh ?: 0) * 60 + (mm ?: 0)).coerceIn(0, 1440))
     }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        OutlinedTextField(h, { h = it.filter(Char::isDigit).take(2); neu() }, label = { Text("Std.") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, modifier = Modifier.width(100.dp))
-        OutlinedTextField(m, { m = it.filter(Char::isDigit).take(2); neu() }, label = { Text("Min.") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, modifier = Modifier.width(100.dp))
+        OutlinedTextField(h, { h = it.filter(Char::isDigit).take(2); neu() }, label = { Text(stringResource(R.string.formular_std_kurz)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, modifier = Modifier.width(100.dp))
+        OutlinedTextField(m, { m = it.filter(Char::isDigit).take(2); neu() }, label = { Text(stringResource(R.string.allgemein_min_kurz)) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number), singleLine = true, modifier = Modifier.width(100.dp))
     }
 }
 
 /** „Heute, 08:15“ oder „Gestern, 23:40“ für den Zeitchip (#134). */
 fun zeitchipText(z: Zeitpunkt): String {
     val t = Instant.ofEpochMilli(z.utcMs).atZone(ZoneId.systemDefault())
-    val tag = if (t.toLocalDate() == LocalDate.now()) "Heute" else if (t.toLocalDate() == LocalDate.now().minusDays(1)) "Gestern" else t.toLocalDate().toString()
+    val res = DaysAndKeysAppHolder.app.resources
+    val tag = if (t.toLocalDate() == LocalDate.now()) res.getString(R.string.formular_zeitchip_heute) else if (t.toLocalDate() == LocalDate.now().minusDays(1)) res.getString(R.string.formular_zeitchip_gestern) else t.toLocalDate().toString()
     return "$tag, %02d:%02d".format(t.hour, t.minute)
 }

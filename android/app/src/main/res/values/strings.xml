@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<!-- Texte der Oberfläche (AE-22, #144). Texte aus dem Kern (Formulare, Fragen, Anker, Hinweise) stehen nicht hier. -->
+<!-- Der Wächter OberflaechentexteTest prüft, dass in den Kotlin-Quellen keine Oberflächentexte mehr stehen. -->
+<resources>
+
+    <!-- Allgemein: an mehreren Stellen mit gleicher Bedeutung -->
+    <string name="allgemein_app_name">Days &amp; Keys</string>
+    <string name="allgemein_hilfe">Hilfe</string>
+    <string name="allgemein_hilfe_krise">Hilfe in einer Krise</string>
+    <string name="allgemein_abbrechen">Abbrechen</string>
+    <string name="allgemein_uebernehmen">Übernehmen</string>
+    <string name="allgemein_speichern">Speichern</string>
+    <string name="allgemein_gespeichert">Gespeichert</string>
+    <string name="allgemein_verwerfen">Verwerfen</string>
+    <string name="allgemein_weiter">Weiter</string>
+    <string name="allgemein_zurueck">Zurück</string>
+    <string name="allgemein_pruefen">Prüfen</string>
+    <string name="allgemein_name">Name</string>
+    <string name="allgemein_min_kurz">Min.</string>
+    <string name="allgemein_praeparat">Präparat</string>
+    <string name="allgemein_bei_bedarf">Bei Bedarf</string>
+    <string name="allgemein_erinnerungen">Erinnerungen</string>
+    <string name="allgemein_sicherung">Sicherung</string>
+    <string name="allgemein_tagesabschluss">Tagesabschluss</string>
+    <string name="allgemein_plan_tiefs">Mein Plan für Tiefs</string>
+    <string name="allgemein_festhalten">Festhalten</string>
+    <string name="allgemein_festgehalten_um">Festgehalten um %1$s</string>
+    <string name="allgemein_krise_hinweis">Danach zeigt die App die Hilfe-Seite mit Nummern. Die App benachrichtigt niemanden.</string>
+    <string name="allgemein_tage">%1$d Tage</string>
+    <string name="allgemein_fehler_unerwartet">Unerwarteter Fehler: %1$s</string>
+
+    <!-- Oberfläche: Titelleiste und Reiter -->
+    <string name="oberflaeche_heute">Heute</string>
+    <string name="oberflaeche_verlauf">Verlauf</string>
+    <string name="oberflaeche_medikamente">Medikamente</string>
+    <string name="oberflaeche_mehr">Mehr</string>
+    <string name="oberflaeche_eintrag">Eintrag</string>
+    <string name="oberflaeche_praeparat_neu">Neues Präparat</string>
+    <string name="oberflaeche_praeparat_bearbeiten">Präparat bearbeiten</string>
+    <string name="oberflaeche_korrektur">Korrektur: %1$s</string>
+    <string name="oberflaeche_schliessen">Schließen</string>
+    <string name="oberflaeche_sperren">Sperren</string>
+
+    <!-- Bausteine: Zeitangaben, Stufenleiste, Aufklappgruppe -->
+    <string name="baustein_gerade_eben">gerade eben</string>
+    <string name="baustein_vor_minuten">vor %1$d Minuten</string>
+    <plurals name="baustein_vor_stunden">
+        <item quantity="one">vor %1$d Stunde</item>
+        <item quantity="other">vor %1$d Stunden</item>
+    </plurals>
+    <string name="baustein_vor_tagen">vor %1$d Tagen</string>
+    <!-- Anfang der Texte „vor …“ oben, die Startseite schneidet ihn für „… alt“ ab. Leerzeichen am Ende gehört dazu. -->
+    <string name="baustein_vor_praefix">"vor "</string>
+    <string name="baustein_minus">minus %1$d</string>
+    <string name="baustein_plus">plus %1$d</string>
+    <string name="baustein_null">null</string>
+    <!-- Frage, Wert unten, optional „, Anker“, Wert oben, optional „, Anker“ -->
+    <string name="baustein_leiste_beschreibung">%1$s Von %2$s%3$s, bis %4$s%5$s</string>
+    <string name="baustein_nicht_beantwortet">nicht beantwortet</string>
+    <string name="baustein_antwort_entfernen">Antwort entfernen</string>
+    <string name="baustein_zuklappen">zuklappen</string>
+    <string name="baustein_aufklappen">aufklappen</string>
+    <string name="baustein_aufgeklappt">aufgeklappt</string>
+    <string name="baustein_zugeklappt">zugeklappt</string>
+
+    <!-- Sperre -->
+    <string name="sperre_gesperrt">Gesperrt</string>
+    <string name="sperre_ersetzt">Dieses Gerät wurde durch ein anderes ersetzt. Deine Einträge liegen auf dem neuen Gerät; hier wird nichts mehr gesichert. Entzieh diesem Gerät den Zugang zum Sicherungsordner.</string>
+    <string name="sperre_entsperren">Entsperren</string>
+    <string name="sperre_hinweis">Zum Entsperren genügt Fingerabdruck, Gesicht oder der Geräte-Code.</string>
+    <string name="sperre_kein_schluessel">Kein geschützter Schlüssel gefunden.</string>
+
+    <!-- Geräteschutz: Abfrage von Fingerabdruck, Gesicht oder Geräte-Code -->
+    <string name="geraeteschutz_untertitel">Mit Fingerabdruck, Gesicht oder Geräte-Code</string>
+    <string name="geraeteschutz_schuetzen">Schlüssel schützen</string>
+    <string name="geraeteschutz_entsperren">Days &amp; Keys entsperren</string>
+
+    <!-- Benachrichtigungskanäle (Systemeinstellungen) -->
+    <string name="benachrichtigung_kanal_einnahme">Einnahme</string>
+    <string name="benachrichtigung_kanal_erinnerungen">Erinnerungen</string>
+
+    <!-- Sicherung im Hintergrund -->
+    <string name="sicherung_gesichert">Gesichert</string>
+    <string name="sicherung_kein_ordner">Noch kein Sicherungsordner gewählt</string>
+    <string name="sicherung_ersetzt">Dieses Gerät wurde durch ein anderes ersetzt und sichert nicht mehr.</string>
+    <string name="sicherung_fehlgeschlagen">Sicherung fehlgeschlagen: %1$s</string>
+
+    <!-- Hilfe -->
+    <!-- Name, Nummer, Hinweis der Notrufnummer -->
+    <string name="hilfe_notruf_beschreibung">%1$s, %2$s, %3$s, Wählfeld öffnen</string>
+    <!-- Name, Nummer -->
+    <string name="hilfe_nummer_beschreibung">%1$s, %2$s, Wählfeld öffnen</string>
+    <string name="hilfe_plan_leer_entsperrt">Unter Mehr › Mein Plan für Tiefs kannst du eigene Schritte aufschreiben. Sie stehen dann hier, auch ohne Entsperren.</string>
+    <string name="hilfe_plan_leer">Noch kein eigener Plan aufgeschrieben.</string>
+    <string name="hilfe_vertrauen_kopf">Menschen, denen ich vertraue</string>
+    <string name="hilfe_vertrauen_gesperrt">Deine Vertrauenspersonen siehst du nach dem Entsperren.</string>
+    <string name="hilfe_vertrauen_leer">Noch keine eingetragen (unter Mehr › Vertrauenspersonen).</string>
+    <string name="hilfe_waehlfeld">Die Nummern öffnen nur das Wählfeld, angerufen wird erst, wenn du es dort bestätigst.</string>
+
+    <!-- Start (Heute) -->
+    <!-- Name des Ereignisses, Uhrzeit -->
+    <string name="start_ereignis_festgehalten">%1$s um %2$s festgehalten</string>
+    <string name="start_mehr_angeben">Mehr angeben</string>
+    <string name="start_zuletzt_um">Zuletzt um %1$s</string>
+    <string name="start_ausfuehrlich">Ausführlich</string>
+    <string name="start_wochenrueckblick">Wochenrückblick</string>
+    <string name="start_erinnerungen_aus_titel">Erinnerungen sind ausgeschaltet</string>
+    <string name="start_erinnerungen_aus_text">Ohne Erlaubnis zeigt das Telefon keine Erinnerungen an.</string>
+    <string name="start_erlauben">Erlauben</string>
+    <string name="start_schlaf_titel">Wie hast du geschlafen?</string>
+    <string name="start_schlaf_text">Wie lange und wie gut, in ein paar Sekunden.</string>
+    <string name="start_schlaf_knopf">Schlaf festhalten</string>
+    <string name="start_plan_titel">Dein Plan für Tiefs</string>
+    <string name="start_plan_text">Du hast eingestellt, dass die App ihn dir zeigt, wenn deine Tageswerte eine Weile niedrig sind.</string>
+    <string name="start_plan_ansehen">Plan ansehen</string>
+    <string name="start_ausblenden">Ausblenden</string>
+    <!-- Name des Formulars -->
+    <string name="start_entwurf_titel">%1$s, angefangen</string>
+    <!-- Wie lange her („vor 5 Minuten“), Anzahl der Antworten -->
+    <plurals name="start_entwurf_zeile">
+        <item quantity="one">%1$s · %2$d Antwort</item>
+        <item quantity="other">%1$s · %2$d Antworten</item>
+    </plurals>
+    <string name="start_medikamente_titel">Medikamente heute</string>
+    <string name="start_medikamente_hinweis">Bestätige nur, was du genommen hast.</string>
+    <string name="start_dosis">Dosis %1$s</string>
+    <string name="start_einnahme_festgehalten">Einnahme festgehalten</string>
+    <string name="start_genommen_knopf">Genommen</string>
+    <string name="start_ausgelassen_knopf">Ausgelassen</string>
+    <!-- Stand neben dem Häkchen; das Leerzeichen davor setzt der Code. -->
+    <string name="start_genommen_stand">genommen</string>
+    <string name="start_ausgelassen_stand">ausgelassen</string>
+    <string name="start_ereignis_titel">Ereignis festhalten</string>
+    <string name="start_ereignis_text">Ein Tipp hält es mit der Uhrzeit von jetzt fest. Ändern kannst du sie danach.</string>
+    <string name="start_weniger_zeigen">Weniger zeigen</string>
+    <string name="start_alle_ereignisse">Alle Ereignisse</string>
+    <!-- Wie lange her, ohne „vor“ („5 Minuten“) -->
+    <string name="start_sicherung_alt">Die letzte Sicherung ist %1$s alt.</string>
+    <string name="start_sicherung_fehlt">Noch keine Sicherung eingerichtet. Geht das Gerät verloren, sind die Einträge sonst weg.</string>
+    <string name="start_sicherung_einrichten">Sicherung einrichten</string>
+    <!-- Wie lange her („vor 5 Minuten“) -->
+    <string name="start_gesichert">Gesichert %1$s</string>
+    <string name="start_bedarf_frage">Jetzt eingenommen?</string>
+    <string name="start_bedarf_ja">Ja, genommen</string>
+    <string name="start_krise_titel">Krise festhalten?</string>
+    <string name="start_krise_knopf">Festhalten und Hilfe zeigen</string>
+
+    <!-- Einträge und Eintrag im Detail -->
+    <string name="eintrag_leer">Noch keine Einträge. Was du festhältst, erscheint hier.</string>
+    <string name="eintrag_aeltere_laden">Ältere Einträge laden</string>
+    <string name="eintrag_ohne_angaben">Ohne Angaben</string>
+    <string name="eintrag_loeschen">Eintrag löschen</string>
+    <string name="eintrag_korrigieren">Korrigieren</string>
+    <string name="eintrag_loeschen_frage">Eintrag löschen?</string>
+    <string name="eintrag_loeschen_text">Er verschwindet sofort aus der App. In älteren Sicherungen bleibt er höchstens 30 Tage erhalten.</string>
+    <string name="eintrag_loeschen_knopf">Löschen</string>
+    <string name="eintrag_behalten">Behalten</string>
+
+    <!-- Verlauf -->
+    <string name="verlauf_gruppe_jetzt">Jetzt</string>
+    <string name="verlauf_gruppe_schlaf">Schlaf am Morgen</string>
+    <string name="verlauf_andere_frage">Andere Frage wählen</string>
+    <string name="verlauf_4_wochen">4 Wochen</string>
+    <string name="verlauf_3_monate">3 Monate</string>
+    <string name="verlauf_1_jahr">1 Jahr</string>
+    <string name="verlauf_keine_werte">In diesem Zeitraum gibt es noch keine Werte für diese Frage.</string>
+    <string name="verlauf_grundniveau_7_tage">Grundniveau 7 Tage</string>
+    <!-- Anzahl; „ · “ davor setzt der Code. -->
+    <string name="verlauf_einnahmen">%1$d Einnahmen</string>
+    <!-- Liste der Marker mit Anzahl -->
+    <string name="verlauf_marker">Marker: %1$s</string>
+    <string name="verlauf_lesen_titel">So liest du das Diagramm</string>
+    <string name="verlauf_lesen_zeile">Tageswert, Mittelwerte, Lücken</string>
+    <string name="verlauf_liste_titel">Tageswerte als Liste</string>
+    <string name="verlauf_liste_zeile">%1$d Tage mit Wert</string>
+    <!-- Anzahl, kleinster, größter Wert des Tages; die zwei Leerzeichen davor setzt der Code. -->
+    <string name="verlauf_tageswert_mehrere">(%1$d Einträge, %2$d bis %3$d)</string>
+    <string name="verlauf_vergleich_kopf">Grundniveau mit und ohne</string>
+    <!-- Faktor, Tage mit, Mittel mit, Tage ohne, Mittel ohne -->
+    <string name="verlauf_vergleich">%1$s: an %2$d Tagen mit %3$s, an %4$d Tagen ohne %5$s</string>
+    <!-- Einträge, Tage mit Wert, Tage gesamt -->
+    <string name="verlauf_diagramm_beschreibung">Verlauf mit %1$d Einträgen an %2$d von %3$d Tagen</string>
+    <!-- Achsenbeschriftung für Dauern in Stunden -->
+    <string name="verlauf_achse_stunden">%1$d Std.</string>
+    <string name="verlauf_legende_eintrag">● Eintrag</string>
+    <string name="verlauf_legende_grundniveau">━ Grundniveau (%1$d Tage)</string>
+    <string name="verlauf_diagramm">Diagramm</string>
+    <string name="verlauf_eintraege">Einträge</string>
+
+    <!-- Medikamente und Präparat -->
+    <string name="medikament_leer">Noch keine Medikamente eingetragen. Du kannst die App auch ganz ohne nutzen.</string>
+    <string name="medikament_pausiert">pausiert</string>
+    <string name="medikament_bei_bedarf_zeile">bei Bedarf</string>
+    <string name="medikament_ohne_plan">ohne festen Plan</string>
+    <string name="medikament_hinzufuegen">Präparat hinzufügen</string>
+    <string name="medikament_name_fehlt">Bitte einen Namen eingeben.</string>
+    <string name="medikament_wirkstoff">Wirkstoff (optional)</string>
+    <string name="medikament_staerke">Stärke</string>
+    <string name="medikament_form">Form</string>
+    <string name="medikament_einnahme">Einnahme</string>
+    <string name="medikament_nach_plan">Nach Plan</string>
+    <string name="medikament_dosis">Dosis</string>
+    <string name="medikament_uhrzeit_entfernen">Uhrzeit %1$s entfernen</string>
+    <string name="medikament_uhrzeit_hinzufuegen">Uhrzeit hinzufügen</string>
+    <string name="medikament_erinnerung">Erinnerung</string>
+    <string name="medikament_erinnern">An die Einnahme erinnern</string>
+    <string name="medikament_erinnern_zeile">Die Benachrichtigung nennt kein Medikament.</string>
+    <string name="medikament_status_nach">Status-Erinnerung danach</string>
+    <string name="medikament_status_nach_leer">Leer lassen für keine.</string>
+    <string name="medikament_im_status">Im Status</string>
+    <string name="medikament_wirkung">Nach der Wirkung fragen</string>
+    <string name="medikament_wirkung_zeile">Der Status fragt dann, ob du die Wirkung gerade spürst.</string>
+    <string name="medikament_aktiv">Nehme ich derzeit</string>
+    <string name="medikament_wechsel">Wechsel</string>
+    <string name="medikament_wechsel_zeile">Ein Dosis- oder Präparatwechsel ist zusätzlich ein Ereignis, damit er im Verlauf sichtbar ist.</string>
+    <string name="medikament_wechsel_knopf">Dosis- oder Präparatwechsel festhalten</string>
+    <string name="medikament_uhrzeit">Uhrzeit</string>
+    <string name="medikament_verwerfen_frage">Änderungen verwerfen?</string>
+    <string name="medikament_weiter_bearbeiten">Weiter bearbeiten</string>
+
+    <!-- Formular -->
+    <string name="formular_korrigiert">Korrigiert</string>
+    <string name="formular_jetzt">Jetzt</string>
+    <string name="formular_entwurf_verwerfen">Entwurf verwerfen</string>
+    <string name="formular_kein_praeparat">Noch kein Präparat angelegt. Du kannst es unter Medikamente anlegen.</string>
+    <!-- Bezug aus dem Kern -->
+    <string name="formular_seit_status">Seit dem letzten Status, %1$s</string>
+    <string name="formular_beantwortet">%1$d beantwortet</string>
+    <string name="formular_optional_fragen">optional · %1$d Fragen</string>
+    <string name="formular_leer_hinweis">Was du auslässt, bleibt leer. Nichts wird aus früheren Einträgen übernommen.</string>
+    <string name="formular_korrektur_festhalten">Korrektur festhalten</string>
+    <string name="formular_wann">Wann war das?</string>
+    <string name="formular_heute">heute</string>
+    <string name="formular_gestern">gestern</string>
+    <string name="formular_ja">ja</string>
+    <string name="formular_nein">nein</string>
+    <string name="formular_leicht">leicht</string>
+    <string name="formular_mittel">mittel</string>
+    <string name="formular_stark">stark</string>
+    <string name="formular_kam_nicht_vor">kam nicht vor</string>
+    <string name="formular_std_kurz">Std.</string>
+    <!-- Tag im Zeitchip („Heute, 08:15“) -->
+    <string name="formular_zeitchip_heute">Heute</string>
+    <string name="formular_zeitchip_gestern">Gestern</string>
+
+    <!-- Einrichtung und Wiederherstellung -->
+    <string name="einrichtung_wort">Wort %1$d</string>
+    <string name="einrichtung_tag_titel">Wann beginnt dein Tag?</string>
+    <string name="einrichtung_tag_text">Wenn du nach Mitternacht noch wach bist, zählt das bis zu dieser Uhrzeit zum Vortag. Spätere Änderungen gelten nur für neue Einträge.</string>
+    <string name="einrichtung_uhr">Uhr</string>
+    <string name="einrichtung_woerter_titel">Deine 24 Recovery-Wörter</string>
+    <string name="einrichtung_woerter_text">Schreib sie auf Papier. Nur mit ihnen kommst du auf einem neuen Gerät wieder an deine Einträge. Kein Foto, keine Notiz-App.</string>
+    <string name="einrichtung_aufgeschrieben">Ich habe sie aufgeschrieben</string>
+    <string name="einrichtung_probe_titel">Kurze Probe</string>
+    <string name="einrichtung_probe_text">Gib diese drei Wörter von deinem Zettel ein.</string>
+    <string name="einrichtung_probe_falsch">Die Wörter passen nicht. Schau noch einmal auf deinen Zettel.</string>
+    <string name="einrichtung_woerter_zeigen">Wörter noch einmal zeigen</string>
+    <string name="einrichtung_schutz_titel">Mit dem Gerät schützen</string>
+    <string name="einrichtung_schutz_text">Days &amp; Keys öffnet sich mit Fingerabdruck, Gesicht oder Geräte-Code. Der Schlüssel liegt im Sicherheitschip.</string>
+    <string name="einrichtung_schuetzen">Schützen</string>
+    <string name="einrichtung_sicherung_titel">Automatische Sicherung</string>
+    <string name="einrichtung_sicherung_text">Wähle einen Ordner, in den die App verschlüsselte Sicherungen legt, zum Beispiel einen Cloud-Ordner. Ohne Sicherung sind die Einträge weg, wenn das Gerät verloren geht.</string>
+    <string name="einrichtung_ordner_waehlen">Ordner wählen</string>
+    <string name="einrichtung_spaeter">Später</string>
+    <string name="einrichtung_erinnerungen_text">Erinnerungen haben neutrale Texte ohne Medikamentennamen. Sie ersetzen keinen Medikamentenwecker.</string>
+    <string name="einrichtung_benachrichtigungen_erlauben">Benachrichtigungen erlauben</string>
+    <string name="einrichtung_ohne_erinnerungen">Ohne Erinnerungen</string>
+    <string name="einrichtung_fertig">Fertig</string>
+    <!-- Wortlaut wie bisher, schließt mit geradem Anführungszeichen. -->
+    <string name="einrichtung_samsung">Stell in den Akku-Einstellungen die App auf „Nicht eingeschränkt\", sonst kommen Erinnerungen unzuverlässig.</string>
+    <string name="einrichtung_puenktlich">Pünktliche Erinnerungen erlauben</string>
+    <string name="einrichtung_zur_startseite">Zur Startseite</string>
+    <string name="einrichtung_wiederherstellen_titel">Wiederherstellen</string>
+    <string name="einrichtung_wiederherstellen_text">Gib deine 24 Wörter ein und wähle dann den Ordner mit den Sicherungen.</string>
+    <string name="einrichtung_ordner_sicherungen">Ordner mit Sicherungen wählen</string>
+    <string name="einrichtung_gefunden">Gefundene Sicherungen</string>
+    <string name="einrichtung_zwei_staende">Es gibt zwei verschiedene Stände. Wähle den richtigen.</string>
+    <string name="einrichtung_keine_sicherung">In diesem Ordner liegt keine Sicherung.</string>
+    <!-- Nummer der Sicherung, Datum und Uhrzeit -->
+    <string name="einrichtung_sicherung_nr">Nr. %1$d vom %2$s</string>
+    <string name="einrichtung_sicherung_nr_neueste">Nr. %1$d vom %2$s (neueste)</string>
+    <string name="einrichtung_wiederhergestellt">Wiederhergestellt. Entziehe dem alten Gerät den Zugang zum Sicherungsordner, falls es noch existiert.</string>
+    <string name="einrichtung_anderer_ordner">Anderen Ordner wählen</string>
+    <string name="einrichtung_schritt">Schritt %1$d von 7</string>
+    <string name="einrichtung_willkommen">Willkommen</string>
+    <string name="einrichtung_zusage_verschluesselt">Alles bleibt verschlüsselt auf diesem Gerät.</string>
+    <string name="einrichtung_zusage_offline">Kein Internet, kein Konto, kein Server.</string>
+    <string name="einrichtung_zusage_festhalten">Halte fest, wie es dir geht, so oft du willst.</string>
+    <string name="einrichtung_code_hinweis">Wer den Code dieses Geräts kennt, kann die Einträge lesen.</string>
+    <string name="einrichtung_einrichten">Einrichten</string>
+    <string name="einrichtung_aus_sicherung">Aus einer Sicherung wiederherstellen</string>
+
+    <!-- Mehr (Einstellungen) -->
+    <string name="mehr_export_gespeichert">Export gespeichert</string>
+    <!-- Wie lange her („vor 5 Minuten“) -->
+    <string name="mehr_letzte_sicherung">Letzte Sicherung %1$s</string>
+    <string name="mehr_ordner_gewaehlt">Ordner gewählt</string>
+    <string name="mehr_kein_ordner">Noch kein Ordner gewählt</string>
+    <!-- Anzahl Tage, Schwelle -->
+    <string name="mehr_regel">%1$d Tage unter %2$d</string>
+    <string name="mehr_aus">aus</string>
+    <string name="mehr_schwere_momente">Für schwere Momente</string>
+    <string name="mehr_plan_leer">noch nicht geschrieben</string>
+    <string name="mehr_plan_zeigen">Plan automatisch zeigen</string>
+    <string name="mehr_vertrauenspersonen">Vertrauenspersonen</string>
+    <string name="mehr_keine">keine</string>
+    <string name="mehr_alltag">Alltag</string>
+    <string name="mehr_tag_sperre">Tag und Sperre</string>
+    <!-- Stunde des Tageswechsels, Sperrzeit („30 s“, „5 min“) -->
+    <string name="mehr_tag_sperre_zeile">Tag beginnt um %1$d:00 · sperren nach %2$s</string>
+    <string name="mehr_sekunden">%1$d s</string>
+    <string name="mehr_minuten">%1$d min</string>
+    <string name="mehr_tagesmarker">Eigene Tagesmarker</string>
+    <string name="mehr_daten">Daten</string>
+    <string name="mehr_woerter_pruefen">Recovery-Wörter prüfen</string>
+    <string name="mehr_woerter_pruefen_zeile">ob dein Zettel noch stimmt</string>
+    <string name="mehr_schluessel_erneuern">Schlüssel erneuern</string>
+    <string name="mehr_schluessel_erneuern_zeile">bei Verdacht, dass jemand Zugriff hatte</string>
+    <string name="mehr_export">Alles exportieren</string>
+    <string name="mehr_export_zeile">Tabelle im Klartext</string>
+    <string name="mehr_ueber">Über</string>
+    <string name="mehr_version">Version %1$s</string>
+    <string name="mehr_zurueck">Zurück zu Mehr</string>
+    <string name="mehr_plan_hinweis">Dieser Text ist über die Hilfe auch gesperrt lesbar und liegt dafür unverschlüsselt auf dem Gerät. In die Sicherung kommt er verschlüsselt mit.</string>
+    <string name="mehr_plan_zusatz">Frühwarnzeichen, was hilft, wen ich anrufe.</string>
+    <string name="mehr_regel_text">Die App zeigt deinen Plan, wenn du mehrere Tage in Folge eine niedrige Stimmung einträgst. Selbst eingestellt, keine Diagnose.</string>
+    <string name="mehr_unter">Unter</string>
+    <string name="mehr_personen_text">Erscheinen in der Hilfe, aber nur entsperrt. Die App benachrichtigt niemanden.</string>
+    <string name="mehr_telefon">Telefon</string>
+    <string name="mehr_person_hinzufuegen">Person hinzufügen</string>
+    <string name="mehr_erinnerungen_text">Neutrale Texte, höchstens %1$d am Tag.</string>
+    <string name="mehr_wochenrueckblick_sonntag">Wochenrückblick (Sonntag)</string>
+    <!-- Uhrzeit -->
+    <string name="mehr_um">um %1$s</string>
+    <string name="mehr_status_erinnerungen">Status-Erinnerungen</string>
+    <string name="mehr_tag_beginnt">Der Tag beginnt um</string>
+    <string name="mehr_sperren_nach">Sperren nach</string>
+    <string name="mehr_marker_text">Bis zu drei Marker mit selbst gewählten Namen, zum Beispiel für besondere Tage. Die Namen liegen nur verschlüsselt auf dem Gerät.</string>
+    <string name="mehr_marker_feld">Marker %1$d</string>
+    <string name="mehr_jetzt_sichern">Jetzt sichern</string>
+    <string name="mehr_ordner_aendern">Ordner ändern</string>
+    <string name="mehr_woerter_text">Gib deine 24 Wörter ein, um zu prüfen, ob dein Zettel noch stimmt. Die Wörter werden nicht gespeichert.</string>
+    <string name="mehr_schluessel_text">Bei Verdacht, dass jemand Zugriff hatte. Neue Einträge und Sicherungen sind dann mit alten Schlüsseln nicht mehr lesbar.</string>
+    <!-- Ergebnis der Sicherung danach -->
+    <string name="mehr_schluessel_erneuert">Schlüssel erneuert. %1$s</string>
+    <string name="mehr_export_text">Alle Einträge als Tabelle (CSV) im Klartext, zum Beispiel als Ausstieg oder für einen Arzttermin. Speichere sie nicht im Sicherungsordner und nicht in einem Ordner, der in eine Cloud synchronisiert wird.</string>
+    <string name="mehr_export_erstellen">Export erstellen</string>
+    <string name="mehr_version_lizenz">Version %1$s · Open Source (MPL-2.0)</string>
+    <string name="mehr_quelltext">Quelltext: https://github.com/Blackfort-Technology/days-and-keys</string>
+    <string name="mehr_keine_diagnosen">Keine Diagnosen, keine Empfehlungen, keine automatischen Zusammenhänge. Die App ersetzt keine ärztliche Beratung.</string>
+    <string name="mehr_schluessel_strongbox">Schlüssel: StrongBox</string>
+    <string name="mehr_schluessel_keystore">Schlüssel: Keystore des Geräts</string>
+    <string name="mehr_schrift">Schrift: Atkinson Hyperlegible Next (SIL Open Font License 1.1). Symbole: Material Symbols (Apache License 2.0).</string>
+    <string name="mehr_woerter_stimmen">Die Wörter stimmen.</string>
+    <string name="mehr_woerter_passen_nicht">Die Wörter passen nicht.</string>
+</resources>

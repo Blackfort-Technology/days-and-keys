@@ -21,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -43,37 +44,39 @@ fun HilfeSeite(z: AppZustand) {
     Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Abstand.rand), verticalArrangement = Arrangement.spacedBy(Abstand.m)) {
         h?.hinweis?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
         notruf?.let { n ->
-            Button(onClick = { waehlen(n.nummer) }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.hauptknopf).semantics { contentDescription = "${n.name}, ${n.nummer}, ${n.hinweis}, Wählfeld öffnen" }) {
+            val beschreibung = stringResource(R.string.hilfe_notruf_beschreibung, n.name, n.nummer, n.hinweis)
+            Button(onClick = { waehlen(n.nummer) }, modifier = Modifier.fillMaxWidth().heightIn(min = Abstand.hauptknopf).semantics { contentDescription = beschreibung }) {
                 Symbol(R.drawable.sym_call, null); Text("  ${n.name} ${n.nummer} · ${n.hinweis}")
             }
         }
-        Kopf("Mein Plan für Tiefs")
+        Kopf(stringResource(R.string.allgemein_plan_tiefs))
         val plan = h?.krisenplan
         if (plan != null) Text(
             plan, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onTertiaryContainer,
             modifier = Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.tertiaryContainer, MaterialTheme.shapes.medium).padding(Abstand.l),
         ) else Text(
-            if (z.entsperrt()) "Unter Mehr › Mein Plan für Tiefs kannst du eigene Schritte aufschreiben. Sie stehen dann hier, auch ohne Entsperren." else "Noch kein eigener Plan aufgeschrieben.",
+            if (z.entsperrt()) stringResource(R.string.hilfe_plan_leer_entsperrt) else stringResource(R.string.hilfe_plan_leer),
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        Kopf("Menschen, denen ich vertraue")
-        if (!z.entsperrt()) Text("Deine Vertrauenspersonen siehst du nach dem Entsperren.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        else if (h?.vertrauenspersonen.isNullOrEmpty()) Text("Noch keine eingetragen (unter Mehr › Vertrauenspersonen).", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Kopf(stringResource(R.string.hilfe_vertrauen_kopf))
+        if (!z.entsperrt()) Text(stringResource(R.string.hilfe_vertrauen_gesperrt), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        else if (h?.vertrauenspersonen.isNullOrEmpty()) Text(stringResource(R.string.hilfe_vertrauen_leer), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         else for (v in h!!.vertrauenspersonen) Nummernzeile(v.name, v.telefon) { waehlen(v.telefon) }
         // Gleiche Hinweise bilden eine Gruppe; der Hinweis steht als Überschrift, nicht zwischen Knöpfen.
         for ((hinweis, gruppe) in nummern.filter { it != notruf }.groupBy { it.hinweis }) {
             Kopf(hinweis.replaceFirstChar { it.uppercase() })
             for (n in gruppe) Nummernzeile(n.name, n.nummer) { waehlen(n.nummer) }
         }
-        Text("Die Nummern öffnen nur das Wählfeld, angerufen wird erst, wenn du es dort bestätigst.", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = Abstand.xl))
+        Text(stringResource(R.string.hilfe_waehlfeld), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(vertical = Abstand.xl))
     }
 }
 
 @Composable
 private fun Nummernzeile(name: String, nummer: String, waehlen: () -> Unit) {
+    val beschreibung = stringResource(R.string.hilfe_nummer_beschreibung, name, nummer)
     Row(
         Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(role = Role.Button) { waehlen() }
-            .semantics(mergeDescendants = true) { contentDescription = "$name, $nummer, Wählfeld öffnen" },
+            .semantics(mergeDescendants = true) { contentDescription = beschreibung },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f)) {

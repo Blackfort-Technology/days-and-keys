@@ -36,12 +36,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import de.blackforttec.daysandkeys.DaysAndKeysAppHolder
+import de.blackforttec.daysandkeys.R
 import de.blackforttec.daysandkeys.kern.Feldart
 import de.blackforttec.daysandkeys.kern.Richtung
 import de.blackforttec.daysandkeys.kern.Verlauf
@@ -55,8 +58,11 @@ import java.time.LocalDate
 @Composable
 fun VerlaufSeite(z: AppZustand) {
     // Fragen nach Bezug gruppiert, Stimmung oben (#135, Vorgabe 4.7).
+    val titelJetzt = stringResource(R.string.verlauf_gruppe_jetzt)
+    val titelAbschluss = stringResource(R.string.allgemein_tagesabschluss)
+    val titelSchlaf = stringResource(R.string.verlauf_gruppe_schlaf)
     val gruppen = remember {
-        listOf("status_jetzt" to "Jetzt", "tagesabschluss" to "Tagesabschluss", "aufgewacht" to "Schlaf am Morgen").map { (schl, titel) ->
+        listOf("status_jetzt" to titelJetzt, "tagesabschluss" to titelAbschluss, "aufgewacht" to titelSchlaf).map { (schl, titel) ->
             titel to z.versuch { z.kern.formular(schl) }?.gruppen.orEmpty().flatMap { it.fragen }
                 .filter { it.feldart in setOf(Feldart.SKALA, Feldart.STUFEN, Feldart.ZAHL, Feldart.DAUER) }
         }
@@ -72,30 +78,30 @@ fun VerlaufSeite(z: AppZustand) {
     val v: Verlauf? = remember(frage, tage) { z.versuch { z.kern.verlauf(frage, heute - tage + 1, heute) } }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(horizontal = Abstand.rand), verticalArrangement = Arrangement.spacedBy(Abstand.m)) {
         val gewaehlt = fragen.firstOrNull { it.schluessel == frage }
-        Klickzeile(gewaehlt?.frage ?: frage, "Andere Frage wählen") { wahl = true }
-        Stufenwahl(listOf(28L to "4 Wochen", 91L to "3 Monate", 365L to "1 Jahr"), tage.toLong()) { it?.let { w -> tage = w.toInt() } }
+        Klickzeile(gewaehlt?.frage ?: frage, stringResource(R.string.verlauf_andere_frage)) { wahl = true }
+        Stufenwahl(listOf(28L to stringResource(R.string.verlauf_4_wochen), 91L to stringResource(R.string.verlauf_3_monate), 365L to stringResource(R.string.verlauf_1_jahr)), tage.toLong()) { it?.let { w -> tage = w.toInt() } }
         if (v != null) {
             if (v.punkte.isEmpty()) {
-                Text("In diesem Zeitraum gibt es noch keine Werte für diese Frage.", style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(vertical = Abstand.xl))
+                Text(stringResource(R.string.verlauf_keine_werte), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(vertical = Abstand.xl))
             } else {
                 Diagramm(v, heute - tage + 1, heute, mittel, dauer = gewaehlt?.feldart == Feldart.DAUER)
-                Stufenwahl(listOf(7L to "Grundniveau 7 Tage", 28L to "28 Tage"), mittel.toLong()) { it?.let { w -> mittel = w.toInt() } }
+                Stufenwahl(listOf(7L to stringResource(R.string.verlauf_grundniveau_7_tage), 28L to stringResource(R.string.allgemein_tage, 28)), mittel.toLong()) { it?.let { w -> mittel = w.toInt() } }
             }
-            Text(v.hinweis + (if (v.einnahmenMs.isNotEmpty()) " · ${v.einnahmenMs.size} Einnahmen" else ""), style = MaterialTheme.typography.bodyMedium)
-            if (v.marker.isNotEmpty()) Text("Marker: " + v.marker.groupBy { it.name }.map { "${it.key} (${it.value.size})" }.joinToString(", "), style = MaterialTheme.typography.bodyMedium)
-            Aufklappgruppe("So liest du das Diagramm", "Tageswert, Mittelwerte, Lücken", lesen, { lesen = !lesen }) {
+            Text(v.hinweis + (if (v.einnahmenMs.isNotEmpty()) " · " + stringResource(R.string.verlauf_einnahmen, v.einnahmenMs.size) else ""), style = MaterialTheme.typography.bodyMedium)
+            if (v.marker.isNotEmpty()) Text(stringResource(R.string.verlauf_marker, v.marker.groupBy { it.name }.map { "${it.key} (${it.value.size})" }.joinToString(", ")), style = MaterialTheme.typography.bodyMedium)
+            Aufklappgruppe(stringResource(R.string.verlauf_lesen_titel), stringResource(R.string.verlauf_lesen_zeile), lesen, { lesen = !lesen }) {
                 Text(v.erklaerung, style = MaterialTheme.typography.bodyMedium)
             }
-            Aufklappgruppe("Tageswerte als Liste", "${v.tage.size} Tage mit Wert", liste, { liste = !liste }) {
+            Aufklappgruppe(stringResource(R.string.verlauf_liste_titel), stringResource(R.string.verlauf_liste_zeile, v.tage.size), liste, { liste = !liste }) {
                 for (t in v.tage.reversed()) Row(Modifier.fillMaxWidth()) {
                     Text(t.datum, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                    Text("${t.letzter}" + if (t.anzahl > 1u) "  (${t.anzahl} Einträge, ${t.min} bis ${t.max})" else "", style = MaterialTheme.typography.bodyMedium)
+                    Text("${t.letzter}" + if (t.anzahl > 1u) "  " + stringResource(R.string.verlauf_tageswert_mehrere, t.anzahl.toInt(), t.min, t.max) else "", style = MaterialTheme.typography.bodyMedium)
                 }
             }
             if (v.vergleiche.isNotEmpty()) {
-                Kopf("Grundniveau mit und ohne", v.vergleiche.first().hinweis)
+                Kopf(stringResource(R.string.verlauf_vergleich_kopf), v.vergleiche.first().hinweis)
                 fun t(x: Double?) = x?.let { "%+.1f".format(it) } ?: "-"
-                for (f in v.vergleiche) Text("${f.faktor}: an ${f.tageMit} Tagen mit ${t(f.mittelMit)}, an ${f.tageOhne} Tagen ohne ${t(f.mittelOhne)}", style = MaterialTheme.typography.bodyMedium)
+                for (f in v.vergleiche) Text(stringResource(R.string.verlauf_vergleich, f.faktor, f.tageMit.toInt(), t(f.mittelMit), f.tageOhne.toInt(), t(f.mittelOhne)), style = MaterialTheme.typography.bodyMedium)
             }
         }
         Abstand(24)
@@ -126,14 +132,17 @@ fun Diagramm(v: Verlauf, von: Long, bis: Long, mittel: Int, dauer: Boolean = fal
     val max = if (dauer) (((v.punkte.maxOfOrNull { it.wert } ?: 0) / 60 + 1) * 60).coerceAtLeast(600).toFloat()
     else (v.max ?: v.punkte.maxOfOrNull { it.wert } ?: 10).toFloat().let { if (it == min) min + 1 else it }
     val reihe = if (mittel == 7) v.gleitend7 else v.gleitend28
-    Canvas(Modifier.fillMaxWidth().height(240.dp).semantics { contentDescription = "Verlauf mit ${v.punkte.size} Einträgen an ${v.tageMitWert} von ${v.tageGesamt} Tagen" }) {
+    // Semantik ist kein Composable, der Text steht vorher fest.
+    val beschreibung = stringResource(R.string.verlauf_diagramm_beschreibung, v.punkte.size, v.tageMitWert.toInt(), v.tageGesamt.toInt())
+    val res = DaysAndKeysAppHolder.app.resources
+    Canvas(Modifier.fillMaxWidth().height(240.dp).semantics { contentDescription = beschreibung }) {
         // Ränder für die Beschriftung: Werte links, Datum unten (#127).
         val links = (if (dauer) 48.dp else 30.dp).toPx(); val unten = 18.dp.toPx(); val oben = 6.dp.toPx()
         val breite = size.width - links; val hoehe = size.height - unten - oben
         val tage = (bis - von + 1).coerceAtLeast(1)
         fun x(tag: Double) = (links + (tag - von) / tage * breite).toFloat()
         fun y(w: Double) = (oben + hoehe - (w - min) / (max - min) * hoehe).toFloat()
-        fun wert(w: Double) = if (dauer) "${(w / 60).toInt()} Std." else if (v.richtung == Richtung.BIPOLAR && w > 0) "+${w.toInt()}" else "${w.toInt()}"
+        fun wert(w: Double) = if (dauer) res.getString(R.string.verlauf_achse_stunden, (w / 60).toInt()) else if (v.richtung == Richtung.BIPOLAR && w > 0) "+${w.toInt()}" else "${w.toInt()}"
         // Hilfslinien und Werte: unten, Mitte (bei bipolaren Skalen die Null), oben
         val mitte = if (v.richtung == Richtung.BIPOLAR) 0.0 else ((min + max) / 2.0)
         for (w in listOf(min.toDouble(), mitte, max.toDouble())) {
@@ -167,8 +176,8 @@ fun Diagramm(v: Verlauf, von: Long, bis: Long, mittel: Int, dauer: Boolean = fal
         }
     }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("● Eintrag", style = MaterialTheme.typography.labelSmall, color = farbePunkt)
-        Text("━ Grundniveau ($mittel Tage)", style = MaterialTheme.typography.labelSmall, color = farbeLinie)
+        Text(stringResource(R.string.verlauf_legende_eintrag), style = MaterialTheme.typography.labelSmall, color = farbePunkt)
+        Text(stringResource(R.string.verlauf_legende_grundniveau, mittel), style = MaterialTheme.typography.labelSmall, color = farbeLinie)
         Text("${v.anker.firstOrNull()?.text ?: ""} … ${v.anker.lastOrNull()?.text ?: ""}", style = MaterialTheme.typography.labelSmall, color = farbeAchse)
     }
 }
@@ -179,7 +188,7 @@ fun Diagramm(v: Verlauf, von: Long, bis: Long, mittel: Int, dauer: Boolean = fal
 fun VerlaufReiter(z: AppZustand, eintraege: Boolean) {
     Column(Modifier.fillMaxSize()) {
         SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().padding(horizontal = Abstand.rand, vertical = Abstand.s)) {
-            listOf("Diagramm" to Seite.Verlauf, "Einträge" to Seite.Eintraege).forEachIndexed { i, (t, ziel) ->
+            listOf(stringResource(R.string.verlauf_diagramm) to Seite.Verlauf, stringResource(R.string.verlauf_eintraege) to Seite.Eintraege).forEachIndexed { i, (t, ziel) ->
                 SegmentedButton(
                     selected = (ziel == Seite.Eintraege) == eintraege,
                     onClick = { z.zu(ziel) },
