@@ -194,6 +194,8 @@ pub struct FrageAnsicht {
     pub messdef_id: String,
     pub schluessel: String,
     pub frage: String,
+    /// Kurzname für Listen und Verlauf, etwa „Bewegung, Dauer“ (#153).
+    pub kurz: Option<String>,
     pub feldart: Feldart,
     pub min: Option<i64>,
     pub max: Option<i64>,

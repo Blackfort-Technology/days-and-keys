@@ -78,6 +78,7 @@ fn frage(s: &Sitzung, md: &modell::Messdef) -> FrageAnsicht {
         messdef_id: hex(&md.id),
         schluessel: md.schluessel.clone(),
         frage: md.frage.clone(),
+        kurz: md.kurz.clone(),
         feldart: feldart(md.feldtyp),
         min: md.min,
         max: md.max,

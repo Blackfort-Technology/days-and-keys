@@ -5,6 +5,13 @@ all-features = true
 
 [advisories]
 yanked = "deny"
+# zip 8.x ist vollständig zurückgezogen, libsodium-sys-stable (auch 1.24.3) verlangt aber 8.6.
+# Gebraucht nur im Build-Skript zum Entpacken der vorgebauten MSVC-Bibliothek (Windows), den
+# Pfad durchläuft keines unserer Ziele. Ausnahme entfernen, sobald libsodium-sys-stable auf zip 9
+# geht (#157).
+ignore = [
+    { crate = "zip@8.6.0", reason = "nur Windows-Build-Skript von libsodium-sys-stable, #157" },
+]
 
 [licenses]
 allow = ["MIT", "Apache-2.0", "Apache-2.0 WITH LLVM-exception", "ISC", "BSD-2-Clause", "BSD-3-Clause", "MPL-2.0", "Unicode-3.0", "Zlib", "CC0-1.0", "Unlicense", "BlueOak-1.0.0"]
