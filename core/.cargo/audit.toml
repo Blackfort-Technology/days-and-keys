@@ -1,0 +1,5 @@
+# SPDX-License-Identifier: MPL-2.0
+# Zurückgezogene Pakete prüft cargo-deny (deny.toml, mit benannter Ausnahme für zip, #157);
+# cargo-audit kennt keine Ausnahme je Paket und prüft hier nur Sicherheitsmeldungen.
+[yanked]
+enabled = false
