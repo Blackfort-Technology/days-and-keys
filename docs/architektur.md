@@ -579,7 +579,7 @@ geprüft werden.
 - **Entscheidung:** drei getrennte Zähler: App-Version (SemVer), `formatversion` je Objekt,
   Suite-Kennung. Neue Formatversionen kommen in zwei Schritten (erst lesen, dann schreiben);
   in Phase A des Versuchs keine Formatänderung (Protokoll 15). Das Protokoll hat eine eigene
-  Dokumentversion (derzeit v0.7.1).
+  Dokumentversion (derzeit v1.0 für Teil A).
 
 ### AE-34 Shamir zurückgestellt
 
