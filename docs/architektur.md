@@ -255,6 +255,7 @@ geprüft werden.
 | AE-37 | Nutzungsversuch: direkt Phase A, dann Phase B | entschieden | #82, #99 |
 | AE-38 | Name „Days & Keys", Adresse unter `wirdsichtbar.de` | entschieden | #14 |
 | AE-39 | Projekt vollständig auf GitHub, öffentlich | entschieden | Projektleitung, 2026-10-14 (#106) |
+| AE-40 | Recovery-Wörter erst mit der Sicherung, nicht in der Einrichtung | entschieden | Projektleitung, 2026-10-17 (#165) |
 
 ### AE-01 Lokal zuerst, Zero-Knowledge, kein Generalschlüssel
 
@@ -610,6 +611,23 @@ geprüft werden.
 - **Entscheidung:** „Days & Keys"; Server ab M1.5 unter `https://daysandkeys.wirdsichtbar.de`
   (#14). Eigene Domains werden vorerst nicht registriert; vor einer Veröffentlichung Marke und
   Domains neu prüfen.
+
+### AE-40 Recovery-Wörter erst mit der Sicherung
+
+- **Entscheidung:** Die Einrichtung kommt ohne Recovery-Wörter aus. Der Recovery-Schlüssel der
+  Gründung signiert nur die Gründung und wird beim Abschluss verworfen, ohne je angezeigt oder
+  gespeichert zu werden (Meta `woerter_offen`). Die Wörter entstehen erst mit der Sicherung, in der
+  Einrichtung („Jetzt einrichten“) oder später unter Mehr › Sicherung: Glied `recovery_neu`, vom
+  Gerät signiert, `kapsel` und `kapsel_h` an den neuen `RK_enc` gebunden, Bund und Bund_h an den
+  neuen Kettenkopf. Keine Rotation, weil der erste Recovery-Schlüssel nie bekannt war; bekannte
+  Wörter zu ersetzen bleibt ausgeschlossen. Solange die Wörter fehlen, erzeugt der Kern keine
+  Sicherung, und „Heute“ erinnert erst ab dem zweiten Tag, aufschiebbar um eine Woche.
+- **Begründung:** 24 Wörter und eine Abfrage vor dem ersten Eintrag waren die größte Hürde der
+  Einrichtung (Projektleitung, 2026-10-17). Ohne Sicherung nützen die Wörter nichts, ohne Wörter
+  lässt sich keine Sicherung öffnen; beides gehört in einen Schritt.
+- **Folge:** Geht das Gerät verloren, bevor Wörter und Sicherung eingerichtet sind, sind die
+  Einträge verloren, wie beim Überspringen der Sicherung. iOS behält den bisherigen Ablauf bis zum
+  Nachzug (#137); die bisherige Schnittstelle bleibt.
 
 ## 9. Offene Entscheidungen
 

@@ -30,6 +30,7 @@ use crate::zeit::Zeitpunkt;
 pub const ZWEI_STUNDEN_MS: i64 = 2 * 3600 * 1000;
 pub const ZWOELF_STUNDEN_MS: i64 = 12 * 3600 * 1000;
 pub const DREI_TAGE_MS: i64 = 3 * 24 * 3600 * 1000;
+pub const EIN_TAG_MS: i64 = 24 * 3600 * 1000;
 
 /// Zeitquelle; in Tests ersetzbar (Protokoll 6.3, #81).
 pub trait Uhr: Send + Sync {
@@ -103,6 +104,41 @@ impl Drop for EinrichtungOffen {
     }
 }
 
+/// Recovery-Wörter, die nach einer Einrichtung ohne Wörter ausgestellt werden (#165).
+struct WoerterOffen {
+    rk: Geheim,
+    probe: Vec<usize>,
+    woerter: Vec<String>,
+}
+
+impl Drop for WoerterOffen {
+    fn drop(&mut self) {
+        for w in &mut self.woerter {
+            w.zeroize();
+        }
+    }
+}
+
+/// Drei verschiedene Positionen für die Wortprobe, aufsteigend.
+fn probe_waehlen(z: &mut dyn Zufall) -> Vec<usize> {
+    let mut probe: Vec<usize> = Vec::new();
+    while probe.len() < 3 {
+        let i = (sodium::zufall_bytes::<1>(z)[0] as usize) % woerter::ANZAHL;
+        if !probe.contains(&i) {
+            probe.push(i);
+        }
+    }
+    probe.sort_unstable();
+    probe
+}
+
+fn probe_passt(probe: &[usize], woerter: &[String], antworten: &[String]) -> bool {
+    antworten.len() == probe.len()
+        && probe.iter().zip(antworten).all(|(i, a)| {
+            woerter::index(a).is_some() && woerter::index(a) == woerter::index(&woerter[*i])
+        })
+}
+
 /// Vorbereiteter Bestand, der erst nach dem Umhüllen durch die Plattform geschrieben wird.
 struct Vorbereitet {
     meta: Vec<(&'static str, Vec<u8>)>,
@@ -123,6 +159,7 @@ pub struct Kern {
     pub(crate) uhr: Box<dyn Uhr>,
     pub(crate) sitzung: Option<Sitzung>,
     einrichtung: Option<EinrichtungOffen>,
+    woerter_neu: Option<WoerterOffen>,
     vorbereitet: Option<Vorbereitet>,
     pub(crate) recovery: Option<Recovery>,
     pub(crate) bestaetigung: Option<(String, [u8; 32])>,
@@ -157,6 +194,7 @@ impl Kern {
             uhr,
             sitzung: None,
             einrichtung: None,
+            woerter_neu: None,
             vorbereitet: None,
             recovery: None,
             bestaetigung: None,
@@ -201,6 +239,7 @@ impl Kern {
     pub fn sperren(&mut self) {
         self.sitzung = None;
         self.bestaetigung = None;
+        self.woerter_neu = None;
     }
 
     // -----------------------------------------------------------------------------------------
@@ -212,20 +251,34 @@ impl Kern {
         &mut self,
         tageswechsel_min: i32,
     ) -> Ergebnis<(Vec<String>, Vec<usize>, NeueSchluessel)> {
+        self.einrichtung_vorbereiten(tageswechsel_min, true)
+    }
+
+    /// Einrichtung ohne Wörter (#165): Der Recovery-Schlüssel signiert nur die Gründung und wird
+    /// beim Abschluss verworfen, ohne je angezeigt zu werden. Wörter stellt später
+    /// [`Kern::woerter_einrichten_beginnen`] aus; bis dahin entsteht keine Sicherung.
+    pub fn einrichtung_beginnen_ohne_woerter(
+        &mut self,
+        tageswechsel_min: i32,
+    ) -> Ergebnis<NeueSchluessel> {
+        Ok(self.einrichtung_vorbereiten(tageswechsel_min, false)?.2)
+    }
+
+    fn einrichtung_vorbereiten(
+        &mut self,
+        tageswechsel_min: i32,
+        mit_woertern: bool,
+    ) -> Ergebnis<(Vec<String>, Vec<usize>, NeueSchluessel)> {
         if self.eingerichtet()? {
             return Err(Fehler::SchonEingerichtet);
         }
         Einstellungen::standard(tageswechsel_min).pruefen()?;
         let rk = Geheim::zufall(32, &mut *self.z);
-        let woerter = woerter::kodieren(&rk);
-        let mut probe: Vec<usize> = Vec::new();
-        while probe.len() < 3 {
-            let i = (sodium::zufall_bytes::<1>(&mut *self.z)[0] as usize) % woerter::ANZAHL;
-            if !probe.contains(&i) {
-                probe.push(i);
-            }
-        }
-        probe.sort_unstable();
+        let (woerter, probe) = if mit_woertern {
+            (woerter::kodieren(&rk), probe_waehlen(&mut *self.z))
+        } else {
+            (Vec::new(), Vec::new())
+        };
         let kk = Geheim::zufall(32, &mut *self.z);
         let kk_h = Geheim::zufall(32, &mut *self.z);
         let s = NeueSchluessel {
@@ -251,10 +304,7 @@ impl Kern {
             .einrichtung
             .as_ref()
             .ok_or(Fehler::Zustand("keine Einrichtung offen"))?;
-        Ok(probe_antworten.len() == e.probe.len()
-            && e.probe.iter().zip(probe_antworten).all(|(i, a)| {
-                woerter::index(a).is_some() && woerter::index(a) == woerter::index(&e.woerter[*i])
-            }))
+        Ok(probe_passt(&e.probe, &e.woerter, probe_antworten))
     }
 
     /// Prüft die Wortprobe und schreibt den Bestand. `kk_umh`/`kk_h_umh` sind die von der
@@ -278,6 +328,7 @@ impl Kern {
             }
         }
         let e = self.einrichtung.take().expect("geprüft");
+        let ohne_woerter = e.woerter.is_empty();
         let jetzt = self.uhr.jetzt();
         let rec = Recovery::aus_rk(&e.rk);
         let geraet_id = tresor::neue_id(&mut *self.z);
@@ -342,6 +393,9 @@ impl Kern {
             ("ws_g_pub", bund.ws().oeffentlich.to_vec()),
             ("sicherung_nr", 0u64.to_be_bytes().to_vec()),
         ];
+        if ohne_woerter {
+            meta.push(("woerter_offen", vec![1]));
+        }
         if let Some(u) = kk_umh {
             meta.push(("kk_umh", u));
         }
@@ -1108,6 +1162,10 @@ impl Kern {
     /// Erzeugt die nächste Sicherung (Name und Bytes). Gültig wird sie erst mit
     /// [`Kern::sicherung_bestaetigen`], nachdem die Plattform sie geschrieben und zurückgelesen hat.
     pub fn sicherung_erstellen(&mut self) -> Ergebnis<(String, Vec<u8>)> {
+        // Ohne Wörter ließe sich die Sicherung nie öffnen; sie wäre nur Schein (#165).
+        if self.woerter_offen()? {
+            return Err(Fehler::Zustand("erst Recovery-Wörter einrichten"));
+        }
         if speicher::meta(&self.db, "ersetzt")?.is_some() {
             return Err(Fehler::Kette(
                 "dieses Gerät ist ersetzt und sichert nicht mehr",
@@ -1171,6 +1229,117 @@ impl Kern {
             }
         }
         Ok(speicher::meta(&self.db, "ersetzt")?.is_none())
+    }
+
+    // -----------------------------------------------------------------------------------------
+    // Recovery-Wörter nach einer Einrichtung ohne Wörter (#165)
+    // -----------------------------------------------------------------------------------------
+
+    /// Wurde ohne Wörter eingerichtet und fehlen sie noch?
+    pub fn woerter_offen(&self) -> Ergebnis<bool> {
+        Ok(speicher::meta(&self.db, "woerter_offen")?.is_some())
+    }
+
+    /// Zeitpunkt der Einrichtung, solange die Wörter fehlen (für die Erinnerung auf „Heute“).
+    pub fn woerter_offen_seit(&self) -> Ergebnis<Option<i64>> {
+        if !self.woerter_offen()? {
+            return Ok(None);
+        }
+        Ok(Some(self.gegruendet_um()?))
+    }
+
+    /// Zeitpunkt der Gründung des Kontos (UTC-ms), aus der signierten Gründung.
+    pub fn gegruendet_um(&self) -> Ergebnis<i64> {
+        let g = Huelle::dekodieren(&meta_pflicht(&self.db, "gruendung")?)?;
+        Ok(kette::gruendung_pruefen(&g)?.0.erstellt_um)
+    }
+
+    /// Erzeugt neue Wörter und die Wortprobe; geschrieben wird erst beim Abschluss. Nur solange
+    /// die Wörter fehlen: Bekannte Wörter zu ersetzen verlangt eine Rotation und ist hier nicht
+    /// vorgesehen.
+    pub fn woerter_einrichten_beginnen(&mut self) -> Ergebnis<(Vec<String>, Vec<usize>)> {
+        self.sitzung()?;
+        if !self.woerter_offen()? {
+            return Err(Fehler::Zustand("Recovery-Wörter sind schon eingerichtet"));
+        }
+        let rk = Geheim::zufall(32, &mut *self.z);
+        let woerter = woerter::kodieren(&rk);
+        let probe = probe_waehlen(&mut *self.z);
+        self.woerter_neu = Some(WoerterOffen {
+            rk,
+            probe: probe.clone(),
+            woerter: woerter.clone(),
+        });
+        Ok((woerter, probe))
+    }
+
+    pub fn woerter_einrichten_probe_pruefen(&self, antworten: &[String]) -> Ergebnis<bool> {
+        let w = self
+            .woerter_neu
+            .as_ref()
+            .ok_or(Fehler::Zustand("keine Wörter offen"))?;
+        Ok(probe_passt(&w.probe, &w.woerter, antworten))
+    }
+
+    /// Prüft die Probe, hängt `recovery_neu` an die Kette und bindet beide Kapseln an den neuen
+    /// `RK_enc`. Keine Rotation: Der erste Recovery-Schlüssel wurde nie angezeigt und ist verworfen.
+    pub fn woerter_einrichten_abschliessen(&mut self, antworten: &[String]) -> Ergebnis<()> {
+        if !self.woerter_einrichten_probe_pruefen(antworten)? {
+            return Err(Fehler::Woerter);
+        }
+        if !self.woerter_offen()? {
+            return Err(Fehler::Zustand("Recovery-Wörter sind schon eingerichtet"));
+        }
+        let s = self.sitzung.as_ref().ok_or(Fehler::Gesperrt)?;
+        let w = self.woerter_neu.as_ref().expect("geprüft");
+        let rec = Recovery::aus_rk(&w.rk);
+        let gruendung = Huelle::dekodieren(&meta_pflicht(&self.db, "gruendung")?)?;
+        let mut kette_b = speicher::kette(&self.db)?;
+        let gl = Glied {
+            nr: s.kopf.laenge + 1,
+            vorgaenger: s.kopf.kopf_hash,
+            geraet_id: s.kopf.geraet_id,
+            erstellt_um: self.uhr.jetzt().utc_ms,
+            art: GliedArt::RecoveryNeu {
+                rk_sig: rec.sig.oeffentlich,
+                rk_enc: rec.enc.oeffentlich,
+            },
+        };
+        kette_b.push(gl.signieren(&s.bund.dk_sig(), None).kodieren());
+        let glieder = kette_b
+            .iter()
+            .map(|b| Huelle::dekodieren(b))
+            .collect::<Ergebnis<Vec<_>>>()?;
+        let kopf = kette::pruefen(&gruendung, &glieder)?;
+        let kapsel = tresor::kapsel(&s.konto_id, kopf.generation, &s.kk, &kopf.rk_enc, false);
+        let kapsel_h = tresor::kapsel(&s.konto_id, kopf.generation_h, &s.kk_h, &kopf.rk_enc, true);
+        // Bund und Bund_h sind an den Kettenkopf gebunden und brauchen den neuen.
+        let bund_b =
+            tresor::bund_verschluesseln(&s.bund, &s.kk, &s.konto_id, &kopf.kopf_hash, &mut *self.z);
+        let bund_h_b = tresor::bund_h_verschluesseln(
+            &s.bund_h,
+            &s.kk_h,
+            &s.konto_id,
+            &kopf.kopf_hash,
+            &mut *self.z,
+        );
+        let tx = self.db.transaction()?;
+        speicher::kette_ersetzen(&tx, &kette_b)?;
+        speicher::meta_setzen(&tx, "kapsel", &kapsel)?;
+        speicher::meta_setzen(&tx, "kapsel_h", &kapsel_h)?;
+        speicher::bund_setzen(&tx, 1, &bund_b)?;
+        speicher::bund_setzen(&tx, 2, &bund_h_b)?;
+        speicher::meta_loeschen(&tx, "woerter_offen")?;
+        tx.commit()?;
+        self.woerter_neu = None;
+        if let Some(s) = self.sitzung.as_mut() {
+            s.kopf = kopf;
+        }
+        Ok(())
+    }
+
+    pub fn woerter_einrichten_verwerfen(&mut self) {
+        self.woerter_neu = None;
     }
 
     // -----------------------------------------------------------------------------------------

@@ -121,6 +121,7 @@ Rebound-Erkennung, Hinweise wie „auffällig".
 - **Automatische** verschlüsselte Sicherung in einen einmal gewählten Ordner (auch in einer Cloud),
   mehrere Stände, Warnung bei Ausfall; Wiederherstellung auf einem neuen Gerät mit den 24
   Recovery-Wörtern, ohne Server (#91, #79). Restore-Test vor dem Nutzungsversuch ist Pflicht.
+  Die Wörter entstehen zusammen mit der Sicherung, nicht schon in der Einrichtung (AE-40, #165).
 - Hilfe jederzeit erreichbar, auch ohne Entsperren: TelefonSeelsorge 0800 111 0 111,
   0800 111 0 222 und 116 123, Nummer gegen Kummer 116 111, ärztlicher Bereitschaftsdienst 116 117, Notruf 112, eigene Vertrauenspersonen
   (#71). Keine Überwachung, keine Meldung an Dritte.
@@ -195,6 +196,7 @@ Vollständig in `docs/protokoll.md` (v0.6); hier die wichtigsten Punkte.
 | Manipulierter Build oder nativer Code | nichts | alles (Lieferkette, #68) |
 | Altes Gerät nach Wiederherstellung | alles Neue (Rotation) | was es bis dahin hatte |
 | Gerät und Recovery-Wörter verloren | nichts | alle Daten (gewollt) |
+| Gerät verloren, bevor Wörter und Sicherung eingerichtet sind | nichts | alle Daten (angenommen, AE-40) |
 
 Das Bedrohungsmodell (`docs/threat-model/`) bezieht sich noch auf Protokoll v0.1 und wird gegen
 Teil A neu erstellt (#66), bevor v1.0 freigegeben wird.

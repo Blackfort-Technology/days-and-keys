@@ -609,3 +609,134 @@ fn lastprobe_zwei_jahre() {
         restore
     );
 }
+
+// ---------------------------------------------------------------------------------------------
+// Recovery-Wörter erst mit der Sicherung (#165)
+// ---------------------------------------------------------------------------------------------
+
+fn einrichten_ohne_woerter(seed: u8, uhr: &TestUhr) -> Geraet {
+    let mut k = neues_geraet(seed, uhr);
+    let s = k.einrichtung_beginnen_ohne_woerter(240).unwrap();
+    k.einrichtung_abschliessen(&[], None, None).unwrap();
+    Geraet {
+        kk: s.kk.clone(),
+        kk_h: s.kk_h.clone(),
+        kern: k,
+        woerter: Vec::new(),
+    }
+}
+
+fn woerter_einrichten(g: &mut Geraet) {
+    let (woerter, probe) = g.kern.woerter_einrichten_beginnen().unwrap();
+    let antworten: Vec<String> = probe.iter().map(|i| woerter[*i].clone()).collect();
+    g.kern.woerter_einrichten_abschliessen(&antworten).unwrap();
+    g.woerter = woerter;
+}
+
+#[test]
+fn einrichtung_ohne_woerter_sichert_erst_mit_woertern() {
+    let uhr = TestUhr::neu(20_700, 600);
+    let mut a = einrichten_ohne_woerter(21, &uhr);
+    assert!(a.kern.woerter_offen().unwrap());
+    assert_eq!(
+        a.kern.woerter_offen_seit().unwrap(),
+        Some(uhr.jetzt().utc_ms)
+    );
+    status(&mut a, 3);
+    assert_eq!(
+        a.kern.sicherung_erstellen().unwrap_err(),
+        Fehler::Zustand("erst Recovery-Wörter einrichten"),
+        "ohne Wörter keine Sicherung, die niemand öffnen kann"
+    );
+
+    // Falsche Probe schreibt nichts.
+    let (woerter, probe) = a.kern.woerter_einrichten_beginnen().unwrap();
+    assert_eq!(woerter.len(), 24);
+    let falsch: Vec<String> = probe.iter().map(|_| "zoo".to_string()).collect();
+    assert!(!a.kern.woerter_einrichten_probe_pruefen(&falsch).unwrap());
+    assert_eq!(
+        a.kern.woerter_einrichten_abschliessen(&falsch).unwrap_err(),
+        Fehler::Woerter
+    );
+    assert!(a.kern.woerter_offen().unwrap());
+    let antworten: Vec<String> = probe.iter().map(|i| woerter[*i].clone()).collect();
+    a.kern.woerter_einrichten_abschliessen(&antworten).unwrap();
+    a.woerter = woerter;
+    assert!(!a.kern.woerter_offen().unwrap());
+    assert_eq!(a.kern.woerter_offen_seit().unwrap(), None);
+    assert!(a.kern.woerter_pruefen(&a.woerter).unwrap());
+    assert!(
+        a.kern.woerter_einrichten_beginnen().is_err(),
+        "bekannte Wörter lassen sich hier nicht ersetzen"
+    );
+
+    // Bund und Bund_h sind an den neuen Kettenkopf gebunden: Entsperren klappt weiter.
+    a.kern.sperren();
+    a.kern.entsperren(a.kk.clone(), a.kk_h.clone()).unwrap();
+    assert_eq!(stimmungen(&a.kern), vec![3]);
+    let datei = sichern(&mut a);
+
+    // Fremde Wörter öffnen die Sicherung nicht.
+    let fremd = einrichten(22, &uhr);
+    let mut c = neues_geraet(23, &uhr);
+    c.wiederherstellung_beginnen(&fremd.woerter).unwrap();
+    assert!(
+        c.kandidaten(std::slice::from_ref(&datei), &[])
+            .unwrap()
+            .iter()
+            .all(|k| !k.gueltig)
+    );
+
+    // Mit den neuen Wörtern vollständig auf einem zweiten Gerät, beide Kapseln.
+    let mut b = neues_geraet(24, &uhr);
+    b.wiederherstellung_beginnen(&a.woerter).unwrap();
+    let k = b.kandidaten(std::slice::from_ref(&datei), &[]).unwrap();
+    assert!(k[0].gueltig && k[0].empfohlen);
+    let (neu, _, _) = b
+        .wiederherstellen(std::slice::from_ref(&datei), &[], 0)
+        .unwrap();
+    b.vorbereitetes_abschliessen(None, None).unwrap();
+    assert_eq!(stimmungen(&b), vec![3]);
+    assert!(!b.woerter_offen().unwrap());
+    b.sperren();
+    b.entsperren(neu.kk.clone(), neu.kk_h.clone()).unwrap();
+    assert!(b.sicherung_erstellen().is_ok());
+}
+
+#[test]
+fn offene_woerter_verfallen_beim_sperren() {
+    let uhr = TestUhr::neu(20_710, 600);
+    let mut g = einrichten_ohne_woerter(25, &uhr);
+    let (woerter, probe) = g.kern.woerter_einrichten_beginnen().unwrap();
+    let antworten: Vec<String> = probe.iter().map(|i| woerter[*i].clone()).collect();
+    g.kern.sperren();
+    g.kern.entsperren(g.kk.clone(), g.kk_h.clone()).unwrap();
+    assert_eq!(
+        g.kern
+            .woerter_einrichten_abschliessen(&antworten)
+            .unwrap_err(),
+        Fehler::Zustand("keine Wörter offen")
+    );
+    assert!(g.kern.woerter_offen().unwrap());
+    // Ein neuer Anlauf gibt neue Wörter.
+    woerter_einrichten(&mut g);
+    assert_ne!(g.woerter, woerter);
+    assert!(!g.kern.woerter_offen().unwrap());
+}
+
+#[test]
+fn einrichtung_mit_woertern_hat_keine_offenen() {
+    let uhr = TestUhr::neu(20_720, 600);
+    let mut g = einrichten(26, &uhr);
+    assert!(!g.kern.woerter_offen().unwrap());
+    assert_eq!(g.kern.woerter_offen_seit().unwrap(), None);
+    assert!(g.kern.woerter_einrichten_beginnen().is_err());
+    assert!(g.kern.sicherung_erstellen().is_ok());
+    // Ohne Wörter eingerichtet und gesperrt: neue Wörter nur entsperrt.
+    let mut h = einrichten_ohne_woerter(27, &uhr);
+    h.kern.sperren();
+    assert_eq!(
+        h.kern.woerter_einrichten_beginnen().unwrap_err(),
+        Fehler::Gesperrt
+    );
+}

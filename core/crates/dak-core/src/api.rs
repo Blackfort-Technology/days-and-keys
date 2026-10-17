@@ -93,6 +93,14 @@ pub struct Einrichtung {
     pub schluessel: Schluessel,
 }
 
+#[derive(Debug, Clone)]
+#[cfg_attr(feature = "ffi", derive(uniffi::Record))]
+pub struct NeueWoerter {
+    pub woerter: Vec<String>,
+    /// Positionen (0-basiert) der drei Wörter, die zur Probe abgefragt werden.
+    pub probe: Vec<u32>,
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[cfg_attr(feature = "ffi", derive(uniffi::Enum))]
 pub enum AntwortZustand {
@@ -662,6 +670,15 @@ impl DakKern {
         })
     }
 
+    /// Einrichtung ohne Recovery-Wörter (#165); `einrichtung_abschliessen` dann mit leerer Probe.
+    pub fn einrichtung_beginnen_ohne_woerter(&self, tageswechsel_min: i32) -> E<Schluessel> {
+        self.mit(|k| {
+            Ok(Schluessel::from(
+                &k.einrichtung_beginnen_ohne_woerter(tageswechsel_min)?,
+            ))
+        })
+    }
+
     pub fn einrichtung_probe_pruefen(&self, probe: Vec<String>) -> E<bool> {
         self.mit(|k| k.einrichtung_probe_pruefen(&probe))
     }
@@ -979,6 +996,36 @@ impl DakKern {
                 &k.rotation_beginnen(Rotationsgrund::AufWunsch)?,
             ))
         })
+    }
+
+    /// Einrichtungszeitpunkt (UTC-ms), solange die Recovery-Wörter fehlen; sonst `None` (#165).
+    pub fn woerter_offen_seit(&self) -> E<Option<i64>> {
+        self.mit(|k| k.woerter_offen_seit())
+    }
+
+    pub fn woerter_einrichten_beginnen(&self) -> E<NeueWoerter> {
+        self.mit(|k| {
+            let (w, p) = k.woerter_einrichten_beginnen()?;
+            Ok(NeueWoerter {
+                woerter: w,
+                probe: p.iter().map(|x| *x as u32).collect(),
+            })
+        })
+    }
+
+    pub fn woerter_einrichten_probe_pruefen(&self, probe: Vec<String>) -> E<bool> {
+        self.mit(|k| k.woerter_einrichten_probe_pruefen(&probe))
+    }
+
+    pub fn woerter_einrichten_abschliessen(&self, probe: Vec<String>) -> E<()> {
+        self.mit(|k| k.woerter_einrichten_abschliessen(&probe))
+    }
+
+    pub fn woerter_einrichten_verwerfen(&self) {
+        let _ = self.mit(|k| {
+            k.woerter_einrichten_verwerfen();
+            Ok(())
+        });
     }
 
     pub fn woerter_pruefen(&self, woerter: Vec<String>) -> E<bool> {

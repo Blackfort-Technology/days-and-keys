@@ -484,3 +484,51 @@ fn hilfe_ohne_entsperren() {
     assert!(h.vertrauenspersonen.is_empty(), "Kontakte nur entsperrt");
     assert!(k.startseite().is_err(), "sonst nichts ohne Entsperren");
 }
+
+#[test]
+fn sicherungshinweis_erst_ab_dem_zweiten_tag_und_ohne_woerter_eingerichtet() {
+    // #165: Einrichtung ohne Recovery-Wörter, der Hinweis auf die Sicherung wartet einen Tag.
+    let t0 = tag_aus_datum(2026, 10, 2);
+    let uhr = TestUhr(Arc::new(AtomicI64::new(
+        (t0 * 1440 + 9 * 60 - 120) * 60_000,
+    )));
+    let k = DakKern::aus_kern(Kern::neu(
+        speicher::im_speicher().unwrap(),
+        Box::new(TestZufall::neu(31)),
+        Box::new(uhr.clone()),
+    ));
+    k.einrichtung_beginnen_ohne_woerter(240).unwrap();
+    k.einrichtung_abschliessen(Vec::new(), None, None).unwrap();
+    let seit = k.woerter_offen_seit().unwrap();
+    assert_eq!(seit, Some(uhr.0.load(Ordering::SeqCst)));
+    assert!(
+        !k.startseite().unwrap().sicherung_warnung,
+        "am ersten Tag still"
+    );
+    uhr.0.fetch_add(23 * 3_600_000, Ordering::SeqCst);
+    assert!(!k.startseite().unwrap().sicherung_warnung);
+    uhr.0.fetch_add(2 * 3_600_000, Ordering::SeqCst);
+    assert!(
+        k.startseite().unwrap().sicherung_warnung,
+        "ab dem zweiten Tag"
+    );
+    assert!(
+        k.sicherung_erstellen().is_err(),
+        "ohne Wörter keine Sicherung"
+    );
+    let w = k.woerter_einrichten_beginnen().unwrap();
+    let p: Vec<String> = w
+        .probe
+        .iter()
+        .map(|i| w.woerter[*i as usize].clone())
+        .collect();
+    assert!(k.woerter_einrichten_probe_pruefen(p.clone()).unwrap());
+    k.woerter_einrichten_abschliessen(p).unwrap();
+    assert_eq!(k.woerter_offen_seit().unwrap(), None);
+    let d = k.sicherung_erstellen().unwrap();
+    k.sicherung_bestaetigen(d.bytes).unwrap();
+    assert!(
+        !k.startseite().unwrap().sicherung_warnung,
+        "nach der Sicherung still"
+    );
+}

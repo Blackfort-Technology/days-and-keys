@@ -691,6 +691,11 @@ public protocol DakKernProtocol: AnyObject, Sendable {
     
     func einrichtungBeginnen(tageswechselMin: Int32) throws  -> Einrichtung
     
+    /**
+     * Einrichtung ohne Recovery-Wörter (#165); `einrichtung_abschliessen` dann mit leerer Probe.
+     */
+    func einrichtungBeginnenOhneWoerter(tageswechselMin: Int32) throws  -> Schluessel
+    
     func einrichtungProbePruefen(probe: [String]) throws  -> Bool
     
     func einstellungen() throws  -> EinstellungenDaten
@@ -768,6 +773,19 @@ public protocol DakKernProtocol: AnyObject, Sendable {
     func wiederherstellen(dateien: [SicherungDatei], marker: [Data], index: UInt32) throws  -> Wiederherstellung
     
     func wiederherstellungBeginnen(woerter: [String]) throws 
+    
+    func woerterEinrichtenAbschliessen(probe: [String]) throws 
+    
+    func woerterEinrichtenBeginnen() throws  -> NeueWoerter
+    
+    func woerterEinrichtenProbePruefen(probe: [String]) throws  -> Bool
+    
+    func woerterEinrichtenVerwerfen() 
+    
+    /**
+     * Einrichtungszeitpunkt (UTC-ms), solange die Recovery-Wörter fehlen; sonst `None` (#165).
+     */
+    func woerterOffenSeit() throws  -> Int64?
     
     func woerterPruefen(woerter: [String]) throws  -> Bool
     
@@ -901,6 +919,19 @@ open func einrichtungBeginnen(tageswechselMin: Int32)throws  -> Einrichtung  {
     return try  FfiConverterTypeEinrichtung_lift(try rustCallWithError(FfiConverterTypeDakFehler_lift) {
         uniffiCallStatus in
     uniffi_dak_core_fn_method_dakkern_einrichtung_beginnen(
+            self.uniffiCloneHandle(),
+        FfiConverterInt32.lower(tageswechselMin),uniffiCallStatus
+    )
+})
+}
+    
+    /**
+     * Einrichtung ohne Recovery-Wörter (#165); `einrichtung_abschliessen` dann mit leerer Probe.
+     */
+open func einrichtungBeginnenOhneWoerter(tageswechselMin: Int32)throws  -> Schluessel  {
+    return try  FfiConverterTypeSchluessel_lift(try rustCallWithError(FfiConverterTypeDakFehler_lift) {
+        uniffiCallStatus in
+    uniffi_dak_core_fn_method_dakkern_einrichtung_beginnen_ohne_woerter(
             self.uniffiCloneHandle(),
         FfiConverterInt32.lower(tageswechselMin),uniffiCallStatus
     )
@@ -1242,6 +1273,54 @@ open func wiederherstellungBeginnen(woerter: [String])throws   {try rustCallWith
         FfiConverterSequenceString.lower(woerter),uniffiCallStatus
     )
 }
+}
+    
+open func woerterEinrichtenAbschliessen(probe: [String])throws   {try rustCallWithError(FfiConverterTypeDakFehler_lift) {
+        uniffiCallStatus in
+    uniffi_dak_core_fn_method_dakkern_woerter_einrichten_abschliessen(
+            self.uniffiCloneHandle(),
+        FfiConverterSequenceString.lower(probe),uniffiCallStatus
+    )
+}
+}
+    
+open func woerterEinrichtenBeginnen()throws  -> NeueWoerter  {
+    return try  FfiConverterTypeNeueWoerter_lift(try rustCallWithError(FfiConverterTypeDakFehler_lift) {
+        uniffiCallStatus in
+    uniffi_dak_core_fn_method_dakkern_woerter_einrichten_beginnen(
+            self.uniffiCloneHandle(),uniffiCallStatus
+    )
+})
+}
+    
+open func woerterEinrichtenProbePruefen(probe: [String])throws  -> Bool  {
+    return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeDakFehler_lift) {
+        uniffiCallStatus in
+    uniffi_dak_core_fn_method_dakkern_woerter_einrichten_probe_pruefen(
+            self.uniffiCloneHandle(),
+        FfiConverterSequenceString.lower(probe),uniffiCallStatus
+    )
+})
+}
+    
+open func woerterEinrichtenVerwerfen()  {try! rustCall() {
+        uniffiCallStatus in
+    uniffi_dak_core_fn_method_dakkern_woerter_einrichten_verwerfen(
+            self.uniffiCloneHandle(),uniffiCallStatus
+    )
+}
+}
+    
+    /**
+     * Einrichtungszeitpunkt (UTC-ms), solange die Recovery-Wörter fehlen; sonst `None` (#165).
+     */
+open func woerterOffenSeit()throws  -> Int64?  {
+    return try  FfiConverterOptionInt64.lift(try rustCallWithError(FfiConverterTypeDakFehler_lift) {
+        uniffiCallStatus in
+    uniffi_dak_core_fn_method_dakkern_woerter_offen_seit(
+            self.uniffiCloneHandle(),uniffiCallStatus
+    )
+})
 }
     
 open func woerterPruefen(woerter: [String])throws  -> Bool  {
@@ -3153,6 +3232,66 @@ public func FfiConverterTypeMittel_lift(_ buf: RustBuffer) throws -> Mittel {
 #endif
 public func FfiConverterTypeMittel_lower(_ value: Mittel) -> RustBuffer {
     return FfiConverterTypeMittel.lower(value)
+}
+
+
+public struct NeueWoerter: Equatable, Hashable {
+    public var woerter: [String]
+    /**
+     * Positionen (0-basiert) der drei Wörter, die zur Probe abgefragt werden.
+     */
+    public var probe: [UInt32]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(woerter: [String], 
+        /**
+         * Positionen (0-basiert) der drei Wörter, die zur Probe abgefragt werden.
+         */probe: [UInt32]) {
+        self.woerter = woerter
+        self.probe = probe
+    }
+
+    
+
+    
+}
+
+#if compiler(>=6)
+extension NeueWoerter: Sendable {}
+#endif
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public struct FfiConverterTypeNeueWoerter: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> NeueWoerter {
+        return
+            try NeueWoerter(
+                woerter: FfiConverterSequenceString.read(from: &buf), 
+                probe: FfiConverterSequenceUInt32.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: NeueWoerter, into buf: inout [UInt8]) {
+        FfiConverterSequenceString.write(value.woerter, into: &buf)
+        FfiConverterSequenceUInt32.write(value.probe, into: &buf)
+    }
+}
+
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeNeueWoerter_lift(_ buf: RustBuffer) throws -> NeueWoerter {
+    return try FfiConverterTypeNeueWoerter.lift(buf)
+}
+
+#if swift(>=5.8)
+@_documentation(visibility: private)
+#endif
+public func FfiConverterTypeNeueWoerter_lower(_ value: NeueWoerter) -> RustBuffer {
+    return FfiConverterTypeNeueWoerter.lower(value)
 }
 
 
@@ -5713,6 +5852,9 @@ private let initializationResult: InitializationResult = {
     if (uniffi_dak_core_checksum_method_dakkern_einrichtung_beginnen() != 11911) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_dak_core_checksum_method_dakkern_einrichtung_beginnen_ohne_woerter() != 1895) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_dak_core_checksum_method_dakkern_einrichtung_probe_pruefen() != 50622) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -5810,6 +5952,21 @@ private let initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_dak_core_checksum_method_dakkern_wiederherstellung_beginnen() != 60865) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_abschliessen() != 25286) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_beginnen() != 46355) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_probe_pruefen() != 8710) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_verwerfen() != 54914) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_dak_core_checksum_method_dakkern_woerter_offen_seit() != 5596) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_dak_core_checksum_method_dakkern_woerter_pruefen() != 11426) {

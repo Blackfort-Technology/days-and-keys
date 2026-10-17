@@ -6,7 +6,7 @@ use std::collections::BTreeMap;
 
 use crate::api::*;
 use crate::fehler::{Ergebnis, Fehler};
-use crate::kern::{DREI_TAGE_MS, Kern, Sitzung, ZWEI_STUNDEN_MS};
+use crate::kern::{DREI_TAGE_MS, EIN_TAG_MS, Kern, Sitzung, ZWEI_STUNDEN_MS};
 use crate::modell::{
     self, Antwort, BedingungArt, Bezugsart, Einstellungen, Erinnerung, ErinnerungArt, Feldtyp,
     FormularArt, Id, Krisenregel, Objekt, Polung, Zustand, hex,
@@ -297,7 +297,11 @@ pub(crate) fn startseite(k: &Kern) -> Ergebnis<Startseite> {
                 .iter()
                 .any(|st| st.art == FormularArt::Wochenrueckblick),
         letzte_sicherung_ms: letzte,
-        sicherung_warnung: letzte.is_none_or(|t| jetzt.utc_ms - t > DREI_TAGE_MS),
+        // Ohne Sicherung erst ab dem zweiten Tag, damit der Anfang ohne Hürde bleibt (#165).
+        sicherung_warnung: match letzte {
+            Some(t) => jetzt.utc_ms - t > DREI_TAGE_MS,
+            None => jetzt.utc_ms - k.gegruendet_um()? > EIN_TAG_MS,
+        },
         sicherung_noetig: aenderungen > gesichert
             || letzte.is_none_or(|t| {
                 zeit::Zeitpunkt {
