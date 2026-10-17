@@ -1,0 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
+# Direkte Abhängigkeit von play_upload.py (#159). pycparser nur gepinnt, damit keine Fassung jünger als zwei Wochen einfließt.
+google-auth[requests]==2.59.1
+pycparser==3.0
