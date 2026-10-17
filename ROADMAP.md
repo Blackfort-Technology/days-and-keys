@@ -42,6 +42,8 @@ je Person, Android (Compose) und iOS (SwiftUI) über UniFFI am selben Kern, kein
 - [x] Verlauf mit Einzelpunkten, Tageswerten, Grundniveau und Lücken (#43, #74), Entwürfe (#94)
 - [x] automatische Sicherung und Restore (#91, #79), Erinnerungen (#42), Client-Härtung (#69)
 - [x] Android-APK aus der CI, signiert im Release-Lauf (#9)
+- [ ] Google Play: AAB und Upload in die interne Testspur (#159, `docs/play-store.md`); wartet auf das
+      Play-Konto der UG
 - [ ] iOS über TestFlight (#8, #78): wartet auf das Apple-Konto der UG (#10)
 - [x] interne Sicherheitsprüfungen des Lab-Jenkins als Pflicht-Check (#109, #113, #116)
 - [x] Darstellungsfehler aus dem Emulatortest (#119 bis #122, #125, #127, #129), Plan für Tiefs in der Sicherung (#131)
