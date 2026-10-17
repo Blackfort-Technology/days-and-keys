@@ -62,8 +62,10 @@ fun EinstellungenSeite(z: AppZustand) {
     val scope = rememberCoroutineScope()
     val gespeichert = stringResource(R.string.allgemein_gespeichert)
     val exportGespeichert = stringResource(R.string.mehr_export_gespeichert)
+    // Der Ordner ist kein Compose-Zustand; ohne diese Spiegelung stand nach der Wahl weiter „kein Ordner“.
+    var ordnerDa by remember { mutableStateOf(z.app.ordner.ordner != null) }
     val ordnerWahl = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
-        if (uri != null) { z.app.ordner.uebernehmen(uri); z.sichernImHintergrund { z.meldung = it } }
+        if (uri != null) { z.app.ordner.uebernehmen(uri); ordnerDa = true; z.sichernImHintergrund { z.meldung = it } }
     }
     val exportZiel = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("text/csv")) { uri: Uri? ->
         val text = csv; csv = null
@@ -82,7 +84,11 @@ fun EinstellungenSeite(z: AppZustand) {
     }
 
     // Übersicht mit Unterseiten, Änderungen gelten sofort (#136, Vorgabe 4.9).
-    var teil by remember { mutableStateOf<String?>(null) }
+    var teil by remember { mutableStateOf<String?>(z.mehrTeil.also { z.mehrTeil = null }) }
+    // Ohne Recovery-Wörter eingerichtet: Sicherung beginnt mit den Wörtern (#165).
+    var woerterOffen by remember { mutableStateOf(z.versuch { z.kern.woerterOffenSeit() != null } == true) }
+    var woerterJetzt by remember { mutableStateOf(false) }
+    LaunchedEffect(teil) { if (teil != "sicherung") woerterJetzt = false }
     BackHandler(enabled = teil != null) { teil = null }
     fun sofort(neu: EinstellungenDaten) { e = neu; speichern() }
     LaunchedEffect(marker.toList(), personen.toList()) {
@@ -95,7 +101,7 @@ fun EinstellungenSeite(z: AppZustand) {
         delay(600)
         if (z.versuch { z.kern.krisenplanSetzen(plan.ifBlank { null }) } != null) { planGespeichert = plan; z.meldung = gespeichert }
     }
-    val sicherungText = z.app.ordner.ordner?.let { z.start?.letzteSicherungMs?.let { stringResource(R.string.mehr_letzte_sicherung, vorText(it)) } ?: stringResource(R.string.mehr_ordner_gewaehlt) } ?: stringResource(R.string.mehr_kein_ordner)
+    val sicherungText = if (woerterOffen) stringResource(R.string.mehr_sicherung_offen) else if (ordnerDa) z.start?.letzteSicherungMs?.let { stringResource(R.string.mehr_letzte_sicherung, vorText(it)) } ?: stringResource(R.string.mehr_ordner_gewaehlt) else stringResource(R.string.mehr_kein_ordner)
     val regelText = e.krisenregelTage?.let { stringResource(R.string.mehr_regel, it.toInt(), e.krisenregelUnter ?: -2L) } ?: stringResource(R.string.mehr_aus)
 
     if (teil == null) {
@@ -112,7 +118,7 @@ fun EinstellungenSeite(z: AppZustand) {
             Klickzeile(stringResource(R.string.mehr_tagesmarker), marker.filter { it.isNotBlank() }.joinToString(", ").ifEmpty { keine }) { teil = "marker" }
             Text(stringResource(R.string.mehr_daten), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(start = Abstand.rand, top = Abstand.l, bottom = Abstand.xs))
             Klickzeile(stringResource(R.string.allgemein_sicherung), sicherungText) { teil = "sicherung" }
-            Klickzeile(stringResource(R.string.mehr_woerter_pruefen), stringResource(R.string.mehr_woerter_pruefen_zeile)) { teil = "woerter" }
+            if (!woerterOffen) Klickzeile(stringResource(R.string.mehr_woerter_pruefen), stringResource(R.string.mehr_woerter_pruefen_zeile)) { teil = "woerter" }
             Klickzeile(stringResource(R.string.mehr_schluessel_erneuern), stringResource(R.string.mehr_schluessel_erneuern_zeile)) { teil = "schluessel" }
             Klickzeile(stringResource(R.string.mehr_export), stringResource(R.string.mehr_export_zeile)) { teil = "export" }
             Text(stringResource(R.string.mehr_ueber), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(start = Abstand.rand, top = Abstand.l, bottom = Abstand.xs))
@@ -187,7 +193,16 @@ fun EinstellungenSeite(z: AppZustand) {
                 Text(stringResource(R.string.mehr_marker_text), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 for (i in 0 until 3) OutlinedTextField(marker[i], { marker[i] = it.take(40) }, label = { Text(stringResource(R.string.mehr_marker_feld, i + 1)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             }
-            "sicherung" -> {
+            "sicherung" -> if (woerterOffen) {
+                if (woerterJetzt) {
+                    WoerterEinrichten(z, { titel, text, inhalt -> Kopf(titel, text); inhalt() }) {
+                        woerterOffen = false; woerterJetzt = false; ordnerWahl.launch(null)
+                    }
+                } else {
+                    Text(stringResource(R.string.mehr_sicherung_offen_text), style = MaterialTheme.typography.bodyLarge)
+                    Button(onClick = { woerterJetzt = true }) { Text(stringResource(R.string.start_sicherung_einrichten)) }
+                }
+            } else {
                 Text(sicherungText, style = MaterialTheme.typography.bodyLarge)
                 Row(horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
                     Button(onClick = { z.sichernImHintergrund { z.meldung = it } }) { Text(stringResource(R.string.mehr_jetzt_sichern)) }

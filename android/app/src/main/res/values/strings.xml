@@ -260,8 +260,8 @@
     <string name="einrichtung_schutz_text">Days &amp; Keys öffnet sich mit Fingerabdruck, Gesicht oder Geräte-Code. Der Schlüssel liegt im Sicherheitschip.</string>
     <string name="einrichtung_schuetzen">Schützen</string>
     <string name="einrichtung_sicherung_titel">Automatische Sicherung</string>
-    <string name="einrichtung_sicherung_text">Wähle einen Ordner, in den die App verschlüsselte Sicherungen legt, zum Beispiel einen Cloud-Ordner. Ohne Sicherung sind die Einträge weg, wenn das Gerät verloren geht.</string>
-    <string name="einrichtung_ordner_waehlen">Ordner wählen</string>
+    <string name="einrichtung_sicherung_text">Damit deine Einträge ein verlorenes Handy überstehen, legt die App verschlüsselte Sicherungen in einen Ordner deiner Wahl, zum Beispiel einen Cloud-Ordner. Dazu gehören 24 Recovery-Wörter auf Papier. Das dauert etwa fünf Minuten und geht auch später unter Mehr › Sicherung.</string>
+    <string name="einrichtung_sicherung_jetzt">Jetzt einrichten</string>
     <string name="einrichtung_spaeter">Später</string>
     <string name="einrichtung_erinnerungen_text">Erinnerungen haben neutrale Texte ohne Medikamentennamen. Sie ersetzen keinen Medikamentenwecker.</string>
     <string name="einrichtung_benachrichtigungen_erlauben">Benachrichtigungen erlauben</string>
@@ -282,7 +282,7 @@
     <string name="einrichtung_sicherung_nr_neueste">Nr. %1$d vom %2$s (neueste)</string>
     <string name="einrichtung_wiederhergestellt">Wiederhergestellt. Entziehe dem alten Gerät den Zugang zum Sicherungsordner, falls es noch existiert.</string>
     <string name="einrichtung_anderer_ordner">Anderen Ordner wählen</string>
-    <string name="einrichtung_schritt">Schritt %1$d von 7</string>
+    <string name="einrichtung_schritt">Schritt %1$d von 5</string>
     <string name="einrichtung_willkommen">Willkommen</string>
     <string name="einrichtung_zusage_verschluesselt">Alles bleibt verschlüsselt auf diesem Gerät.</string>
     <string name="einrichtung_zusage_offline">Kein Internet, kein Konto, kein Server.</string>
@@ -297,6 +297,8 @@
     <string name="mehr_letzte_sicherung">Letzte Sicherung %1$s</string>
     <string name="mehr_ordner_gewaehlt">Ordner gewählt</string>
     <string name="mehr_kein_ordner">Noch kein Ordner gewählt</string>
+    <string name="mehr_sicherung_offen">Noch nicht eingerichtet</string>
+    <string name="mehr_sicherung_offen_text">Für die Sicherung brauchst du 24 Recovery-Wörter auf Papier und einen Ordner, zum Beispiel einen Cloud-Ordner. Nur mit beidem kommst du auf einem neuen Gerät wieder an deine Einträge.</string>
     <!-- Anzahl Tage, Schwelle -->
     <string name="mehr_regel">%1$d Tage unter %2$d</string>
     <string name="mehr_aus">aus</string>

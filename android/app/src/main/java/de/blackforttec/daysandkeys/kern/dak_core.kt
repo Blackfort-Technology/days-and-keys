@@ -709,6 +709,8 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_dak_core_checksum_method_dakkern_einrichtung_beginnen(
     ): Int
+    external fun uniffi_dak_core_checksum_method_dakkern_einrichtung_beginnen_ohne_woerter(
+    ): Int
     external fun uniffi_dak_core_checksum_method_dakkern_einrichtung_probe_pruefen(
     ): Int
     external fun uniffi_dak_core_checksum_method_dakkern_einstellungen(
@@ -775,6 +777,16 @@ internal object IntegrityCheckingUniffiLib {
     ): Int
     external fun uniffi_dak_core_checksum_method_dakkern_wiederherstellung_beginnen(
     ): Int
+    external fun uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_abschliessen(
+    ): Int
+    external fun uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_beginnen(
+    ): Int
+    external fun uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_probe_pruefen(
+    ): Int
+    external fun uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_verwerfen(
+    ): Int
+    external fun uniffi_dak_core_checksum_method_dakkern_woerter_offen_seit(
+    ): Int
     external fun uniffi_dak_core_checksum_method_dakkern_woerter_pruefen(
     ): Int
     external fun uniffi_dak_core_checksum_method_dakkern_wort_vorschlaege(
@@ -821,6 +833,8 @@ internal object UniffiLib {
     external fun uniffi_dak_core_fn_method_dakkern_einrichtung_abschliessen(`ptr`: Long,`probe`: RustBuffer.ByValue,`kkUmhuellung`: RustBuffer.ByValue,`kkHUmhuellung`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
     external fun uniffi_dak_core_fn_method_dakkern_einrichtung_beginnen(`ptr`: Long,`tageswechselMin`: Int,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_dak_core_fn_method_dakkern_einrichtung_beginnen_ohne_woerter(`ptr`: Long,`tageswechselMin`: Int,uniffi_out_err: UniffiRustCallStatus, 
     ): RustBuffer.ByValue
     external fun uniffi_dak_core_fn_method_dakkern_einrichtung_probe_pruefen(`ptr`: Long,`probe`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
@@ -888,6 +902,16 @@ internal object UniffiLib {
     ): RustBuffer.ByValue
     external fun uniffi_dak_core_fn_method_dakkern_wiederherstellung_beginnen(`ptr`: Long,`woerter`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Unit
+    external fun uniffi_dak_core_fn_method_dakkern_woerter_einrichten_abschliessen(`ptr`: Long,`probe`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_dak_core_fn_method_dakkern_woerter_einrichten_beginnen(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
+    external fun uniffi_dak_core_fn_method_dakkern_woerter_einrichten_probe_pruefen(`ptr`: Long,`probe`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
+    ): Byte
+    external fun uniffi_dak_core_fn_method_dakkern_woerter_einrichten_verwerfen(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): Unit
+    external fun uniffi_dak_core_fn_method_dakkern_woerter_offen_seit(`ptr`: Long,uniffi_out_err: UniffiRustCallStatus, 
+    ): RustBuffer.ByValue
     external fun uniffi_dak_core_fn_method_dakkern_woerter_pruefen(`ptr`: Long,`woerter`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
     ): Byte
     external fun uniffi_dak_core_fn_method_dakkern_wort_vorschlaege(`ptr`: Long,`anfang`: RustBuffer.ByValue,uniffi_out_err: UniffiRustCallStatus, 
@@ -1037,6 +1061,9 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
     if ((lib.uniffi_dak_core_checksum_method_dakkern_einrichtung_beginnen() and 0xFFFF) != 11911) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
+    if ((lib.uniffi_dak_core_checksum_method_dakkern_einrichtung_beginnen_ohne_woerter() and 0xFFFF) != 1895) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
     if ((lib.uniffi_dak_core_checksum_method_dakkern_einrichtung_probe_pruefen() and 0xFFFF) != 50622) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
@@ -1134,6 +1161,21 @@ private fun uniffiCheckApiChecksums(lib: IntegrityCheckingUniffiLib) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_dak_core_checksum_method_dakkern_wiederherstellung_beginnen() and 0xFFFF) != 60865) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_abschliessen() and 0xFFFF) != 25286) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_beginnen() and 0xFFFF) != 46355) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_probe_pruefen() and 0xFFFF) != 8710) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_dak_core_checksum_method_dakkern_woerter_einrichten_verwerfen() and 0xFFFF) != 54914) {
+        throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
+    }
+    if ((lib.uniffi_dak_core_checksum_method_dakkern_woerter_offen_seit() and 0xFFFF) != 5596) {
         throw RuntimeException("UniFFI API checksum mismatch: try cleaning and rebuilding your project")
     }
     if ((lib.uniffi_dak_core_checksum_method_dakkern_woerter_pruefen() and 0xFFFF) != 11426) {
@@ -1720,6 +1762,11 @@ public interface DakKernInterface {
     
     fun `einrichtungBeginnen`(`tageswechselMin`: kotlin.Int): Einrichtung
     
+    /**
+     * Einrichtung ohne Recovery-Wörter (#165); `einrichtung_abschliessen` dann mit leerer Probe.
+     */
+    fun `einrichtungBeginnenOhneWoerter`(`tageswechselMin`: kotlin.Int): Schluessel
+    
     fun `einrichtungProbePruefen`(`probe`: List<kotlin.String>): kotlin.Boolean
     
     fun `einstellungen`(): EinstellungenDaten
@@ -1797,6 +1844,19 @@ public interface DakKernInterface {
     fun `wiederherstellen`(`dateien`: List<SicherungDatei>, `marker`: List<kotlin.ByteArray>, `index`: kotlin.UInt): Wiederherstellung
     
     fun `wiederherstellungBeginnen`(`woerter`: List<kotlin.String>)
+    
+    fun `woerterEinrichtenAbschliessen`(`probe`: List<kotlin.String>)
+    
+    fun `woerterEinrichtenBeginnen`(): NeueWoerter
+    
+    fun `woerterEinrichtenProbePruefen`(`probe`: List<kotlin.String>): kotlin.Boolean
+    
+    fun `woerterEinrichtenVerwerfen`()
+    
+    /**
+     * Einrichtungszeitpunkt (UTC-ms), solange die Recovery-Wörter fehlen; sonst `None` (#165).
+     */
+    fun `woerterOffenSeit`(): kotlin.Long?
     
     fun `woerterPruefen`(`woerter`: List<kotlin.String>): kotlin.Boolean
     
@@ -1997,6 +2057,24 @@ open class DakKern: Disposable, AutoCloseable, DakKernInterface
     callWithHandle {
     uniffiRustCallWithError(DakFehler) { _status ->
     UniffiLib.uniffi_dak_core_fn_method_dakkern_einrichtung_beginnen(
+        it,
+        
+        FfiConverterInt.lower(`tageswechselMin`),_status)
+}
+    }
+    )
+    }
+    
+
+    
+    /**
+     * Einrichtung ohne Recovery-Wörter (#165); `einrichtung_abschliessen` dann mit leerer Probe.
+     */
+    @Throws(DakFehler::class)override fun `einrichtungBeginnenOhneWoerter`(`tageswechselMin`: kotlin.Int): Schluessel {
+            return FfiConverterTypeSchluessel.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DakFehler) { _status ->
+    UniffiLib.uniffi_dak_core_fn_method_dakkern_einrichtung_beginnen_ohne_woerter(
         it,
         
         FfiConverterInt.lower(`tageswechselMin`),_status)
@@ -2504,6 +2582,78 @@ open class DakKern: Disposable, AutoCloseable, DakKernInterface
 }
     }
     
+    
+
+    
+    @Throws(DakFehler::class)override fun `woerterEinrichtenAbschliessen`(`probe`: List<kotlin.String>)
+        = 
+    callWithHandle {
+    uniffiRustCallWithError(DakFehler) { _status ->
+    UniffiLib.uniffi_dak_core_fn_method_dakkern_woerter_einrichten_abschliessen(
+        it,
+        
+        FfiConverterSequenceString.lower(`probe`),_status)
+}
+    }
+    
+    
+
+    
+    @Throws(DakFehler::class)override fun `woerterEinrichtenBeginnen`(): NeueWoerter {
+            return FfiConverterTypeNeueWoerter.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DakFehler) { _status ->
+    UniffiLib.uniffi_dak_core_fn_method_dakkern_woerter_einrichten_beginnen(
+        it,
+        _status)
+}
+    }
+    )
+    }
+    
+
+    
+    @Throws(DakFehler::class)override fun `woerterEinrichtenProbePruefen`(`probe`: List<kotlin.String>): kotlin.Boolean {
+            return FfiConverterBoolean.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DakFehler) { _status ->
+    UniffiLib.uniffi_dak_core_fn_method_dakkern_woerter_einrichten_probe_pruefen(
+        it,
+        
+        FfiConverterSequenceString.lower(`probe`),_status)
+}
+    }
+    )
+    }
+    
+
+    override fun `woerterEinrichtenVerwerfen`()
+        = 
+    callWithHandle {
+    uniffiRustCall() { _status ->
+    UniffiLib.uniffi_dak_core_fn_method_dakkern_woerter_einrichten_verwerfen(
+        it,
+        _status)
+}
+    }
+    
+    
+
+    
+    /**
+     * Einrichtungszeitpunkt (UTC-ms), solange die Recovery-Wörter fehlen; sonst `None` (#165).
+     */
+    @Throws(DakFehler::class)override fun `woerterOffenSeit`(): kotlin.Long? {
+            return FfiConverterOptionalLong.lift(
+    callWithHandle {
+    uniffiRustCallWithError(DakFehler) { _status ->
+    UniffiLib.uniffi_dak_core_fn_method_dakkern_woerter_offen_seit(
+        it,
+        _status)
+}
+    }
+    )
+    }
     
 
     
@@ -4206,6 +4356,47 @@ public object FfiConverterTypeMittel: FfiConverterRustBuffer<Mittel> {
     override fun write(value: Mittel, buf: ByteBuffer) {
             FfiConverterLong.write(value.`lebenstag`, buf)
             FfiConverterOptionalDouble.write(value.`wert`, buf)
+    }
+}
+
+
+
+data class NeueWoerter (
+    var `woerter`: List<kotlin.String>
+    , 
+    /**
+     * Positionen (0-basiert) der drei Wörter, die zur Probe abgefragt werden.
+     */
+    var `probe`: List<kotlin.UInt>
+    
+){
+    
+
+    
+
+    
+    companion object
+}
+
+/**
+ * @suppress
+ */
+public object FfiConverterTypeNeueWoerter: FfiConverterRustBuffer<NeueWoerter> {
+    override fun read(buf: ByteBuffer): NeueWoerter {
+        return NeueWoerter(
+            FfiConverterSequenceString.read(buf),
+            FfiConverterSequenceUInt.read(buf),
+        )
+    }
+
+    override fun allocationSize(value: NeueWoerter) = (
+            FfiConverterSequenceString.allocationSize(value.`woerter`) +
+            FfiConverterSequenceUInt.allocationSize(value.`probe`)
+    )
+
+    override fun write(value: NeueWoerter, buf: ByteBuffer) {
+            FfiConverterSequenceString.write(value.`woerter`, buf)
+            FfiConverterSequenceUInt.write(value.`probe`, buf)
     }
 }
 

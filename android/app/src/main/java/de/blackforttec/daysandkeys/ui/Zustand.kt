@@ -53,6 +53,8 @@ class AppZustand(val app: DaysAndKeysApp, val activity: MainActivity) {
     var ersetzt by mutableStateOf(false)
     /** Gewählte, noch nicht festgehaltene Stimmung auf Heute, übersteht den Reiterwechsel (#151). */
     var schnellwert by mutableStateOf<Long?>(null)
+    /** Unterseite von Mehr, die beim nächsten Öffnen direkt erscheint, etwa „sicherung“ (#165). */
+    var mehrTeil: String? = null
     var ziel: String? = null
     private var sperrzeitMs: Long = 60_000
     val scope get() = activity.lifecycleScope

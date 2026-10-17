@@ -26,6 +26,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -60,6 +61,8 @@ fun StartSeite(z: AppZustand) {
         if (benachrichtigungenErlaubt) z.planen()
     }
     var wert by z::schnellwert
+    val prefs = remember { z.activity.getSharedPreferences("oberflaeche", android.content.Context.MODE_PRIVATE) }
+    var sicherungSpaeterBis by remember { mutableLongStateOf(prefs.getLong("sicherung_spaeter_bis", 0L)) }
     val einnahmeFestgehalten = stringResource(R.string.start_einnahme_festgehalten)
     val vorPraefix = stringResource(R.string.baustein_vor_praefix)
 
@@ -172,12 +175,21 @@ fun StartSeite(z: AppZustand) {
             }
             if (s.ereignisse.size > 6) TextButton(onClick = { alleEreignisse = !alleEreignisse }) { Text(if (alleEreignisse) stringResource(R.string.start_weniger_zeigen) else stringResource(R.string.start_alle_ereignisse)) }
         }
-        if (s.sicherungWarnung) {
+        // Fehlt die Sicherung ganz, lässt sich der Hinweis eine Woche aufschieben (#165).
+        if (s.sicherungWarnung && (s.letzteSicherungMs != null || System.currentTimeMillis() >= sicherungSpaeterBis)) {
             Abschnitt(
                 stringResource(R.string.allgemein_sicherung),
                 s.letzteSicherungMs?.let { stringResource(R.string.start_sicherung_alt, vorText(it).removePrefix(vorPraefix)) }
                     ?: stringResource(R.string.start_sicherung_fehlt),
-            ) { FilledTonalButton(onClick = { z.zu(Seite.Einstellungen) }) { Text(stringResource(R.string.start_sicherung_einrichten)) } }
+            ) {
+                Row(horizontalArrangement = Arrangement.spacedBy(Abstand.s)) {
+                    FilledTonalButton(onClick = { z.mehrTeil = "sicherung"; z.zu(Seite.Einstellungen) }) { Text(stringResource(R.string.start_sicherung_einrichten)) }
+                    if (s.letzteSicherungMs == null) TextButton(onClick = {
+                        sicherungSpaeterBis = System.currentTimeMillis() + 7L * 24 * 3600 * 1000
+                        prefs.edit().putLong("sicherung_spaeter_bis", sicherungSpaeterBis).apply()
+                    }) { Text(stringResource(R.string.einrichtung_spaeter)) }
+                }
+            }
         } else s.letzteSicherungMs?.let {
             Text(stringResource(R.string.start_gesichert, vorText(it)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = Abstand.rand, vertical = Abstand.s))
         }

@@ -212,7 +212,8 @@ kapsel_h = crypto_box_seal(cbor{0: 7, 1: 1, 2: "dak-kapsel-h-v1", 3 konto_id, 4 
 ```
 
 `kapsel` entsteht je Generation `k`, `kapsel_h` je Generation `k_h`, beide werden unverändert in
-jede Sicherung der Generation kopiert.
+jede Sicherung der Generation kopiert. Nach `recovery_neu` werden beide für die laufenden Generationen neu an
+den neuen `RK_enc` gebunden (AE-40, #165).
 
 **Prüfreihenfolge der Wiederherstellung:** Kopf → `kapsel` mit `RK_enc` öffnen (`konto_id`, `k`,
 `KK`) → Strom vollständig und in Reihenfolge entschlüsseln (abgeschnitten: Fehler) → MAC → Kette

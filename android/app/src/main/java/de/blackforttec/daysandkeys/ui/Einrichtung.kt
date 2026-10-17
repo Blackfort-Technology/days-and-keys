@@ -57,7 +57,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import de.blackforttec.daysandkeys.R
 import de.blackforttec.daysandkeys.kern.DakFehler
-import de.blackforttec.daysandkeys.kern.Einrichtung
+import de.blackforttec.daysandkeys.kern.Schluessel
 import de.blackforttec.daysandkeys.plattform.Schluesselspeicher
 import kotlinx.coroutines.launch
 
@@ -93,22 +93,73 @@ fun WortFeld(z: AppZustand, nr: Int, wert: String, aendern: (String) -> Unit) {
     }
 }
 
+/** Die 24 Wörter in zwei Spalten: drei passen bei 360 dp Breite nicht, Nummer und Wort brachen um (#120). */
+@Composable
+fun WortListe(woerter: List<String>) {
+    for (zeile in woerter.chunked(2).withIndex()) {
+        Row(Modifier.fillMaxWidth()) {
+            for ((i, w) in zeile.value.withIndex()) {
+                Row(Modifier.weight(1f)) {
+                    Text("${zeile.index * 2 + i + 1}".padStart(2) + ".", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(32.dp))
+                    Text(w, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Recovery-Wörter ausstellen und abfragen, erst zusammen mit der Sicherung (#165). `rahmen` setzt
+ * Titel und Text passend zur Umgebung (Einrichtungsschritt oder Unterseite von Mehr).
+ */
+@Composable
+fun WoerterEinrichten(
+    z: AppZustand,
+    rahmen: @Composable (titel: String, text: String, inhalt: @Composable () -> Unit) -> Unit,
+    fertig: () -> Unit,
+) {
+    val neu = remember { z.versuch { z.kern.woerterEinrichtenBeginnen() } } ?: return
+    var abfrage by remember { mutableStateOf(false) }
+    var abgeschlossen by remember { mutableStateOf(false) }
+    val probe = remember { mutableStateListOf("", "", "") }
+    val probeFalsch = stringResource(R.string.einrichtung_probe_falsch)
+    // Wer abbricht, lässt keine Wörter im Kern liegen.
+    DisposableEffect(Unit) { onDispose { if (!abgeschlossen) z.kern.woerterEinrichtenVerwerfen() } }
+    BackHandler(enabled = abfrage) { abfrage = false }
+    SensibleAnsicht()
+    if (!abfrage) {
+        rahmen(stringResource(R.string.einrichtung_woerter_titel), stringResource(R.string.einrichtung_woerter_text)) {
+            WortListe(neu.woerter)
+            Button(onClick = { abfrage = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_aufgeschrieben)) }
+        }
+    } else {
+        rahmen(stringResource(R.string.einrichtung_probe_titel), stringResource(R.string.einrichtung_probe_text)) {
+            for ((i, pos) in neu.probe.withIndex()) WortFeld(z, pos.toInt() + 1, probe[i]) { probe[i] = it }
+            Button(onClick = {
+                if (z.versuch { z.kern.woerterEinrichtenProbePruefen(probe.toList()) } != true) { z.meldung = probeFalsch; return@Button }
+                if (z.versuch { z.kern.woerterEinrichtenAbschliessen(probe.toList()) } != null) { abgeschlossen = true; fertig() }
+            }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.allgemein_pruefen)) }
+            TextButton(onClick = { abfrage = false }) { Text(stringResource(R.string.einrichtung_woerter_zeigen)) }
+        }
+    }
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EinrichtungSeite(z: AppZustand) {
+    // Fünf Schritte ohne Recovery-Wörter; die kommen mit der Sicherung, jetzt oder später (#165).
     var schritt by remember { mutableIntStateOf(0) }
     var tageswechsel by remember { mutableIntStateOf(4) }
-    var einrichtung by remember { mutableStateOf<Einrichtung?>(null) }
-    val probe = remember { mutableStateListOf("", "", "") }
+    var schluessel by remember { mutableStateOf<Schluessel?>(null) }
+    var sicherungJetzt by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val ordnerWahl = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri: Uri? ->
         if (uri != null) { z.app.ordner.uebernehmen(uri); z.sichernImHintergrund { z.meldung = it } }
-        schritt = 6
+        schritt = 4
     }
-    val erlaubnis = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { schritt = 7 }
+    val erlaubnis = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { schritt = 5 }
 
-    val probeFalsch = stringResource(R.string.einrichtung_probe_falsch)
-    BackHandler(enabled = schritt in 2..3) { schritt -= 1 }
+    BackHandler(enabled = schritt == 3 && sicherungJetzt) { sicherungJetzt = false }
     if (schritt == 0) { Begruessung(z) { schritt = 1 }; return }
     Column(Modifier.verticalScroll(rememberScrollState()).padding(vertical = 16.dp)) {
         when (schritt) {
@@ -116,51 +167,21 @@ fun EinrichtungSeite(z: AppZustand) {
                 Stufenwahl(listOf(0L to "0", 2L to "2", 3L to "3", 4L to "4", 5L to "5", 6L to "6"), tageswechsel.toLong()) { it?.let { w -> tageswechsel = w.toInt() } }
                 Text(stringResource(R.string.einrichtung_uhr), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Button(onClick = {
-                    einrichtung = z.versuch { z.kern.einrichtungBeginnen(tageswechsel * 60) }
-                    if (einrichtung != null) schritt = 2
+                    schluessel = z.versuch { z.kern.einrichtungBeginnenOhneWoerter(tageswechsel * 60) }
+                    if (schluessel != null) schritt = 2
                 }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.allgemein_weiter)) }
             }
-            2 -> {
-                SensibleAnsicht()
-                val e = einrichtung!!
-                Schritt(2, stringResource(R.string.einrichtung_woerter_titel), stringResource(R.string.einrichtung_woerter_text)) {
-                    // Zwei Spalten: drei passen bei 360 dp Breite nicht, Nummer und Wort brachen um (#120).
-                    for (zeile in e.woerter.chunked(2).withIndex()) {
-                        Row(Modifier.fillMaxWidth()) {
-                            for ((i, w) in zeile.value.withIndex()) {
-                                Row(Modifier.weight(1f)) {
-                                    Text("${zeile.index * 2 + i + 1}".padStart(2) + ".", style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.width(32.dp))
-                                    Text(w, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, softWrap = false)
-                                }
-                            }
-                        }
-                    }
-                    Button(onClick = { schritt = 3 }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_aufgeschrieben)) }
-                }
-            }
-            3 -> {
-                SensibleAnsicht()
-                val e = einrichtung!!
-                Schritt(3, stringResource(R.string.einrichtung_probe_titel), stringResource(R.string.einrichtung_probe_text)) {
-                    for ((i, pos) in e.probe.withIndex()) WortFeld(z, pos.toInt() + 1, probe[i]) { probe[i] = it }
-                    Button(onClick = {
-                        if (z.versuch { z.kern.einrichtungProbePruefen(probe.toList()) } == true) schritt = 4
-                        else z.meldung = probeFalsch
-                    }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.allgemein_pruefen)) }
-                    TextButton(onClick = { schritt = 2 }) { Text(stringResource(R.string.einrichtung_woerter_zeigen)) }
-                }
-            }
-            4 -> Schritt(4, stringResource(R.string.einrichtung_schutz_titel), stringResource(R.string.einrichtung_schutz_text)) {
+            2 -> Schritt(2, stringResource(R.string.einrichtung_schutz_titel), stringResource(R.string.einrichtung_schutz_text)) {
                 Button(onClick = {
-                    val e = einrichtung!!
+                    val k = schluessel!!
                     scope.launch {
                         try {
                             z.arbeitet = true
-                            val umh = z.app.schluessel.umhuellen(z.activity, e.schluessel.generation, e.schluessel.kk, e.schluessel.kkH)
-                            z.kern.einrichtungAbschliessen(probe.toList(), umh, null)
-                            einrichtung = null
+                            val umh = z.app.schluessel.umhuellen(z.activity, k.generation, k.kk, k.kkH)
+                            z.kern.einrichtungAbschliessen(emptyList(), umh, null)
+                            schluessel = null
                             z.nachEntsperren(navigieren = false)
-                            schritt = 5
+                            schritt = 3
                         } catch (x: Schluesselspeicher.Abgebrochen) {
                             z.meldung = x.message
                         } catch (x: DakFehler.Fehler) {
@@ -171,21 +192,25 @@ fun EinrichtungSeite(z: AppZustand) {
                     }
                 }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_schuetzen)) }
             }
-            5 -> Schritt(5, stringResource(R.string.einrichtung_sicherung_titel), stringResource(R.string.einrichtung_sicherung_text)) {
-                Button(onClick = { ordnerWahl.launch(null) }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_ordner_waehlen)) }
-                TextButton(onClick = { schritt = 6 }) { Text(stringResource(R.string.einrichtung_spaeter)) }
+            3 -> if (sicherungJetzt) {
+                WoerterEinrichten(z, { titel, text, inhalt -> Schritt(3, titel, text, inhalt) }) { ordnerWahl.launch(null) }
+            } else {
+                Schritt(3, stringResource(R.string.einrichtung_sicherung_titel), stringResource(R.string.einrichtung_sicherung_text)) {
+                    Button(onClick = { sicherungJetzt = true }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_sicherung_jetzt)) }
+                    TextButton(onClick = { schritt = 4 }) { Text(stringResource(R.string.einrichtung_spaeter)) }
+                }
             }
-            6 -> Schritt(6, stringResource(R.string.allgemein_erinnerungen), stringResource(R.string.einrichtung_erinnerungen_text)) {
+            4 -> Schritt(4, stringResource(R.string.allgemein_erinnerungen), stringResource(R.string.einrichtung_erinnerungen_text)) {
                 Button(onClick = {
-                    if (Build.VERSION.SDK_INT >= 33) erlaubnis.launch(Manifest.permission.POST_NOTIFICATIONS) else schritt = 7
+                    if (Build.VERSION.SDK_INT >= 33) erlaubnis.launch(Manifest.permission.POST_NOTIFICATIONS) else schritt = 5
                 }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.einrichtung_benachrichtigungen_erlauben)) }
                 TextButton(onClick = {
                     // „Ohne Erinnerungen“ schaltet die voreingestellten Erinnerungen ab (#149).
                     z.versuch { z.kern.einstellungen() }?.let { e -> z.versuch { z.kern.einstellungenSpeichern(e.copy(erinnerungen = e.erinnerungen.map { it.copy(aktiv = false) })) } }
-                    schritt = 7
+                    schritt = 5
                 }) { Text(stringResource(R.string.einrichtung_ohne_erinnerungen)) }
             }
-            else -> Schritt(7, stringResource(R.string.einrichtung_fertig), if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) stringResource(R.string.einrichtung_samsung) else null) {
+            else -> Schritt(5, stringResource(R.string.einrichtung_fertig), if (Build.MANUFACTURER.equals("samsung", ignoreCase = true)) stringResource(R.string.einrichtung_samsung) else null) {
                 if (!de.blackforttec.daysandkeys.plattform.Planer.exaktErlaubt(z.activity)) {
                     OutlinedButton(onClick = {
                         z.activity.startActivity(Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + z.activity.packageName)))
@@ -260,7 +285,7 @@ fun WiederherstellungSeite(z: AppZustand) {
 @Composable
 fun Schritt(nr: Int, titel: String, text: String?, inhalt: @Composable () -> Unit) {
     Column(Modifier.fillMaxWidth().padding(horizontal = Abstand.rand), verticalArrangement = Arrangement.spacedBy(Abstand.m)) {
-        LinearProgressIndicator(progress = { nr / 7f }, modifier = Modifier.fillMaxWidth().padding(top = Abstand.s))
+        LinearProgressIndicator(progress = { nr / 5f }, modifier = Modifier.fillMaxWidth().padding(top = Abstand.s))
         Text(stringResource(R.string.einrichtung_schritt, nr), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(titel, style = MaterialTheme.typography.headlineSmall)
         text?.let { Text(it, style = MaterialTheme.typography.bodyLarge) }
