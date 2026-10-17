@@ -49,11 +49,11 @@ Arzttermin lässt sich mit echten Aufzeichnungen vorbereiten statt aus dem Gedä
 ## Privat bleibt privat
 
 - **Kein Konto, kein Server, kein Internet:** Die App hat keinen Netzzugriff. Die Einträge
-  verlassen das Gerät nur verschlüsselt als Sicherung oder als Export, wenn man ihn ausdrücklich
-  anstößt. Blackfort sieht nichts davon.
+  verlassen das Gerät nur als verschlüsselte Sicherung oder, wenn man es ausdrücklich bestätigt,
+  als Export im Klartext. Blackfort sieht nichts davon.
 - **Verschlüsselt und gesperrt:** Geöffnet wird die App mit Fingerabdruck, Gesicht oder Geräte-Code,
   nach kurzer Zeit sperrt sie sich wieder. Wer den Geräte-Code kennt, kann sie also öffnen.
-  Bildschirmfotos der App sind gesperrt.
+  Auf Android sind Bildschirmfotos der App gesperrt.
 - **Neutrale Erinnerungen:** Die Benachrichtigungen nennen keine Medikamente und keine Inhalte.
 - **Sicherung in einen eigenen Ordner:** Die App legt verschlüsselte Sicherungen in einen selbst
   gewählten Ordner, auch in eine eigene Cloud. Mit 24 Recovery-Wörtern auf Papier kommt alles auf
@@ -146,8 +146,9 @@ Status: **Prototyp** (Milestone M0/M1a). Der Kryptokern `dak-core` steht unter `
 1. **Kein Generalschlüssel.** Weder für Eltern noch für Administratoren noch für den Betreiber.
 2. **Jede Person hält ihren eigenen Status fest.** Freigaben sind feldgenau und gehen vom Autor aus.
    Die App ist kein Werkzeug, um andere zu beobachten.
-3. **Gesundheitsdaten verlassen das Gerät nur verschlüsselt** (Art. 9 DSGVO). Keine
-   Auswertung durch fremde Cloud-Dienste.
+3. **Gesundheitsdaten verlassen das Gerät nur verschlüsselt oder nach ausdrücklicher
+   Bestätigung** (Art. 9 DSGVO); Export und Arzt-PDF sind Klartext und brauchen die native
+   Bestätigung. Keine Auswertung durch fremde Cloud-Dienste.
 4. **Ehrlich zu den Grenzen:** Korrelationen nur mit Fallzahl, Widerruf ohne falsche Versprechen,
    Hinweis auf Wechselwirkungen ohne eigenen medizinischen Rat.
 5. **Krypto nicht selbst erfinden:** bewährte Bausteine, Protokoll vor dem Code spezifiziert

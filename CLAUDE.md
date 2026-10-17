@@ -26,7 +26,8 @@ Noch kein Deploy-Ziel. Konzept und Leitplanken: `README.md`.
 3. **Der Client wird nicht vom Datenserver nachgeladen.** Keine Änderung, die Code zur Laufzeit
    vom Server holt.
 4. **Krypto nur aus geprüften Bausteinen** (libsodium), Protokolländerungen erst in
-   `docs/protokoll.md` bzw. `docs/protokoll-freigaben.md` (#3), dann im Code.
+   `docs/protokoll.md` bzw. `docs/protokoll-freigaben.md` (#3), dann im Code. Widerspricht ein
+   anderes Dokument dem Protokoll, gilt `docs/protokoll.md`.
 5. **Keine echten Personen- oder Gesundheitsdaten in Repo, Tests oder Issues.** Testdaten sind
    erfunden.
 

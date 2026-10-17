@@ -1,7 +1,7 @@
 # Sicherheitsrelevante Abhängigkeiten und ihre Audits
 
 „Auditiert" gilt nur für die geprüfte Version und den geprüften Umfang. Ein Update folgt
-`docs/protokoll.md` Abschnitt 14: Release- und Security-Hinweise lesen, Testvektoren,
+`docs/protokoll.md` Abschnitt 16: Release- und Security-Hinweise lesen, Testvektoren,
 Wycheproof-Fälle und Protokoll-Negativtests grün, diese Datei nachziehen.
 
 Stand 2026-10-14. Gepinnt über `core/Cargo.lock` und exakte Versionen in `core/Cargo.toml` (#100).
