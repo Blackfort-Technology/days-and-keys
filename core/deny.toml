@@ -11,6 +11,11 @@ yanked = "deny"
 # geht (#157).
 ignore = [
     { crate = "zip@8.6.0", reason = "nur Windows-Build-Skript von libsodium-sys-stable, #157" },
+    # Rechte und Symlinks beim Entpacken fremder Archive. Das Build-Skript entpackt nur bei
+    # *-windows-msvc das mitgelieferte, per minisign geprüfte libsodium-Archiv (#163).
+    { id = "RUSTSEC-2026-0367", reason = "zip nur im Windows-Build-Skript, geprüftes Archiv, #163" },
+    { id = "RUSTSEC-2026-0368", reason = "zip nur im Windows-Build-Skript, geprüftes Archiv, #163" },
+    { id = "RUSTSEC-2026-0369", reason = "zip nur im Windows-Build-Skript, geprüftes Archiv, #163" },
 ]
 
 [licenses]

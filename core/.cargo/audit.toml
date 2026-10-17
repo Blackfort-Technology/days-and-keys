@@ -3,3 +3,7 @@
 # cargo-audit kennt keine Ausnahme je Paket und prüft hier nur Sicherheitsmeldungen.
 [yanked]
 enabled = false
+
+# Dieselben drei zip-Meldungen wie in deny.toml, gleiche Begründung (#163).
+[advisories]
+ignore = ["RUSTSEC-2026-0367", "RUSTSEC-2026-0368", "RUSTSEC-2026-0369"]
