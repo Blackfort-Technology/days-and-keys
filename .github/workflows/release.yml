@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: MPL-2.0
-# Auslieferung (#9, #8, #78): signierte APK als GitHub-Release, iOS nach TestFlight.
+# Auslieferung (#9, #8, #78, #159): signierte APK und AAB als GitHub-Release, das AAB in die
+# interne Testspur von Google Play, iOS nach TestFlight.
 # Signaturdaten liegen kanonisch in OpenBao und nur als Secrets der Umgebung `release`
 # (nur geschützte Zweige); PR-Läufe bekommen sie nie (#68).
 name: Release
@@ -26,6 +27,9 @@ env:
   GRADLE_VERSION: "9.7.1"
   NDK_VERSION: "29.0.14206865"
   VERSION: "0.1.${{ github.run_number }}"
+  BUNDLETOOL_VERSION: "1.18.3"
+  BUNDLETOOL_SHA256: "a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29"
+  PLAY_PAKET: "de.blackforttec.daysandkeys"
 
 jobs:
   android:
@@ -46,13 +50,15 @@ jobs:
           curl -fsSL -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
           echo "$(curl -fsSL https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip.sha256)  gradle.zip" | sha256sum -c -
           unzip -q gradle.zip -d "$RUNNER_TEMP" && echo "$RUNNER_TEMP/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"
+          curl -fsSL -o "$RUNNER_TEMP/bundletool.jar" "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+          echo "${BUNDLETOOL_SHA256}  $RUNNER_TEMP/bundletool.jar" | sha256sum -c -
       - name: Kern für Android
         working-directory: core
         run: |
           export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
           rustup target add aarch64-linux-android x86_64-linux-android
           cargo ndk -t arm64-v8a -t x86_64 -P 33 -o ../android/app/src/main/jniLibs build --locked --release -p dak-ffi
-      - name: Signierte APK bauen
+      - name: Signierte APK und signiertes AAB bauen (ein Lauf, derselbe versionCode)
         working-directory: android
         env:
           KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
@@ -65,20 +71,92 @@ jobs:
           export DAK_KEYSTORE="$RUNNER_TEMP/dak.jks"
           echo "$KS_B64" | base64 -d > "$DAK_KEYSTORE"
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          gradle --console=plain --no-daemon assembleRelease
+          gradle --console=plain --no-daemon assembleRelease bundleRelease
           rm -f "$DAK_KEYSTORE"
-      - name: Prüfen (Signatur, keine INTERNET-Berechtigung) und Release anlegen
+      - name: Prüfen (Signatur, keine INTERNET-Berechtigung, versionCode) und Release anlegen
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DAK_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          bt=(java -jar "$RUNNER_TEMP/bundletool.jar")
+          apk="days-and-keys-${VERSION}.apk"
+          aab="days-and-keys-${VERSION}.aab"
+          cp android/app/build/outputs/apk/release/app-release.apk "$apk"
+          cp android/app/build/outputs/bundle/release/app-release.aab "$aab"
+          # APK: Signatur und Berechtigungen wie bisher.
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" > apk-signatur.txt
+          grep -E "Signer #1 certificate (DN|SHA-256)" apk-signatur.txt
+          if "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump permissions "$apk" | grep -q android.permission.INTERNET; then echo "INTERNET-Berechtigung"; exit 1; fi
+          # AAB: JAR-Signatur gültig und vom selben Schlüssel wie die APK (künftiger Upload-Schlüssel).
+          "$JAVA_HOME/bin/jarsigner" -verify "$aab" > aab-signatur.txt || { cat aab-signatur.txt; exit 1; }
+          grep -qx "jar verified." aab-signatur.txt || { echo "AAB nicht signiert"; cat aab-signatur.txt; exit 1; }
+          apk_cert=$(sed -n 's/^Signer #1 certificate SHA-256 digest: //p' apk-signatur.txt)
+          "$JAVA_HOME/bin/keytool" -printcert -jarfile "$aab" > aab-zertifikat.txt
+          aab_cert=$(sed -n 's/^[[:space:]]*SHA256: //p' aab-zertifikat.txt | head -1 | tr -d ':' | tr 'A-F' 'a-f')
+          echo "Zertifikat SHA-256 APK ${apk_cert:-fehlt}, AAB ${aab_cert:-fehlt}"
+          test -n "$apk_cert" && [ "$apk_cert" = "$aab_cert" ] || { echo "APK und AAB sind nicht mit demselben Schlüssel signiert"; exit 1; }
+          # AAB: Manifest des Basismoduls ohne INTERNET, Paketname und versionCode wie die APK.
+          "${bt[@]}" dump manifest --bundle="$aab" > aab-manifest.xml
+          grep -q "<manifest" aab-manifest.xml || { echo "Manifest des AAB nicht lesbar"; exit 1; }
+          if grep -q "android.permission.INTERNET" aab-manifest.xml; then echo "AAB verlangt INTERNET"; exit 1; fi
+          paket=$("${bt[@]}" dump manifest --bundle="$aab" --xpath=/manifest/@package)
+          aab_vc=$("${bt[@]}" dump manifest --bundle="$aab" --xpath=/manifest/@android:versionCode)
+          apk_vc=$("$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$apk" | sed -n "s/^package: .* versionCode='\([0-9]*\)'.*/\1/p")
+          echo "Paket ${paket}, versionCode APK ${apk_vc:-fehlt}, AAB ${aab_vc:-fehlt}, erwartet ${DAK_VERSION_CODE}"
+          [ "$paket" = "$PLAY_PAKET" ] || { echo "Paketname weicht ab"; exit 1; }
+          [ "$aab_vc" = "$DAK_VERSION_CODE" ] && [ "$apk_vc" = "$DAK_VERSION_CODE" ] || { echo "versionCode weicht ab"; exit 1; }
+          sha256sum "$apk" | tee "$apk.sha256"
+          sha256sum "$aab" | tee "$aab.sha256"
+          gh release create "android-${VERSION}" "$apk" "$apk.sha256" "$aab" "$aab.sha256" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
+            --title "Days & Keys ${VERSION} (Android)" \
+            --notes "Testversion für den Nutzungsversuch (#82). Installation: APK auf dem Gerät öffnen und der Installation aus dieser Quelle zustimmen. Das AAB ist nur für Google Play bestimmt und lässt sich nicht direkt installieren. Prüfsummen in den .sha256-Dateien."
+
+  # Upload in die interne Testspur (#159). Läuft nur mit Dienstkonto-Schlüssel; ohne ihn wie der
+  # iOS-Job: übersprungen mit Hinweis. Im Job-env steht nur, OB der Schlüssel gesetzt ist; der
+  # Schlüssel selbst geht ausschließlich an den Upload-Schritt. Das AAB kommt aus dem eben angelegten
+  # Release, damit Play genau die veröffentlichte Datei bekommt und ein fehlgeschlagener Upload
+  # allein neu gestartet werden kann.
+  play:
+    needs: android
+    runs-on: ubuntu-24.04
+    environment: release
+    permissions:
+      contents: read
+    env:
+      PLAY_KONFIGURIERT: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON != '' }}
+    steps:
+      - name: Ohne Play-Dienstkonto kein Upload
+        if: env.PLAY_KONFIGURIERT != 'true'
+        run: echo "::notice::Secret PLAY_SERVICE_ACCOUNT_JSON fehlt in der Umgebung release (#159, docs/play-store.md); Upload nach Google Play übersprungen."
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: env.PLAY_KONFIGURIERT == 'true'
+        with:
+          persist-credentials: false
+      - name: Abhängigkeiten des Upload-Skripts (nur mit Hashes)
+        if: env.PLAY_KONFIGURIERT == 'true'
+        run: |
+          python3 -m venv "$RUNNER_TEMP/play"
+          "$RUNNER_TEMP/play/bin/pip" install --quiet --require-hashes --no-deps -r android/play/requirements.txt
+      - name: AAB aus dem Release holen und Prüfsumme prüfen
+        if: env.PLAY_KONFIGURIERT == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          apk="days-and-keys-${VERSION}.apk"
-          cp android/app/build/outputs/apk/release/app-release.apk "$apk"
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$apk" | grep -E "Signer #1 certificate (DN|SHA-256)"
-          if "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump permissions "$apk" | grep -q android.permission.INTERNET; then echo "INTERNET-Berechtigung"; exit 1; fi
-          sha256sum "$apk" | tee "$apk.sha256"
-          gh release create "android-${VERSION}" "$apk" "$apk.sha256" --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" \
-            --title "Days & Keys ${VERSION} (Android)" \
-            --notes "Testversion für den Nutzungsversuch (#82). Installation: APK auf dem Gerät öffnen und der Installation aus dieser Quelle zustimmen. Prüfsumme in der .sha256-Datei."
+          mkdir -p "$RUNNER_TEMP/aab"
+          gh release download "android-${VERSION}" --repo "$GITHUB_REPOSITORY" --dir "$RUNNER_TEMP/aab" \
+            --pattern "days-and-keys-${VERSION}.aab" --pattern "days-and-keys-${VERSION}.aab.sha256"
+          cd "$RUNNER_TEMP/aab" && sha256sum -c "days-and-keys-${VERSION}.aab.sha256"
+      - name: In die interne Testspur hochladen
+        if: env.PLAY_KONFIGURIERT == 'true'
+        env:
+          PLAY_SERVICE_ACCOUNT_JSON: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          # draft, solange die App in Play nie veröffentlicht wurde; danach Variable auf completed setzen.
+          PLAY_STATUS: ${{ vars.PLAY_RELEASE_STATUS || 'draft' }}
+          DAK_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          "$RUNNER_TEMP/play/bin/python" android/play/play_upload.py --paket "$PLAY_PAKET" \
+            --aab "$RUNNER_TEMP/aab/days-and-keys-${VERSION}.aab" --version-code "$DAK_VERSION_CODE" \
+            --name "$VERSION" --spur internal --status "$PLAY_STATUS"
 
   ios:
     runs-on: macos-15

@@ -26,6 +26,8 @@ env:
   GITLEAKS_SHA256: "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb"
   GRADLE_VERSION: "9.7.1"
   NDK_VERSION: "29.0.14206865"
+  BUNDLETOOL_VERSION: "1.18.3"
+  BUNDLETOOL_SHA256: "a099cfa1543f55593bc2ed16a70a7c67fe54b1747bb7301f37fdfd6d91028e29"
 
 jobs:
   governance:
@@ -129,12 +131,14 @@ jobs:
       - uses: taiki-e/install-action@861a07ce7084f55488e375df125cdc99bba60eb7 # v2.87.23
         with:
           tool: cargo-ndk@4.1.2
-      - name: Werkzeuge (NDK, SDK 37, Gradle mit Prüfsumme)
+      - name: Werkzeuge (NDK, SDK 37, Gradle und bundletool mit Prüfsumme)
         run: |
           printf 'y\n%.0s' $(seq 30) | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;${NDK_VERSION}" "platforms;android-37.0" "build-tools;36.0.0" > /dev/null
           curl -fsSL -o gradle.zip "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
           echo "$(curl -fsSL https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip.sha256)  gradle.zip" | sha256sum -c -
           unzip -q gradle.zip -d "$RUNNER_TEMP" && echo "$RUNNER_TEMP/gradle-${GRADLE_VERSION}/bin" >> "$GITHUB_PATH"
+          curl -fsSL -o "$RUNNER_TEMP/bundletool.jar" "https://github.com/google/bundletool/releases/download/${BUNDLETOOL_VERSION}/bundletool-all-${BUNDLETOOL_VERSION}.jar"
+          echo "${BUNDLETOOL_SHA256}  $RUNNER_TEMP/bundletool.jar" | sha256sum -c -
       - name: Bindungen sind aktuell (Kotlin und Swift aus dak-ffi)
         working-directory: core
         run: |
@@ -149,16 +153,35 @@ jobs:
           export ANDROID_NDK_HOME="$ANDROID_HOME/ndk/$NDK_VERSION"
           cargo build --locked --release -p dak-ffi
           cargo ndk -t arm64-v8a -t x86_64 -P 33 -o ../android/app/src/main/jniLibs build --locked --release -p dak-ffi
-      - name: Gradle (Bindungstest, Lint, APK)
+      - name: Gradle (Bindungstest, Lint, APK, AAB)
         working-directory: android
         run: |
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          gradle --console=plain --no-daemon testDebugUnitTest lintDebug assembleRelease
+          gradle --console=plain --no-daemon testDebugUnitTest lintDebug assembleRelease bundleRelease
       - name: APK ohne INTERNET-Berechtigung (AE-19)
         run: |
           apk=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
           "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump permissions "$apk" | tee berechtigungen.txt
           if grep -q "android.permission.INTERNET" berechtigungen.txt; then echo "APK verlangt INTERNET"; exit 1; fi
+      - name: AAB ohne INTERNET-Berechtigung, Paketname und versionCode wie die APK (#159)
+        run: |
+          bt=(java -jar "$RUNNER_TEMP/bundletool.jar")
+          aab=android/app/build/outputs/bundle/release/app-release.aab
+          apk=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          "${bt[@]}" dump manifest --bundle="$aab" > aab-manifest.xml
+          grep -q "<manifest" aab-manifest.xml || { echo "Manifest des AAB nicht lesbar"; exit 1; }
+          if grep -q "android.permission.INTERNET" aab-manifest.xml; then echo "AAB verlangt INTERNET"; exit 1; fi
+          paket=$("${bt[@]}" dump manifest --bundle="$aab" --xpath=/manifest/@package)
+          aab_vc=$("${bt[@]}" dump manifest --bundle="$aab" --xpath=/manifest/@android:versionCode)
+          apk_vc=$("$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$apk" | sed -n "s/^package: .* versionCode='\([0-9]*\)'.*/\1/p")
+          echo "Paket ${paket}, versionCode APK ${apk_vc:-fehlt}, AAB ${aab_vc:-fehlt}"
+          [ "$paket" = "de.blackforttec.daysandkeys" ] || { echo "Paketname weicht ab"; exit 1; }
+          test -n "$apk_vc" && [ "$aab_vc" = "$apk_vc" ] || { echo "versionCode weicht ab"; exit 1; }
+      - name: Play-Upload-Skript (Abhängigkeiten nur mit Hashes, Offline-Test, #159)
+        run: |
+          python3 -m venv "$RUNNER_TEMP/play"
+          "$RUNNER_TEMP/play/bin/pip" install --quiet --require-hashes --no-deps -r android/play/requirements.txt
+          cd android/play && DAK_PLAY_DEPS=1 "$RUNNER_TEMP/play/bin/python" -m unittest -v test_play_upload
       - name: Nur freigegebene Komponenten exportiert (#116)
         run: |
           if python3 android/pruefung/exportierte_komponenten.py android/pruefung/negativ.xml; then
@@ -169,6 +192,11 @@ jobs:
         with:
           name: apk-unsigniert
           path: android/app/build/outputs/apk/release/*.apk
+          retention-days: 14
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: aab-unsigniert
+          path: android/app/build/outputs/bundle/release/*.aab
           retention-days: 14
 
   ios:

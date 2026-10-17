@@ -60,7 +60,7 @@ Status: **Prototyp** (Milestone M0/M1a). Der Kryptokern `dak-core` steht unter `
 | Freigaben (M1.5) | eigenes Format mit eigener Prüfung (`docs/protokoll-freigaben.md`); vor der ersten Freigabe lokale Umschlüsselung. |
 | Widerruf (M1.5) | neue Schreibgeneration, Nachträge nie in geschlossene Generationen; was ein Empfänger schon hatte, kann er behalten, die App sagt das offen. |
 | iOS-Bau | macOS-Runner von GitHub Actions, Signatur nur im Release-Lauf (#8, AE-30). Verteilung über TestFlight. |
-| Android | APK aus der CI (GitHub Actions), später F-Droid mit reproduzierbarem Build (#9). |
+| Android | APK und AAB aus der CI (GitHub Actions), das AAB in die interne Testspur von Google Play (#159, `docs/play-store.md`), später F-Droid mit reproduzierbarem Build (#9). |
 
 ## Leitplanken
 
@@ -96,7 +96,8 @@ im DPMAregister (DE, EU, IR, alle Klassen) gab es keine Treffer. Ähnlich: die A
 - iOS: nur auf macOS; die CI baut den Kern als XCFramework, erzeugt das Projekt mit XcodeGen
   (`ios/project.yml`) und baut für den Simulator (Job `ios`). TestFlight über
   `.github/workflows/release.yml`, sobald das Apple-Konto steht (#10).
-- Testversionen für Android: signierte APK unter den Releases dieses Repos.
+- Testversionen für Android: signierte APK unter den Releases dieses Repos; über Google Play in der
+  internen Testspur, sobald das Play-Konto eingerichtet ist (`docs/play-store.md`, #159).
 
 ## Lizenz
 
