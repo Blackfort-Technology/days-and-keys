@@ -1,4 +1,83 @@
+<p align="center">
+  <img src="docs/bilder/readme/titel.jpg" alt="Days &amp; Keys: ein Telefon mit der Startseite der App steht im Morgenlicht auf einem Tisch, daneben Tee und ein Notizbuch. Text: Festhalten, wie es geht. Ein privates Tagebuch für Stimmung, Schlaf, Medikamente und das, was den Tag prägt. Verschlüsselt auf dem eigenen Gerät. Ohne Konto, ohne Server." width="100%">
+</p>
+
 # Days & Keys
+
+**Festhalten, wie es geht.** Days & Keys ist ein privates Tagebuch für das Handy. Es hält Stimmung,
+Antrieb, Konzentration, Schlaf, Medikamente und besondere Ereignisse fest, so oft man mag, oft mit
+einem einzigen Tipp. Über Wochen und Monate zeigt der Verlauf, wie es einem ging, und ein
+Arzttermin lässt sich mit echten Aufzeichnungen vorbereiten statt aus dem Gedächtnis. Alles bleibt verschlüsselt auf dem eigenen Gerät.
+
+> **Stand:** Testphase. Die Android-App lässt sich ausprobieren, die iPhone-Fassung folgt.
+
+## Festhalten in Sekunden
+
+<p align="center">
+  <img src="docs/bilder/readme/festhalten.jpg" alt="Vier Bildschirme der App: Status mit Stimmung, Antrieb und Konzentration; Schlaf mit Stunden und Güte von 1 bis 5; ein Präparat mit Einnahmeplan; der Tagesabschluss am Abend." width="100%">
+</p>
+
+- **Ein Tipp genügt:** Auf „Heute“ die Stimmung antippen und festhalten. Wer mehr angeben möchte,
+  ergänzt Antrieb, Konzentration, Unruhe, Anspannung, Müdigkeit oder körperliche Beschwerden.
+- **Schlaf am Morgen:** wie lange und wie gut, auf einer Skala von 1 bis 5.
+- **Medikamente:** Präparate mit Einnahmeplan. Jede Einnahme wird bewusst bestätigt oder als
+  ausgelassen vermerkt, nie automatisch. Ein Dosiswechsel erscheint später im Verlauf.
+- **Ereignisse mit einem Tipp:** Bewegung, Mahlzeit, Arzttermin, Therapiesitzung, Belastung oder
+  Konflikt und mehr, jeweils mit der Uhrzeit.
+- **Tagesabschluss und Wochenrückblick:** abends und einmal pro Woche, freiwillig.
+- **Nichts geht verloren:** Angefangene Einträge bleiben als Entwurf erhalten, auch wenn sich die
+  App zwischendurch sperrt.
+
+## Zurückschauen und geschützt bleiben
+
+<p align="center">
+  <img src="docs/bilder/readme/zurueckschauen.jpg" alt="Vier Bildschirme der App: Verlauf der Stimmung über vier Wochen mit Grundniveau; Einträge nach Tagen geordnet; die gesperrte App; die Hilfe mit Notruf, eigenem Plan und Beratungsnummern." width="100%">
+</p>
+
+- **Verlauf:** jede Frage über vier Wochen, drei Monate oder ein Jahr, dazu das Grundniveau über
+  sieben oder 28 Tage. Tage ohne Eintrag bleiben einfach Lücken. Die App bewertet nichts, stellt
+  keine Diagnosen und gibt keine Empfehlungen.
+- **Einträge:** nach Tagen geordnet, jederzeit zu korrigieren oder zu löschen. Auf Wunsch lassen
+  sich alle Einträge als Tabelle exportieren, zum Beispiel für einen Arzttermin.
+- **Hilfe in schweren Momenten:** Notruf und kostenfreie Beratungsnummern sind immer erreichbar,
+  auch bei gesperrter App. Dazu ein eigener Plan für Tiefs und Menschen, denen man vertraut. Auf
+  Wunsch zeigt die App den Plan von selbst, wenn die Stimmung mehrere Tage niedrig ist. Die App
+  benachrichtigt niemanden.
+- **Gemacht für Tage mit wenig Konzentration:** kurze Wege, große Schaltflächen, gut lesbare
+  Schrift, auch bei sehr großer Schrifteinstellung.
+
+## Privat bleibt privat
+
+- **Kein Konto, kein Server, kein Internet:** Die App hat keinen Netzzugriff. Die Einträge
+  verlassen das Gerät nur verschlüsselt als Sicherung oder als Export, wenn man ihn ausdrücklich
+  anstößt. Blackfort sieht nichts davon.
+- **Verschlüsselt und gesperrt:** Geöffnet wird die App mit Fingerabdruck, Gesicht oder Geräte-Code,
+  nach kurzer Zeit sperrt sie sich wieder. Wer den Geräte-Code kennt, kann sie also öffnen.
+  Bildschirmfotos der App sind gesperrt.
+- **Neutrale Erinnerungen:** Die Benachrichtigungen nennen keine Medikamente und keine Inhalte.
+- **Sicherung in einen eigenen Ordner:** Die App legt verschlüsselte Sicherungen in einen selbst
+  gewählten Ordner, auch in eine eigene Cloud. Mit 24 Recovery-Wörtern auf Papier kommt alles auf
+  ein neues Gerät. Die Wörter gibt es erst, wenn die Sicherung eingerichtet wird; der Einstieg kommt
+  ohne sie aus.
+
+> Days & Keys ist ein persönliches Tagebuch. Es ersetzt keine ärztliche Beratung, Diagnose oder
+> Behandlung. In einer akuten Krise: Notruf 112 oder die TelefonSeelsorge unter 0800 111 0 111.
+
+## Ausprobieren
+
+- **Android:** Die aktuelle Testversion liegt unter
+  [Releases](https://github.com/Blackfort-Technology/days-and-keys/releases) als APK, mit
+  Prüfsumme. Beim Öffnen fragt Android einmal, ob Installationen aus dieser Quelle erlaubt sind.
+  Für automatische Updates eignet sich die freie App [Obtainium](https://github.com/ImranR98/Obtainium)
+  mit der Adresse dieses Repositorys.
+- **iPhone:** in Vorbereitung.
+
+Die Bildschirmfotos stammen aus einem Test im Emulator, alle Werte und das Präparat „Testmittel A“
+sind erfunden.
+
+---
+
+## Technik und Entwicklung
 
 Eine App, mit der eine Person ihren **Status jederzeit festhält**: Befinden, Konzentration,
 Medikation und Substanzkonsum, so oft sie will, auch mehrmals am Tag. Die Fragen stehen in
@@ -10,13 +89,13 @@ Status: **Prototyp** (Milestone M0/M1a). Der Kryptokern `dak-core` steht unter `
 (`docs/prototyp-kern.md`), die Apps entstehen unter `android/` und `ios/`.
 
 - **Gesamtkonzept:** `docs/gesamtkonzept.md`
-- **Architektur:** `docs/architektur.md`, alle Architekturentscheidungen (AE-01 bis AE-39) mit
+- **Architektur:** `docs/architektur.md`, alle Architekturentscheidungen (AE-01 bis AE-40) mit
   Status; Recherchen in `docs/architektur/`
 - **Erörterungen:** drei Erörterungen vom 2026-10-06 (nicht öffentliches Archiv; Befunde als
   Issues)
 - **Protokoll:** `docs/protokoll.md` (Teil A, M1), `docs/protokoll-freigaben.md` (Teil B, M1.5)
 
-## Ausbaustufen
+### Ausbaustufen
 
 1. **M1a Gehgerüst und Nutzungsversuch:** ein schreibendes Gerät je Person; Status jederzeit mit
    vollem Fragenkatalog, Ereignisse mit einem Tipp, Medikation, Tages- und Wochenrückblick, Verlauf,
@@ -29,7 +108,7 @@ Status: **Prototyp** (Milestone M0/M1a). Der Kryptokern `dak-core` steht unter `
 3. **M2 Erweiterter Alltag:** Wetter, allgemeine Mustererkennung, weitere Vorlagen.
 4. **M3 Anbindung von Apps und Datenquellen:** Standort, Health Connect / HealthKit, Kalender.
 
-## Zielbild M1
+### Zielbild M1
 
 - **Anpassbare Formulare** (#6): Fragen ein- und ausblenden, ergänzen, umbenennen. Ändert sich
   Bedeutung oder Skala einer Frage, entsteht eine neue Messreihe.
@@ -49,7 +128,7 @@ Status: **Prototyp** (Milestone M0/M1a). Der Kryptokern `dak-core` steht unter `
 - **Hilfe** jederzeit erreichbar (#71).
 - **Für Menschen mit Konzentrationsschwierigkeiten gestaltet:** kurze Erfassung, Lücken ohne Strafe, Erinnerungen lokal und neutral.
 
-## Architektur
+### Architektur
 
 | Baustein | Entscheidung |
 |---|---|
@@ -62,7 +141,7 @@ Status: **Prototyp** (Milestone M0/M1a). Der Kryptokern `dak-core` steht unter `
 | iOS-Bau | macOS-Runner von GitHub Actions, Signatur nur im Release-Lauf (#8, AE-30). Verteilung über TestFlight. |
 | Android | APK und AAB aus der CI (GitHub Actions), das AAB in die interne Testspur von Google Play (#159, `docs/play-store.md`), später F-Droid mit reproduzierbarem Build (#9). |
 
-## Leitplanken
+### Leitplanken
 
 1. **Kein Generalschlüssel.** Weder für Eltern noch für Administratoren noch für den Betreiber.
 2. **Jede Person hält ihren eigenen Status fest.** Freigaben sind feldgenau und gehen vom Autor aus.
@@ -80,14 +159,14 @@ Status: **Prototyp** (Milestone M0/M1a). Der Kryptokern `dak-core` steht unter `
 8. **Erst Nutzen belegen, dann Komplexität bauen:** Freigaben und Mehrgeräte erst nach einem
    Nutzungsversuch, der den Bedarf zeigt (#82).
 
-## Name und Adresse
+### Name und Adresse
 
 „Days & Keys". Der Server läuft unter `daysandkeys.wirdsichtbar.de` (#14), eigene Domains
 werden vorerst nicht registriert. Am 2026-10-06 waren `daysandkeys.com/.de/.app/.eu` frei und
 im DPMAregister (DE, EU, IR, alle Klassen) gab es keine Treffer. Ähnlich: die App „KeyDays"
 (Tageszähler, nicht als Marke eingetragen). Vor einer Veröffentlichung neu prüfen.
 
-## Bauen
+### Bauen
 
 - Kern: `cd core && cargo test --locked` (Toolchain aus `core/rust-toolchain.toml`).
 - Android: Kern mit `cargo ndk -t arm64-v8a -t x86_64 -P 30 -o ../android/app/src/main/jniLibs build --release -p dak-ffi`,
@@ -99,13 +178,13 @@ im DPMAregister (DE, EU, IR, alle Klassen) gab es keine Treffer. Ähnlich: die A
 - Testversionen für Android: signierte APK unter den Releases dieses Repos; über Google Play in der
   internen Testspur, sobald das Play-Konto eingerichtet ist (`docs/play-store.md`, #159).
 
-## Lizenz
+### Lizenz
 
 Kern und Apps stehen unter der Mozilla Public License 2.0 (`LICENSE`), der Server ab M1.5 unter
 der GNU Affero General Public License 3.0, Dokumentation und Fragenvorlagen unter CC BY 4.0
 (`LICENSE-docs`). Entscheidung AE-02.
 
-## Mitarbeit
+### Mitarbeit
 
 Siehe `CLAUDE.md` und `ROADMAP.md`. Issues und Bugs als GitHub-Issues, jeder Commit referenziert
 ein Issue, jede Änderung läuft über die CI-Pipeline (GitHub Actions).
