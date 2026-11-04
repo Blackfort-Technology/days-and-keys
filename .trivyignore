@@ -1,0 +1,18 @@
+# Begründete Ausnahmen für Trivy (Jenkins-Status blackfort/sicherheit). Jede Zeile mit Grund und Issue.
+
+# zip 8.6.0 (core/Cargo.lock): nur Abhängigkeit des Windows-Build-Skripts von libsodium-sys-stable,
+# auf unseren Zielen (Android, iOS, Linux) nicht gebaut und zur Laufzeit nicht geladen. Entfernen,
+# sobald libsodium-sys-stable auf zip 9 geht. Gleiche Ausnahme in deny.toml und .cargo/audit.toml (#157, #172).
+CVE-2026-115905
+CVE-2026-115906
+CVE-2026-115907
+CVE-2026-115908
+CVE-2026-115909
+
+# pyasn1 0.6.4 (android/play/requirements.txt): behoben in 0.6.5, veröffentlicht 2026-10-27 und damit
+# jünger als zwei Wochen. Betrifft nur das Upload-Skript im Release-Job, das ausschließlich den eigenen
+# Dienstkonto-Schlüssel parst. Befristet; danach auf 0.6.5 anheben (#172).
+CVE-2026-119194 exp:2026-11-11
+CVE-2026-119195 exp:2026-11-11
+CVE-2026-119196 exp:2026-11-11
+CVE-2026-119197 exp:2026-11-11
