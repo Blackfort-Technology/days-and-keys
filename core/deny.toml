@@ -16,6 +16,11 @@ ignore = [
     { id = "RUSTSEC-2026-0367", reason = "zip nur im Windows-Build-Skript, geprüftes Archiv, #163" },
     { id = "RUSTSEC-2026-0368", reason = "zip nur im Windows-Build-Skript, geprüftes Archiv, #163" },
     { id = "RUSTSEC-2026-0369", reason = "zip nur im Windows-Build-Skript, geprüftes Archiv, #163" },
+    { id = "RUSTSEC-2026-0429", reason = "zip nur im Windows-Build-Skript, geprüftes Archiv, #172" },
+    # basic-toml ist nicht mehr gepflegt (keine Sicherheitslücke). Es kommt über askama in
+    # uniffi_bindgen und läuft nur beim Erzeugen der Bindungen zur Bauzeit, nie in der App.
+    # Kein sicheres Update verfügbar; entfernen, sobald uniffi askama ohne basic-toml nutzt (#172).
+    { id = "RUSTSEC-2026-0374", reason = "basic-toml nur zur Bauzeit über uniffi_bindgen, #172" },
 ]
 
 [licenses]
