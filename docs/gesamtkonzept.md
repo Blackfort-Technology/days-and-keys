@@ -54,8 +54,7 @@ Daten in fremde Hände geraten.
 | Betreiber | Blackfort Technology | Pipeline, Verteilung; in M1 kein Server mit Nutzerdaten |
 | Empfänger von Freigaben | erst ab M1.5 | sieht nur freigegebene Felder im freigegebenen Zeitraum |
 
-Zunächst nutzt eine kleine Testgruppe die App auf Android und iOS. Die
-rechtliche Einordnung der Rollen wird vor der ersten Nutzung schriftlich geprüft (#77).
+Zunächst nutzt eine kleine Testgruppe die App auf Android und iOS.
 
 ## 4. Ausbaustufen
 
@@ -205,10 +204,8 @@ Teil A neu erstellt (#66), bevor v1.0 freigegeben wird.
 
 - Gesundheitsdaten (Art. 9 DSGVO) bleiben auf dem Gerät oder verschlüsselt; keine Auswertung bei
   Dritten.
-- Rollen und Verantwortlichkeiten (#77) werden vor der ersten Nutzung schriftlich geprüft;
-  Altersgrenzen und Einwilligung prüfen (#77).
-- Medizinprodukt: Zweckbestimmung und Funktionen (nicht nur ein Hinweis „keine Empfehlungen")
-  werden vor einer Nutzung über den Testkreis hinaus geprüft (#24).
+- Die App richtet sich an Erwachsene ab 18 Jahren.
+- Die App hält fest und zeigt an; sie stellt keine Diagnosen und gibt keine Empfehlungen.
 - Fragen sind eigene Formulierungen; Nähe zu standardisierten Fragebögen wird vor dem Mitliefern
   geprüft.
 - Die Medikamentenerinnerung ersetzt keinen Medikamentenwecker; die App sagt das (#42).
@@ -242,7 +239,6 @@ Teil A neu erstellt (#66), bevor v1.0 freigegeben wird.
 | Oberfläche: nativ mit Compose und SwiftUI (Vorschlag), Flutter oder WebView | #33, `docs/architektur.md` AE-04 |
 | Lizenz: MPL-2.0 für Kern und Apps, AGPL-3.0 für den Server, CC BY 4.0 für die Doku (Vorschlag) | `docs/architektur.md` AE-02 |
 | Argon2id-Parameter und Fehlversuchsregel der App-PIN | #60 |
-| Rollen und Verantwortlichkeiten | #77 |
 | Freigabeformat für M1.5 (Monats- und Tagesketten, Metadaten am Server) | Teil B, #55 |
 
 ## 14. Risiken

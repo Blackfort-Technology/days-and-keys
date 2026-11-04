@@ -4,10 +4,8 @@ Stand 2026-10-17 · Entwurf zu https://github.com/Blackfort-Technology/days-and-
 Anbieter: Blackfort Technology UG (haftungsbeschränkt), Ernst-Robert-Curtius-Straße 8A, 53117 Bonn.
 
 Die Texte beschreiben nur, was Version 0.1 auf Android kann (Stand `main` vom 2026-10-17). Sie
-müssen zur Zweckbestimmung „Tagebuch, keine automatische Bewertung“ passen, die mit der
-rechtlichen Einordnung (https://github.com/Blackfort-Technology/days-and-keys/issues/77) und der
-Abgrenzung Medizinprodukt (https://github.com/Blackfort-Technology/days-and-keys/issues/24)
-festgelegt wird. Deshalb gilt für alle Texte:
+müssen zur Zweckbestimmung „Tagebuch, keine automatische Bewertung“ passen. Deshalb gilt für alle
+Texte:
 
 - keine Krankheitsnamen, keine Zielgruppe nach Diagnose, keine Aussage über Wirkung oder Besserung;
 - die App hält fest und zeigt an; sie bewertet, deutet und empfiehlt nichts;
@@ -114,8 +112,8 @@ Belege für die Aussagen der Beschreibung (alle Pfade relativ zum Repo):
 Bewusst nicht in der Beschreibung: „Plan automatisch zeigen“ (eine selbst eingestellte Regel über
 niedrige Tageswerte, `strings.xml`, Zeile 327) und der Vergleich „Grundniveau mit und ohne“
 (Mittelwert der Stimmung an Tagen mit und ohne eine Ja/Nein-Angabe,
-`core/crates/dak-core/src/ansicht.rs`, Zeilen 503 bis 547). Beides rechnet aus Werten; ob es mit
-der Zweckbestimmung vereinbar ist, steht in `gesundheit.md` unter E3.
+`core/crates/dak-core/src/ansicht.rs`, Zeilen 503 bis 547). Beides rechnet aus Werten und bleibt
+beschreibend.
 
 ## Kategorie
 
@@ -135,11 +133,10 @@ Krankheitsbezug.
 
 ## Kontakt
 
-- E-Mail: `<KONTAKT>` (Pflichtfeld, öffentlich sichtbar; Entscheidung bei Christian, siehe
-  `gesundheit.md`, E7)
+- E-Mail: info@blackfort-tec.de (Pflichtfeld, öffentlich sichtbar)
 - Website: https://www.blackfort-tec.de (optional)
 - Telefon: leer lassen (optional)
-- Datenschutzerklärung: öffentliche URL, siehe `datenschutzerklaerung.md`
+- Datenschutzerklärung: https://blackfort-tec.de/days-and-keys/datenschutz (Text in `datenschutzerklaerung.md`)
 
 ## Bildschirmfotos (Telefon, 2 bis 8)
 

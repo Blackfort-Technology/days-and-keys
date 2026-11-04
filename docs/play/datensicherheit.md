@@ -80,7 +80,7 @@ nicht ausdrücklich. Wir halten „Nein“ für richtig, solange die App den Exp
 einen Dienst schickt.
 
 Wer O1 oder O2 anders auslegt, beantwortet Frage 1 mit „Ja“ und füllt die Abschnitte 3 und 4
-unten aus. Entscheidung bei Christian (siehe `gesundheit.md`, E5).
+unten aus. Eingetragen ist „Nein“ (2026-11-04).
 
 ### Frage 2: Werden alle von deiner App erhobenen Nutzerdaten bei der Übertragung verschlüsselt?
 
@@ -116,7 +116,7 @@ Prüfungen.
 
 ### Frage 5: Entspricht die App der Richtlinie für Familien?
 
-Entfällt; die Zielgruppe ist ab 18 (`gesundheit.md`, Abschnitt 3).
+Entfällt; die Zielgruppe ist ab 18.
 
 ## 3. Datentypen
 
@@ -138,7 +138,7 @@ Datentypen die App auf dem Gerät verarbeitet, damit die Antwort nachvollziehbar
 
 ## 4. Sonstige Hinweise für die Console
 
-- **Datenschutzerklärung:** Pflichtfeld, auch bei „Nein“. Entwurf in `datenschutzerklaerung.md`.
+- **Datenschutzerklärung:** Pflichtfeld, auch bei „Nein“. Veröffentlicht unter https://blackfort-tec.de/days-and-keys/datenschutz, Text in `datenschutzerklaerung.md`.
 - **Berechtigungen:** `SCHEDULE_EXACT_ALARM` (Manifest, Zeile 8) dient pünktlichen Erinnerungen.
   Ab Android 14 muss die Person sie selbst erlauben; die App fragt nur, wenn nötig
   (`strings.xml`, Zeile 272). Für `USE_EXACT_ALARM` gäbe es eine Erklärungspflicht; die App nutzt
