@@ -52,7 +52,6 @@ je Person, Android (Compose) und iOS (SwiftUI) über UniFFI am selben Kern, kein
 - [ ] Neugestaltung iOS (#137), Texte nach strings.xml (#144)
 - [ ] Lieferkette: Gradle-Lockfile, Prüfsummen (#68); Schutzklassen-Feinschliff (#70)
 - [ ] Messungen auf den Zielgeräten: Entsperrzeit, Erinnerungen nach Neustart, Sicherungsordner (#80, #67)
-- [ ] Rechtliche Einordnung der Rollen (#77)
 - [ ] **Nutzungsversuch mit einer Testgruppe (#82):** direkt Phase A (drei Wochen, M1a eingefroren),
       dann Phase B (drei Wochen, M1b-Teile an der Phasengrenze)
 
@@ -74,5 +73,5 @@ neue Felder nachfragen (#40), Server und Kontoanlage (#14, #38).
 - **M2 Erweiterter Alltag:** Wetter (#7), allgemeine Mustererkennung (#13), weitere Vorlagen
 - **M3 Anbindung:** Standort (#11), Health Connect und HealthKit (#12), Kalender, Ernährung,
   Shamir-Recovery (#34)
-- Vor einer Veröffentlichung: Medizinprodukt (#24), Markenprüfung
+- Vor einer Veröffentlichung: Markenprüfung
 - Ideen: Desktop-App (Tauri), Formularvorlagen teilen, F-Droid offiziell
