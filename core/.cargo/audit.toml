@@ -4,6 +4,7 @@
 [yanked]
 enabled = false
 
-# Dieselben drei zip-Meldungen wie in deny.toml, gleiche Begründung (#163).
+# Dieselben zip-Meldungen wie in deny.toml, gleiche Begründung (#163, #172).
 [advisories]
-ignore = ["RUSTSEC-2026-0367", "RUSTSEC-2026-0368", "RUSTSEC-2026-0369"]
+# basic-toml: nicht mehr gepflegt, nur zur Bauzeit über uniffi_bindgen (askama), wie in deny.toml (#172).
+ignore = ["RUSTSEC-2026-0367", "RUSTSEC-2026-0368", "RUSTSEC-2026-0369", "RUSTSEC-2026-0429", "RUSTSEC-2026-0374"]
