@@ -47,7 +47,7 @@ FESTHALTEN
 • Stimmung mit einem Tipp direkt auf der Startseite
 • Status ausführlich: Antrieb, Konzentration, innere Unruhe, Anspannung, Gereiztheit, Müdigkeit, Appetit, körperliche Beschwerden und eine Notiz. Was du auslässt, bleibt leer; nichts wird aus früheren Einträgen übernommen.
 • Seit dem letzten Status: Fragen zu den Stunden dazwischen, zugeklappt und freiwillig
-• Ereignisse mit einem Tipp, zum Beispiel Einnahme, Mahlzeit, Bewegung, schlafen gegangen, aufgewacht, Termin, Belastung, Arzttermin, Therapiesitzung oder Dosiswechsel. Die Uhrzeit lässt sich danach ändern.
+• Ereignisse mit einem Tipp, zum Beispiel Einnahme, Alkohol, Geweint, Mahlzeit, Bewegung, schlafen gegangen, aufgewacht, Termin, Belastung, Arzttermin, Therapiesitzung oder Dosiswechsel. Die Uhrzeit lässt sich danach ändern.
 • Schlaf am Morgen: wie lange und wie gut
 • Tagesabschluss und Wochenrückblick, auf Wunsch mit einer Notiz für das nächste Arztgespräch
 • Entwürfe sichern sich selbst; angefangene Einträge gehen nicht verloren.

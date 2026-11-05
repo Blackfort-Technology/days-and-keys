@@ -51,6 +51,8 @@
     {"schluessel": "woche_arzt", "kurz": "Für den Arzt", "frage": "Für das nächste Arztgespräch merken", "feldtyp": "text", "polung": "keine", "bezug": "woche"},
 
     {"schluessel": "ausgelassen_grund", "kurz": "Grund", "frage": "Warum ausgelassen?", "feldtyp": "einfach", "optionen": [[1, "vergessen"], [2, "bewusst ausgelassen"], [3, "Pause"], [4, "keine mehr da"], [5, "Nebenwirkungen"], [6, "anderes"]], "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "alkohol_menge", "kurz": "Getränke", "frage": "Wie viele Getränke?", "feldtyp": "zahl", "min": 1, "max": 30, "polung": "keine", "bezug": "ereignis"},
+    {"schluessel": "alkohol_art", "kurz": "Art", "frage": "Was?", "feldtyp": "einfach", "optionen": [[1, "Bier"], [2, "Wein oder Sekt"], [3, "Spirituosen"], [4, "Mischgetränk"], [5, "Anderes"]], "polung": "keine", "bezug": "ereignis"},
     {"schluessel": "mahlzeit_art", "kurz": "Mahlzeit", "frage": "Welche Mahlzeit?", "feldtyp": "einfach", "optionen": [[1, "Frühstück"], [2, "Mittag"], [3, "Abend"], [4, "Snack"]], "polung": "keine", "bezug": "ereignis"},
     {"schluessel": "mahlzeit_ohne_appetit", "kurz": "Ohne Appetit", "frage": "Ohne Appetit gegessen?", "feldtyp": "janein", "polung": "keine", "bezug": "ereignis"},
     {"schluessel": "bewegung_art", "kurz": "Art", "frage": "Welche Bewegung?", "feldtyp": "einfach", "optionen": [[1, "Spaziergang"], [2, "Sport"], [3, "anderes"]], "polung": "keine", "bezug": "ereignis"},
@@ -85,15 +87,17 @@
     {"schluessel": "einnahme", "name": "Einnahme", "art": "ereignis", "reihenfolge": 10, "gruppen": [], "bedingungen": []},
     {"schluessel": "einnahme_ausgelassen", "name": "Einnahme ausgelassen", "art": "ereignis", "reihenfolge": 11, "gruppen": [{"titel": "", "fragen": ["ausgelassen_grund"]}], "bedingungen": []},
     {"schluessel": "wirkung_laesst_nach", "name": "Wirkung lässt nach", "art": "ereignis", "reihenfolge": 12, "gruppen": [], "bedingungen": []},
-    {"schluessel": "mahlzeit", "name": "Mahlzeit", "art": "ereignis", "reihenfolge": 13, "gruppen": [{"titel": "", "fragen": ["mahlzeit_art", "mahlzeit_ohne_appetit"]}], "bedingungen": []},
-    {"schluessel": "bewegung", "name": "Bewegung", "art": "ereignis", "reihenfolge": 14, "gruppen": [{"titel": "", "fragen": ["bewegung_art", "bewegung_dauer"]}], "bedingungen": []},
-    {"schluessel": "schlafen_gegangen", "name": "Schlafen gegangen", "art": "ereignis", "reihenfolge": 15, "gruppen": [], "bedingungen": []},
-    {"schluessel": "aufgewacht", "name": "Aufgewacht", "art": "ereignis", "reihenfolge": 16, "gruppen": [{"titel": "", "fragen": ["schlaf_dauer", "schlaf_guete", "aufgewacht_nachts_wach"]}], "bedingungen": []},
-    {"schluessel": "termin", "name": "Termin", "art": "ereignis", "reihenfolge": 17, "gruppen": [{"titel": "", "fragen": ["termin_puenktlich"]}], "bedingungen": []},
-    {"schluessel": "belastung", "name": "Belastung oder Konflikt", "art": "ereignis", "reihenfolge": 18, "gruppen": [{"titel": "", "fragen": ["belastung_notiz"]}], "bedingungen": []},
-    {"schluessel": "krise", "name": "Krise", "art": "ereignis", "reihenfolge": 19, "gruppen": [], "bedingungen": []},
-    {"schluessel": "arzttermin", "name": "Arzttermin", "art": "ereignis", "reihenfolge": 20, "gruppen": [{"titel": "", "fragen": ["termin_notiz"]}], "bedingungen": []},
-    {"schluessel": "therapiesitzung", "name": "Therapiesitzung", "art": "ereignis", "reihenfolge": 21, "gruppen": [{"titel": "", "fragen": ["termin_notiz"]}], "bedingungen": []},
-    {"schluessel": "dosiswechsel", "name": "Dosis- oder Präparatwechsel", "art": "ereignis", "reihenfolge": 22, "gruppen": [{"titel": "", "fragen": ["dosiswechsel_vorher", "dosiswechsel_nachher", "dosiswechsel_anlass"]}], "bedingungen": []}
+    {"schluessel": "alkohol", "name": "Alkohol", "art": "ereignis", "reihenfolge": 13, "gruppen": [{"titel": "", "fragen": ["alkohol_menge", "alkohol_art"]}], "bedingungen": []},
+    {"schluessel": "geweint", "name": "Geweint", "art": "ereignis", "reihenfolge": 14, "gruppen": [], "bedingungen": []},
+    {"schluessel": "mahlzeit", "name": "Mahlzeit", "art": "ereignis", "reihenfolge": 15, "gruppen": [{"titel": "", "fragen": ["mahlzeit_art", "mahlzeit_ohne_appetit"]}], "bedingungen": []},
+    {"schluessel": "bewegung", "name": "Bewegung", "art": "ereignis", "reihenfolge": 16, "gruppen": [{"titel": "", "fragen": ["bewegung_art", "bewegung_dauer"]}], "bedingungen": []},
+    {"schluessel": "schlafen_gegangen", "name": "Schlafen gegangen", "art": "ereignis", "reihenfolge": 17, "gruppen": [], "bedingungen": []},
+    {"schluessel": "aufgewacht", "name": "Aufgewacht", "art": "ereignis", "reihenfolge": 18, "gruppen": [{"titel": "", "fragen": ["schlaf_dauer", "schlaf_guete", "aufgewacht_nachts_wach"]}], "bedingungen": []},
+    {"schluessel": "termin", "name": "Termin", "art": "ereignis", "reihenfolge": 19, "gruppen": [{"titel": "", "fragen": ["termin_puenktlich"]}], "bedingungen": []},
+    {"schluessel": "belastung", "name": "Belastung oder Konflikt", "art": "ereignis", "reihenfolge": 20, "gruppen": [{"titel": "", "fragen": ["belastung_notiz"]}], "bedingungen": []},
+    {"schluessel": "krise", "name": "Krise", "art": "ereignis", "reihenfolge": 21, "gruppen": [], "bedingungen": []},
+    {"schluessel": "arzttermin", "name": "Arzttermin", "art": "ereignis", "reihenfolge": 22, "gruppen": [{"titel": "", "fragen": ["termin_notiz"]}], "bedingungen": []},
+    {"schluessel": "therapiesitzung", "name": "Therapiesitzung", "art": "ereignis", "reihenfolge": 23, "gruppen": [{"titel": "", "fragen": ["termin_notiz"]}], "bedingungen": []},
+    {"schluessel": "dosiswechsel", "name": "Dosis- oder Präparatwechsel", "art": "ereignis", "reihenfolge": 24, "gruppen": [{"titel": "", "fragen": ["dosiswechsel_vorher", "dosiswechsel_nachher", "dosiswechsel_anlass"]}], "bedingungen": []}
   ]
 }

@@ -227,9 +227,37 @@ mod tests {
     use super::*;
 
     #[test]
+    fn alkohol_und_geweint_jederzeit_erfassbar() {
+        // #174: beide Ereignisse stehen unter den ersten sechs Knöpfen der Startseite
+        // (sortiert nach Reihenfolge, ohne „einnahme“), Geweint speichert mit einem Tipp.
+        let v = standard().unwrap();
+        let mut ereignisse: Vec<_> = v
+            .formulare
+            .iter()
+            .filter(|f| f.art == FormularArt::Ereignis && f.schluessel != "einnahme")
+            .collect();
+        ereignisse.sort_by_key(|f| f.reihenfolge);
+        let erste: Vec<&str> = ereignisse.iter().take(6).map(|f| f.schluessel.as_str()).collect();
+        assert!(erste.contains(&"alkohol") && erste.contains(&"geweint"), "{erste:?}");
+        let mut reihen: Vec<u32> = ereignisse.iter().map(|f| f.reihenfolge).collect();
+        reihen.dedup();
+        assert_eq!(reihen.len(), ereignisse.len(), "Reihenfolge eindeutig");
+        let geweint = ereignisse.iter().find(|f| f.schluessel == "geweint").unwrap();
+        assert!(geweint.gruppen.is_empty());
+        let alkohol = ereignisse.iter().find(|f| f.schluessel == "alkohol").unwrap();
+        let fragen: Vec<&str> = alkohol
+            .gruppen
+            .iter()
+            .flat_map(|g| g.messdefs.iter())
+            .map(|id| v.messdefs.iter().find(|m| &m.id == id).unwrap().schluessel.as_str())
+            .collect();
+        assert_eq!(fragen, ["alkohol_menge", "alkohol_art"]);
+    }
+
+    #[test]
     fn vorlage_ist_gueltig_und_vollstaendig() {
         let v = standard().unwrap();
-        assert_eq!(v.messdefs.len(), 53); // +2 für den Schlaf am Morgen (#139)
+        assert_eq!(v.messdefs.len(), 55); // +2 für den Schlaf am Morgen (#139), +2 für Alkohol (#174)
         let st = v
             .messdefs
             .iter()
